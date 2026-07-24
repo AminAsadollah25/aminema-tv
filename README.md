@@ -13,6 +13,11 @@ Android TV uses native pointer/cursor mode for USB/Bluetooth mice and pointer
 remotes. Hover, click, wheel scrolling, and browser mouse side buttons can be
 tested directly in the TV emulator or on a physical box.
 
+Version 0.4 adds Amin TV OS's own mouse-clickable web keyboard. It replaces
+DPAD-only Android TV IMEs for website login and search fields, supports English,
+Persian, numbers, email punctuation, password masking, Backspace, Space, and
+Done/Search, and never reads an existing password from a website.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.

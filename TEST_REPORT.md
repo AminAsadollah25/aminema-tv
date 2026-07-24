@@ -1,4 +1,4 @@
-# Amin TV OS v0.3.1 — MVP test report
+# Amin TV OS v0.4.0 — MVP test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug build.
 
@@ -17,6 +17,9 @@ Tested on the Android TV 1080p emulator (Android TV API 36) using the debug buil
 - Both cinematic service cards fit side-by-side at 1920×1080.
 - Existing service data is enriched with artwork while preserving saved URLs.
 - Native TV pointer mode is enabled with `android.software.leanback.supports_touch`.
+- FilmRooz login fields open the Amin TV OS mouse keyboard.
+- Keyboard letter buttons accept emulator touchscreen/mouse-equivalent clicks.
+- Password input is masked in the native overlay.
 
 ## Real box acceptance checks
 

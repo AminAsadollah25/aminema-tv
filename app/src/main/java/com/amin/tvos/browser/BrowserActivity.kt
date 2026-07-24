@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -20,6 +21,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
@@ -57,6 +59,7 @@ class BrowserActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
     private lateinit var errorView: TvErrorView
+    private lateinit var mouseKeyboard: MouseKeyboardOverlay
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -95,6 +98,18 @@ class BrowserActivity : ComponentActivity() {
         )
         root.addView(
             errorView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        mouseKeyboard = MouseKeyboardOverlay(
+            this,
+            onValueChanged = { updateFocusedWebInput(it, submit = false) },
+            onAction = { value, submit -> updateFocusedWebInput(value, submit) }
+        )
+        root.addView(
+            mouseKeyboard,
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -147,6 +162,7 @@ class BrowserActivity : ComponentActivity() {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
         }
+        webView.addJavascriptInterface(KeyboardBridge(), "AminKeyboard")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
@@ -162,6 +178,7 @@ class BrowserActivity : ComponentActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 CookieManager.getInstance().flush()
                 installAdaptivePageScale(view)
+                installMouseKeyboardBridge(view)
                 captureResumeMetadata(url)
             }
 
@@ -169,6 +186,7 @@ class BrowserActivity : ComponentActivity() {
                 super.doUpdateVisitedHistory(view, url, isReload)
                 // ParsiFlix is an SPA; route changes often do not call onPageFinished.
                 view.postDelayed({ installAdaptivePageScale(view) }, 350)
+                view.postDelayed({ installMouseKeyboardBridge(view) }, 400)
             }
 
             override fun onReceivedError(
@@ -210,6 +228,7 @@ class BrowserActivity : ComponentActivity() {
                 customViewCallback = callback
                 webView.visibility = View.GONE
                 errorView.visibility = View.GONE
+                mouseKeyboard.dismiss()
                 (view.parent as? ViewGroup)?.removeView(view)
                 root.addView(
                     view,
@@ -314,6 +333,89 @@ class BrowserActivity : ComponentActivity() {
         view.evaluateJavascript(script, null)
     }
 
+    /** Hooks normal website inputs to Amin TV OS's mouse-clickable keyboard. */
+    private fun installMouseKeyboardBridge(view: WebView = webView) {
+        val script = """
+            (function() {
+              if (window.__aminKeyboardInstalled) return;
+              window.__aminKeyboardInstalled = true;
+              document.addEventListener('focusin', function(event) {
+                var el = event.target;
+                if (!el) return;
+                var tag = (el.tagName || '').toLowerCase();
+                var editable = tag === 'input' || tag === 'textarea' ||
+                               el.isContentEditable;
+                if (!editable) return;
+                var type = (el.type || 'text').toLowerCase();
+                if (/button|submit|checkbox|radio|file|range|color/.test(type)) return;
+                window.__aminActiveInput = el;
+                var value = type === 'password' ? '' : (el.value || el.textContent || '');
+                if (window.AminKeyboard) {
+                  window.AminKeyboard.open(type, String(value).slice(0, 160));
+                }
+              }, true);
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script, null)
+    }
+
+    private inner class KeyboardBridge {
+        @JavascriptInterface
+        fun open(inputType: String?, initialValue: String?) {
+            runOnUiThread {
+                hideSystemKeyboard()
+                mouseKeyboard.open(
+                    initialValue = initialValue.orEmpty().take(160),
+                    inputType = inputType.orEmpty().take(24)
+                )
+                root.postDelayed({ hideSystemKeyboard() }, 120)
+                root.postDelayed({ hideSystemKeyboard() }, 400)
+            }
+        }
+    }
+
+    private fun updateFocusedWebInput(value: String, submit: Boolean) {
+        val quoted = org.json.JSONObject.quote(value)
+        val script = """
+            (function() {
+              var el = window.__aminActiveInput || document.activeElement;
+              if (!el) return;
+              if ('value' in el) {
+                var setter = Object.getOwnPropertyDescriptor(
+                  HTMLInputElement.prototype, 'value'
+                );
+                if (setter && el instanceof HTMLInputElement) {
+                  setter.set.call(el, $quoted);
+                } else {
+                  el.value = $quoted;
+                }
+              } else {
+                el.textContent = $quoted;
+              }
+              el.dispatchEvent(new Event('input', {bubbles:true}));
+              el.dispatchEvent(new Event('change', {bubbles:true}));
+              if ($submit) {
+                ['keydown','keypress','keyup'].forEach(function(name) {
+                  el.dispatchEvent(new KeyboardEvent(name, {
+                    key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
+                  }));
+                });
+                if (el.form && (el.type === 'search' || el.type === 'password')) {
+                  if (el.form.requestSubmit) el.form.requestSubmit();
+                }
+              }
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+        hideSystemKeyboard()
+        webView.requestFocus()
+    }
+
+    private fun hideSystemKeyboard() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(webView.windowToken, 0)
+    }
+
     /**
      * Remote shortcut for sites whose fullscreen control is hard to reach:
      * MENU/red/F11 or long-press OK asks the actual player to enter native
@@ -396,6 +498,7 @@ class BrowserActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    mouseKeyboard.isShowing -> mouseKeyboard.dismiss()
                     customView != null -> webView.webChromeClient?.onHideCustomView()
                     errorView.visibility == View.VISIBLE && webView.canGoBack() -> {
                         errorView.visibility = View.GONE
