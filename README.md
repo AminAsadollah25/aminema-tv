@@ -40,6 +40,20 @@ ParsiFlix reopens the stable detail page and activates the site's own
 Authenticated FilmRooz posters are fetched inside the signed-in WebView and
 saved to app-private storage, fixing missing cards without exporting cookies.
 
+Version 0.7 adds a visible **Sync accounts** action. On demand, it imports only
+the signed-in account's own Continue/Recent metadata: ParsiFlix Continue
+Watching and FilmRooz Recent Watching. Local real playback sessions always win,
+so their exact normal browser page and saved HTML5 position are preserved.
+FilmRooz lazy-loaded authenticated posters are resolved from `data-src`, fetched
+inside the signed-in WebView, and cached privately. Authentication tokens never
+leave WebView and media/stream URLs are never inspected during account sync.
+
+The mouse keyboard login flow is also fixed: a text/email field now shows
+**Next**, which moves focus to the visible password field and reopens the
+keyboard in masked password mode. **Done** submits password/search fields;
+**Cancel**, remote Back, and mouse Back always dismiss the keyboard, clear the
+website input focus, and return control to the page.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.
@@ -85,6 +99,7 @@ com.amin.tvos
 │   └── settings/           SettingsScreen + SettingsViewModel
 └── browser/
     ├── BrowserActivity     Playback bridge, poster cache, resume, native fullscreen
+    ├── AccountSyncActivity Visible, user-triggered signed-in account history sync
     ├── ServiceAdapter      JSON-driven page/player/search rules per service
     ├── QuickMenuOverlay    Hidden MENU/INFO/right-click browser controls
     ├── MouseKeyboardOverlay Mouse keyboard with Caps and password Show/Hide

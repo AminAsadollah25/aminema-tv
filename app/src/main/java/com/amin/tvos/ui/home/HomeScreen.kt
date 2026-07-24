@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
+import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
@@ -84,7 +86,9 @@ fun HomeScreen(
                 contentUrl = session.contentUrl,
                 contentTitle = session.title,
                 contentPoster = session.posterUrl,
-                autoResume = true
+                autoResume = true,
+                resumeStrategyOverride = session.resumeStrategy,
+                actionButtonTextPatterns = session.actionButtonTextPatterns
             )
         )
     }
@@ -115,6 +119,28 @@ fun HomeScreen(
                 color = CinemaRed
             )
             Spacer(Modifier.weight(1f))
+            FocusableCard(
+                shape = RoundedCornerShape(50),
+                onClick = {
+                    context.startActivity(
+                        android.content.Intent(context, AccountSyncActivity::class.java)
+                    )
+                }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Sync,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sync accounts", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
             FocusableCard(
                 shape = RoundedCornerShape(50),
                 onClick = onOpenSettings

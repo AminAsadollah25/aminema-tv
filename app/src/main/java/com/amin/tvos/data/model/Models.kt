@@ -92,7 +92,11 @@ data class PlaybackSession(
     val lastPlayed: Long,
     val resumePosition: Long = 0L,
     val duration: Long = 0L,
-    val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE
+    val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE,
+    /** Optional per-item normal website action, e.g. FilmRooz "پخش آنلاین". */
+    val actionButtonTextPatterns: List<String> = emptyList(),
+    /** True when imported from the signed-in account rather than local playback. */
+    val syncedFromAccount: Boolean = false
 )
 
 /** User-agent modes for the embedded browser. */

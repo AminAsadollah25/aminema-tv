@@ -215,7 +215,9 @@ class LibraryRepository(private val context: Context) {
             duration = duration.takeIf { it > 0L }
                 ?: existingSession?.duration
                 ?: 0L,
-            resumeStrategy = resumeStrategy
+            resumeStrategy = resumeStrategy,
+            actionButtonTextPatterns = emptyList(),
+            syncedFromAccount = false
         )
         persistPlayback(
             (listOf(session) + _playbackSessions.value.filterNot { it.id == id })
@@ -236,6 +238,49 @@ class LibraryRepository(private val context: Context) {
         persist(trimmed(listOf(contentItem) + _items.value.filterNot { it.id == id }))
     }
 
+    /**
+     * Imports only the user's own account Continue/Recent rows. Local playback
+     * always wins for position and stable player URL. No media URL is accepted.
+     */
+    suspend fun syncAccountSessions(
+        incoming: List<PlaybackSession>
+    ) = withContext(Dispatchers.IO) {
+        if (incoming.isEmpty()) return@withContext
+        val current = _playbackSessions.value.toMutableList()
+        incoming.take(30).forEach { remote ->
+            if (remote.contentUrl.isBlank()) return@forEach
+            val id = sha1(remote.contentUrl)
+            val existing = current.firstOrNull { it.id == id }
+            val merged = if (existing != null && !existing.syncedFromAccount) {
+                existing.copy(
+                    title = remote.title.ifBlank { existing.title },
+                    posterUrl = existing.posterUrl.ifBlank { remote.posterUrl },
+                    lastPlayed = remote.lastPlayed
+                )
+            } else {
+                remote.copy(
+                    id = id,
+                    title = remote.title.ifBlank { existing?.title ?: remote.serviceName },
+                    posterUrl = remote.posterUrl.ifBlank {
+                        existing?.posterUrl.orEmpty()
+                    },
+                    resumePosition = remote.resumePosition.takeIf { it > 0L }
+                        ?: existing?.resumePosition
+                        ?: 0L,
+                    duration = remote.duration.takeIf { it > 0L }
+                        ?: existing?.duration
+                        ?: 0L,
+                    syncedFromAccount = true
+                )
+            }
+            current.removeAll { it.id == id }
+            current.add(merged)
+        }
+        persistPlayback(
+            current.sortedByDescending { it.lastPlayed }.take(40)
+        )
+    }
+
     /** Real playback sessions only; nearly completed titles leave Continue. */
     fun continueWatching(list: List<PlaybackSession>): List<PlaybackSession> =
         list.asSequence()
@@ -246,7 +291,7 @@ class LibraryRepository(private val context: Context) {
             }
             .sortedByDescending { it.lastPlayed }
             .distinctBy { it.id }
-            .take(12)
+            .take(20)
             .toList()
 
     private fun persist(list: List<MovieItem>) {

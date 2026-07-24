@@ -61,6 +61,8 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_CONTENT_TITLE = "content_title"
         private const val EXTRA_CONTENT_POSTER = "content_poster"
         private const val EXTRA_AUTO_RESUME = "auto_resume"
+        private const val EXTRA_RESUME_STRATEGY = "resume_strategy"
+        private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
 
         fun intent(
             context: Context,
@@ -70,7 +72,9 @@ class BrowserActivity : ComponentActivity() {
             contentUrl: String = "",
             contentTitle: String = "",
             contentPoster: String = "",
-            autoResume: Boolean = false
+            autoResume: Boolean = false,
+            resumeStrategyOverride: ResumeStrategy? = null,
+            actionButtonTextPatterns: List<String> = emptyList()
         ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
@@ -80,6 +84,11 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_CONTENT_TITLE, contentTitle)
                 .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
+                .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
+                .putStringArrayListExtra(
+                    EXTRA_ACTION_BUTTON_PATTERNS,
+                    ArrayList(actionButtonTextPatterns)
+                )
     }
 
     private lateinit var root: FrameLayout
@@ -101,6 +110,8 @@ class BrowserActivity : ComponentActivity() {
     private var resumeApplied = false
     private var autoResumeRequested = false
     private var autoResumeActionTriggered = false
+    private var requestedResumeStrategy: ResumeStrategy? = null
+    private var requestedActionButtonPatterns: List<String> = emptyList()
 
     private var lastContentUrl = ""
     private var lastContentTitle = ""
@@ -137,6 +148,12 @@ class BrowserActivity : ComponentActivity() {
         lastContentTitle = intent.getStringExtra(EXTRA_CONTENT_TITLE).orEmpty()
         lastContentPoster = intent.getStringExtra(EXTRA_CONTENT_POSTER).orEmpty()
         autoResumeRequested = intent.getBooleanExtra(EXTRA_AUTO_RESUME, false)
+        requestedResumeStrategy = intent.getStringExtra(EXTRA_RESUME_STRATEGY)
+            ?.let { name ->
+                ResumeStrategy.entries.firstOrNull { it.name == name }
+            }
+        requestedActionButtonPatterns =
+            intent.getStringArrayListExtra(EXTRA_ACTION_BUTTON_PATTERNS).orEmpty()
 
         root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         webView = WebView(this).apply {
@@ -162,8 +179,13 @@ class BrowserActivity : ComponentActivity() {
         )
         mouseKeyboard = MouseKeyboardOverlay(
             this,
-            onValueChanged = { updateFocusedWebInput(it, submit = false) },
-            onAction = { value, submit -> updateFocusedWebInput(value, submit) }
+            onValueChanged = {
+                updateFocusedWebInput(it, submit = false, finalize = false)
+            },
+            onAction = { value, submit ->
+                updateFocusedWebInput(value, submit, finalize = true)
+            },
+            onDismissed = { releaseFocusedWebInput() }
         )
         root.addView(
             mouseKeyboard,
@@ -620,7 +642,11 @@ class BrowserActivity : ComponentActivity() {
         }
     }
 
-    private fun updateFocusedWebInput(value: String, submit: Boolean) {
+    private fun updateFocusedWebInput(
+        value: String,
+        submit: Boolean,
+        finalize: Boolean
+    ) {
         val quoted = org.json.JSONObject.quote(value)
         val script = """
             (function() {
@@ -640,6 +666,9 @@ class BrowserActivity : ComponentActivity() {
               }
               el.dispatchEvent(new Event('input', {bubbles:true}));
               el.dispatchEvent(new Event('change', {bubbles:true}));
+              if (!$finalize) {
+                return JSON.stringify({action:'updated'});
+              }
               if ($submit) {
                 ['keydown','keypress','keyup'].forEach(function(name) {
                   el.dispatchEvent(new KeyboardEvent(name, {
@@ -649,10 +678,63 @@ class BrowserActivity : ComponentActivity() {
                 if (el.form && (el.type === 'search' || el.type === 'password')) {
                   if (el.form.requestSubmit) el.form.requestSubmit();
                 }
+                return JSON.stringify({action:'submitted'});
               }
+              var fields = Array.from(document.querySelectorAll(
+                "input:not([type='hidden']):not([disabled])," +
+                "textarea:not([disabled]),[contenteditable='true']"
+              )).filter(function(field) {
+                var type = (field.type || 'text').toLowerCase();
+                var r = field.getBoundingClientRect();
+                return !/button|submit|checkbox|radio|file|range|color/.test(type) &&
+                       r.width > 20 && r.height > 15;
+              });
+              var index = fields.indexOf(el);
+              var next = index >= 0 ? fields[index + 1] : null;
+              if (next) {
+                next.scrollIntoView({block:'center', behavior:'smooth'});
+                next.focus();
+                next.click();
+                window.__aminActiveInput = next;
+                return JSON.stringify({
+                  action:'next',
+                  type:(next.type || 'text').toLowerCase()
+                });
+              }
+              el.blur();
+              window.__aminActiveInput = null;
+              return JSON.stringify({action:'done'});
             })();
         """.trimIndent()
-        webView.evaluateJavascript(script, null)
+        webView.evaluateJavascript(script) { raw ->
+            val result = decodeJavascriptJson(raw)
+            if (!finalize) {
+                hideSystemKeyboard()
+            } else if (result?.optString("action") == "next") {
+                mouseKeyboard.open(
+                    initialValue = "",
+                    inputType = result.optString("type").ifBlank { "text" }
+                )
+            } else {
+                mouseKeyboard.dismiss()
+                webView.requestFocus()
+            }
+            hideSystemKeyboard()
+        }
+    }
+
+    private fun releaseFocusedWebInput() {
+        if (!::webView.isInitialized) return
+        webView.evaluateJavascript(
+            """
+                (function() {
+                  var el = window.__aminActiveInput || document.activeElement;
+                  if (el && el.blur) el.blur();
+                  window.__aminActiveInput = null;
+                })();
+            """.trimIndent(),
+            null
+        )
         hideSystemKeyboard()
         webView.requestFocus()
     }
@@ -857,7 +939,8 @@ class BrowserActivity : ComponentActivity() {
         if (
             !autoResumeRequested ||
             autoResumeActionTriggered ||
-            adapter.resumeStrategy != ResumeStrategy.CLICK_SITE_CONTINUE
+            (requestedResumeStrategy ?: adapter.resumeStrategy) !=
+                ResumeStrategy.CLICK_SITE_CONTINUE
         ) return
         listOf(250L, 800L, 1_600L, 3_000L).forEach { delay ->
             view.postDelayed({ tryClickSiteContinue(view) }, delay)
@@ -865,16 +948,20 @@ class BrowserActivity : ComponentActivity() {
     }
 
     /**
-     * ParsiFlix's /play route is intentionally not reloadable. The stable path
-     * is its detail page, followed by the website's own Continue Watching
-     * button. This replays that normal UI action without touching media URLs.
+     * Activates a normal visible website action on a stable detail page.
+     * ParsiFlix uses Continue Watching; account-synced FilmRooz items use
+     * Play Online. No media URL is read or touched.
      */
     private fun tryClickSiteContinue(view: WebView = webView) {
         if (autoResumeActionTriggered) return
         val adapter = serviceAdapter ?: return
         if (!adapter.isContentUrl(view.url.orEmpty())) return
+        val textPatterns = requestedActionButtonPatterns.ifEmpty {
+            adapter.resumeButtonTextPatterns
+        }
+        if (textPatterns.isEmpty()) return
         val pattern = JSONObject.quote(
-            adapter.resumeButtonTextPatterns.joinToString("|") { "(?:$it)" }
+            textPatterns.joinToString("|") { "(?:$it)" }
         )
         val script = """
             (function() {
@@ -1154,6 +1241,10 @@ class BrowserActivity : ComponentActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && mouseKeyboard.isShowing) {
+            mouseKeyboard.dismiss()
+            return true
+        }
         when (keyCode) {
             KeyEvent.KEYCODE_MENU,
             KeyEvent.KEYCODE_INFO -> {
@@ -1176,11 +1267,26 @@ class BrowserActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (
+            event.keyCode == KeyEvent.KEYCODE_BACK &&
+            mouseKeyboard.isShowing
+        ) {
+            if (event.action == KeyEvent.ACTION_DOWN) mouseKeyboard.dismiss()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         // USB mouse back/forward buttons behave like browser navigation.
         if (event.actionMasked == MotionEvent.ACTION_BUTTON_PRESS) {
             when (event.actionButton) {
                 MotionEvent.BUTTON_SECONDARY -> {
+                    if (mouseKeyboard.isShowing) {
+                        mouseKeyboard.dismiss()
+                        return true
+                    }
                     openQuickMenu()
                     return true
                 }

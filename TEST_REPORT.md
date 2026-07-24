@@ -1,42 +1,53 @@
-# Amin TV OS v0.6.0 — test report
+# Amin TV OS v0.7.0 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
 
-## Root-cause diagnosis
+## v0.7 fixes
 
-### FilmRooz poster
+### Account history from other devices
 
-- FilmRooz detail pages do not publish an `og:image`.
-- The visible poster is a same-origin image that returns HTML without the
-  authenticated WebView session but returns a valid image inside that session.
-- A normal image loader therefore could not display it reliably.
-- Fix: discover only the current detail page's visible poster, fetch it with
-  `credentials: include` inside WebView, validate type/size/host, and save it
-  to app-private poster storage. Cookies and image bytes are not exported.
+- ParsiFlix stores signed-in account history on its own API. The app now reads
+  only the account's Continue section and builds stable `/medias/.../<id>`
+  detail links.
+- FilmRooz exposes signed-in account Recent Watching in `/user/panel/`. The app
+  now imports those stable `/post/...` detail links.
+- Existing local playback sessions retain their playback page and exact
+  same-device HTML5 position when account metadata is merged.
+- Cross-device FilmRooz history supplies the content page but not an exact
+  episode/quality/time. The website remains responsible for that selection.
 
-### ParsiFlix resume
+### FilmRooz lazy poster
 
-- ParsiFlix uses a stable `/medias/.../<id>` detail route.
-- Its `/play` route is transient and redirects to the service root after a
-  reload, so saving `/play` cannot provide reliable Continue Watching.
-- Fix: save the stable detail route and, on Continue, activate the website's
-  own visible `ادامه تماشا` button. The website remains responsible for its
-  episode and playback state.
+- Off-screen Recent cards use a grey SVG in `src/currentSrc`; their real poster
+  is in `data-src`.
+- Sync now prefers and resolves `data-src`, fetches authenticated images inside
+  WebView, validates host/type/size, and caches them in app-private storage.
 
-### Recent-page pollution
+### Login keyboard deadlock
 
-- An older generic content pattern treated `/play` as content.
-- An overly broad ParsiFlix exclusion pattern also matched valid detail pages.
-- Fix: migrate away from both legacy patterns and use explicit content,
-  playback, root, login, category, and excluded-route rules.
+- **Next** on username/email updates the field and moves focus to the next
+  visible password input.
+- The overlay reopens in password mode with masking, Show/Hide, and **Done**.
+- Cancel, remote Back, and mouse Back dismiss the keyboard and release the
+  focused website input, so the login page can always be used again.
 
 ## Verified
 
 - Gradle `clean assembleDebug`: successful.
 - APK install/replace and launch: successful.
 - Existing authenticated sessions survive APK replacement.
-- FilmRooz detail poster is cached privately and renders on Home.
+- User-triggered account sync completed with 8 ParsiFlix and 11 FilmRooz rows.
+- 19 merged Continue sessions rendered; 17 were account-synced and the two
+  existing local playback sessions retained their saved progress.
+- ParsiFlix sync used only stable detail URLs and account metadata.
+- FilmRooz sync used only stable detail URLs and account Recent metadata.
+- Lazy FilmRooz posters resolved correctly and rendered on Home; authenticated
+  images were cached privately when available.
+- Synthetic two-field login test: username **Next** focused the password input,
+  retained the username value, and reopened the masked password keyboard.
+- Remote Back closed the keyboard, cleared its tracked input, focused WebView,
+  and did not leave an unresponsive overlay.
 - FilmRooz Continue opens the stable normal `/stream/...` page and restored the
   HTML5 position (tested around 425 seconds).
 - ParsiFlix detail is recorded with the visible title and poster.
@@ -50,6 +61,7 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
 - Service roots, login/profile/category pages, `/play`, and FilmRooz `/stream`
   pages are absent from Recently Opened.
 - Continue progress bars and both authenticated posters render correctly.
+- Account tokens remained inside WebView during sync.
 - No protected media URL is read, stored, logged, or displayed.
 - No app crash was found in final emulator logcat.
 

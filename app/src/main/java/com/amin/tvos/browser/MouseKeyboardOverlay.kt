@@ -21,7 +21,8 @@ import android.widget.TextView
 class MouseKeyboardOverlay(
     context: Context,
     private val onValueChanged: (String) -> Unit,
-    private val onAction: (String, Boolean) -> Unit
+    private val onAction: (String, Boolean) -> Unit,
+    private val onDismissed: () -> Unit
 ) : FrameLayout(context) {
 
     private val panel = LinearLayout(context)
@@ -133,8 +134,9 @@ class MouseKeyboardOverlay(
             typeface = Typeface.DEFAULT_BOLD
             background = rounded("#E50914", 12)
             setOnClickListener {
-                onAction(buffer, searchMode)
-                dismiss()
+                // BrowserActivity dismisses after the website confirms whether
+                // this action submitted or moved focus to the password field.
+                onAction(buffer, searchMode || passwordMode)
             }
         }
 
@@ -149,7 +151,11 @@ class MouseKeyboardOverlay(
         revealButton.visibility = if (passwordMode) View.VISIBLE else View.GONE
         // Never pull an existing password out of the website into Android UI.
         buffer = if (passwordMode) "" else initialValue.take(160)
-        actionButton.text = if (searchMode) "Search" else "Done"
+        actionButton.text = when {
+            searchMode -> "Search"
+            passwordMode -> "Done"
+            else -> "Next"
+        }
         updatePreview()
         visibility = View.VISIBLE
         bringToFront()
@@ -157,7 +163,9 @@ class MouseKeyboardOverlay(
     }
 
     fun dismiss() {
+        if (!isShowing) return
         visibility = View.GONE
+        onDismissed()
     }
 
     private fun rebuildKeys() {
