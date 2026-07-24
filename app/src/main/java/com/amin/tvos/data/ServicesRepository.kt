@@ -46,6 +46,9 @@ class ServicesRepository(private val context: Context) {
         val enriched = saved.map { current ->
             val defaults = bundled.firstOrNull { it.id == current.id }
             if (defaults == null) current else current.copy(
+                url = if (
+                    current.url.contains("example.com/CHANGE_ME", ignoreCase = true)
+                ) defaults.url else current.url,
                 subtitle = current.subtitle.ifBlank { defaults.subtitle },
                 artwork = current.artwork.ifBlank { defaults.artwork },
                 loginZoomPercent = current.loginZoomPercent ?: defaults.loginZoomPercent,

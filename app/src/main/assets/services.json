@@ -21,11 +21,19 @@
   {
     "id": "filmrooz",
     "name": "FilmRooz",
-    "url": "https://example.com/CHANGE_ME",
+    "url": "https://sean.robert-redford.net/",
     "icon": "filmrooz",
     "subtitle": "International Cinema",
     "artwork": "service_filmrooz",
     "color": "#1F80E0",
-    "type": "STREAMING"
+    "type": "STREAMING",
+    "userAgent": "DESKTOP",
+    "fullscreenSelectors": [
+      "button[aria-label*='fullscreen' i]",
+      "button[title*='fullscreen' i]",
+      ".vjs-fullscreen-control",
+      ".plyr__control[data-plyr='fullscreen']",
+      "[class*='fullscreen' i]"
+    ]
   }
 ]
