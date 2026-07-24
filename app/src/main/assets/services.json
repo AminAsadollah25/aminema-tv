@@ -1,0 +1,27 @@
+[
+  {
+    "id": "parsiflix",
+    "name": "ParsiFlix",
+    "url": "https://app.parsiflix.com",
+    "icon": "parsiflix",
+    "color": "#E50914",
+    "type": "STREAMING",
+    "loginZoomPercent": 85,
+    "userAgent": "DESKTOP",
+    "fullscreenSelectors": [
+      "button[aria-label*='fullscreen' i]",
+      "button[title*='fullscreen' i]",
+      ".vjs-fullscreen-control",
+      ".plyr__control[data-plyr='fullscreen']",
+      "[class*='fullscreen' i]"
+    ]
+  },
+  {
+    "id": "filmrooz",
+    "name": "FilmRooz",
+    "url": "https://example.com/CHANGE_ME",
+    "icon": "filmrooz",
+    "color": "#1F80E0",
+    "type": "STREAMING"
+  }
+]

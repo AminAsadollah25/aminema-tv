@@ -1,0 +1,80 @@
+package com.amin.tvos.ui.settings
+
+import android.app.Application
+import android.webkit.CookieManager
+import android.webkit.WebStorage
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.amin.tvos.AminTvApp
+import com.amin.tvos.data.model.ServiceType
+import com.amin.tvos.data.model.StreamingService
+import com.amin.tvos.data.model.UserAgentMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class SettingsViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val tvApp = app as AminTvApp
+    private val servicesRepo = tvApp.servicesRepository
+    private val settingsRepo = tvApp.settingsRepository
+    private val libraryRepo = tvApp.libraryRepository
+
+    val services: StateFlow<List<StreamingService>> = servicesRepo.services
+
+    val userAgentMode: StateFlow<UserAgentMode> = settingsRepo.userAgentMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UserAgentMode.TV)
+
+    fun setUserAgent(mode: UserAgentMode) = viewModelScope.launch {
+        settingsRepo.setUserAgentMode(mode)
+    }
+
+    val browserZoom: StateFlow<Int> = settingsRepo.browserZoom
+        .stateIn(
+            viewModelScope, SharingStarted.Eagerly,
+            com.amin.tvos.data.SettingsRepository.DEFAULT_BROWSER_ZOOM
+        )
+
+    fun changeBrowserZoom(delta: Int) = viewModelScope.launch {
+        settingsRepo.setBrowserZoom(browserZoom.value + delta)
+    }
+
+    fun resetBrowserZoom() = viewModelScope.launch {
+        settingsRepo.setBrowserZoom(com.amin.tvos.data.SettingsRepository.DEFAULT_BROWSER_ZOOM)
+    }
+
+    fun addService(name: String, url: String) = viewModelScope.launch {
+        if (name.isBlank() || url.isBlank()) return@launch
+        val normalized = if (url.startsWith("http")) url else "https://$url"
+        servicesRepo.addService(
+            StreamingService(
+                id = name.lowercase().replace(Regex("[^a-z0-9]"), "_"),
+                name = name.trim(),
+                url = normalized.trim(),
+                type = ServiceType.STREAMING
+            )
+        )
+    }
+
+    fun removeService(id: String) = viewModelScope.launch { servicesRepo.removeService(id) }
+
+    /** Logout everywhere: cookies + web storage. */
+    fun clearCookies(onDone: () -> Unit) {
+        CookieManager.getInstance().removeAllCookies { }
+        CookieManager.getInstance().flush()
+        WebStorage.getInstance().deleteAllData()
+        onDone()
+    }
+
+    fun clearCache(onDone: () -> Unit) = viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+            getApplication<Application>().cacheDir.deleteRecursively()
+        }
+        onDone()
+    }
+
+    fun clearHistory() = viewModelScope.launch { libraryRepo.clearHistory() }
+}
