@@ -279,6 +279,24 @@ fun PosterCard(
                         Text("Continue", style = MaterialTheme.typography.labelLarge, color = Color.White)
                     }
                 }
+                if (item.duration > 0L && item.resumePosition > 0L) {
+                    val progress = (item.resumePosition.toFloat() / item.duration.toFloat())
+                        .coerceIn(0.02f, 1f)
+                    Box(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .background(Color.White.copy(alpha = 0.25f))
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth(progress)
+                                .height(5.dp)
+                                .background(CinemaRed)
+                        )
+                    }
+                }
             }
             Column(Modifier.padding(12.dp)) {
                 Text(

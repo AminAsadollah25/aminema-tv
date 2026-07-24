@@ -16,6 +16,29 @@
       ".vjs-fullscreen-control",
       ".plyr__control[data-plyr='fullscreen']",
       "[class*='fullscreen' i]"
+    ],
+    "playerSelectors": [
+      "video",
+      "iframe[allowfullscreen]",
+      "iframe[src*='player' i]",
+      ".video-js",
+      ".plyr",
+      "[class*='video-player' i]",
+      "[class*='player-wrapper' i]"
+    ],
+    "searchSelectors": [
+      "input[type='search']",
+      "input[placeholder*='search' i]",
+      "input[placeholder*='جست' i]",
+      "button[aria-label*='search' i]",
+      "a[href*='search' i]",
+      "[class*='search' i] input"
+    ],
+    "contentUrlPatterns": [
+      "(/|#)(movie|film|series|episode|watch|play|title|content)(/|$|[?#])"
+    ],
+    "excludedUrlPatterns": [
+      "(/|#)(login|signin|sign-in|auth|account|profile|settings|device|pair|qr)(/|$|[?#])"
     ]
   },
   {
@@ -34,6 +57,29 @@
       ".vjs-fullscreen-control",
       ".plyr__control[data-plyr='fullscreen']",
       "[class*='fullscreen' i]"
+    ],
+    "playerSelectors": [
+      "video",
+      "iframe[allowfullscreen]",
+      "iframe[src*='player' i]",
+      ".video-js",
+      ".plyr",
+      "[class*='video-player' i]",
+      "[class*='player-wrapper' i]"
+    ],
+    "searchSelectors": [
+      "input[type='search']",
+      "input[placeholder*='search' i]",
+      "input[placeholder*='جست' i]",
+      "button[aria-label*='search' i]",
+      "a[href*='search' i]",
+      "[class*='search' i] input"
+    ],
+    "contentUrlPatterns": [
+      "(/|#)(movie|film|series|episode|watch|play|title|content)(/|$|[?#])"
+    ],
+    "excludedUrlPatterns": [
+      "(/|#)(login|signin|sign-in|auth|account|profile|settings)(/|$|[?#])"
     ]
   }
 ]

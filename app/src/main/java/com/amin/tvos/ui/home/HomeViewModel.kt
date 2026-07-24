@@ -25,7 +25,18 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val recentlyOpened: StateFlow<List<MovieItem>> = libraryRepo.items
-        .map { list -> list.sortedByDescending { it.lastOpened }.take(15) }
+        .map { list ->
+            list.asSequence()
+                .filterNot { item ->
+                    Regex(
+                        """(?:^|/)(?:login|signin|sign-in|auth|account|profile|settings)(?:/|$)""",
+                        RegexOption.IGNORE_CASE
+                    ).containsMatchIn(item.url)
+                }
+                .sortedByDescending { it.lastOpened }
+                .take(20)
+                .toList()
+        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val favorites: StateFlow<List<MovieItem>> = libraryRepo.items

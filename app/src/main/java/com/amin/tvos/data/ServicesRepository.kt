@@ -53,8 +53,21 @@ class ServicesRepository(private val context: Context) {
                 artwork = current.artwork.ifBlank { defaults.artwork },
                 loginZoomPercent = current.loginZoomPercent ?: defaults.loginZoomPercent,
                 userAgent = current.userAgent ?: defaults.userAgent,
-                fullscreenSelectors = current.fullscreenSelectors
-                    .ifEmpty { defaults.fullscreenSelectors }
+                fullscreenSelectors = (
+                    current.fullscreenSelectors + defaults.fullscreenSelectors
+                    ).distinct(),
+                playerSelectors = (
+                    current.playerSelectors + defaults.playerSelectors
+                    ).distinct(),
+                searchSelectors = (
+                    current.searchSelectors + defaults.searchSelectors
+                    ).distinct(),
+                contentUrlPatterns = (
+                    current.contentUrlPatterns + defaults.contentUrlPatterns
+                    ).distinct(),
+                excludedUrlPatterns = (
+                    current.excludedUrlPatterns + defaults.excludedUrlPatterns
+                    ).distinct()
             )
         }
         if (enriched != saved) file.writeText(json.encodeToString(enriched))

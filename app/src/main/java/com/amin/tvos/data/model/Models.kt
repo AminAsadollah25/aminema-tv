@@ -27,7 +27,15 @@ data class StreamingService(
     /** Optional UserAgentMode enum name: TV, DESKTOP, or MOBILE. */
     val userAgent: String? = null,
     /** Site-specific fullscreen controls to try from a TV remote shortcut. */
-    val fullscreenSelectors: List<String> = emptyList()
+    val fullscreenSelectors: List<String> = emptyList(),
+    /** Elements that identify an embedded player on this service. */
+    val playerSelectors: List<String> = emptyList(),
+    /** Native website search inputs/buttons that the quick menu can focus. */
+    val searchSelectors: List<String> = emptyList(),
+    /** Regex patterns that identify movie, series, episode, or watch routes. */
+    val contentUrlPatterns: List<String> = emptyList(),
+    /** Regex patterns that must never appear in the personal library. */
+    val excludedUrlPatterns: List<String> = emptyList()
 )
 
 /**
@@ -46,6 +54,9 @@ data class MovieItem(
     val url: String,
     val lastOpened: Long,
     val resumePosition: Long = 0L,
+    val duration: Long = 0L,
+    /** True for a detected player or a service-adapter content route. */
+    val isPlayable: Boolean = false,
     val isFavorite: Boolean = false
 )
 

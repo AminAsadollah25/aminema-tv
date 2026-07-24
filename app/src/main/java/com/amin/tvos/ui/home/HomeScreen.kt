@@ -55,7 +55,14 @@ fun HomeScreen(
         context.startActivity(BrowserActivity.intent(context, service.id, service.url))
 
     fun openItem(item: MovieItem) =
-        context.startActivity(BrowserActivity.intent(context, item.serviceId, item.url))
+        context.startActivity(
+            BrowserActivity.intent(
+                context,
+                item.serviceId,
+                item.url,
+                item.resumePosition
+            )
+        )
 
     Column(
         Modifier

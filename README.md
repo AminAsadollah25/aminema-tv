@@ -22,6 +22,14 @@ Version 0.4.1 adds a visible Caps Lock state and a password Show/Hide button.
 Passwords remain masked by default and are revealed only while the user chooses
 `Show`.
 
+Version 0.5 turns the browser into a personal TV hub. A hidden Quick Menu opens
+with MENU/INFO or mouse right-click and provides fullscreen, favorite, native
+website search, reload, browser back, and Amin TV Home actions. Favorites can be
+saved from the current page, Continue Watching only includes detected content
+pages, HTML5 playback time is saved every 15 seconds, and reopening a card
+attempts a best-effort seek to the saved position. Service-specific content,
+player, search, fullscreen, and excluded-route rules now live in JSON adapters.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.
@@ -41,6 +49,9 @@ Services are defined in JSON only. The bundled defaults live at `app/src/main/as
 - Bundled defaults: edit `assets/services.json` before building. Core fields: `id`, `name`, `url`, `icon`, `color` (hex), `type` (`STREAMING`, or `LIVE_TV` for future use).
 - Optional presentation fields: `subtitle` and `artwork` (drawable resource name or remote image URL).
 - Optional compatibility fields: `loginZoomPercent`, `userAgent` (`TV`, `DESKTOP`, `MOBILE`), and `fullscreenSelectors`.
+- Adapter fields: `playerSelectors`, `searchSelectors`, `contentUrlPatterns`,
+  and `excludedUrlPatterns`. These isolate site-specific behavior while keeping
+  the browser and library shared.
 
 The bundled FilmRooz entry currently points to the user-provided subscribed site.
 You can replace any service URL through Settings or JSON without changing code.
@@ -62,7 +73,10 @@ com.amin.tvos
 │   ├── home/               HomeScreen + HomeViewModel
 │   └── settings/           SettingsScreen + SettingsViewModel
 └── browser/
-    ├── BrowserActivity     Mouse-first browser, adaptive login scale, native fullscreen
+    ├── BrowserActivity     Resume capture, mouse-first browser, native fullscreen
+    ├── ServiceAdapter      JSON-driven page/player/search rules per service
+    ├── QuickMenuOverlay    Hidden MENU/INFO/right-click browser controls
+    ├── MouseKeyboardOverlay Mouse keyboard with Caps and password Show/Hide
     └── TvErrorView         TV-friendly error overlay with retry
 ```
 
@@ -79,8 +93,11 @@ Back inside the browser: exits fullscreen video first, then steps back through W
 - Only login/QR routes use the configured reduced scale (85% by default).
 - QR dialogs and late-mounted SPA players are detected with a lightweight `MutationObserver`.
 - Clicking the website player's fullscreen button uses Android's native `WebChromeClient` custom view.
-- Remote shortcuts: `MENU`, red color key, or `F11`; long-press OK also requests player fullscreen.
+- `MENU` or `INFO` opens the hidden Quick Menu; mouse right-click does the same.
+- Red color key, `F11`, or long-press OK requests player fullscreen directly.
 - A USB mouse is the primary pointer: left click and wheel go directly to WebView; Back/Forward side buttons navigate browser history.
+- Quick Menu search focuses the website's own search field and opens the Amin TV
+  mouse keyboard; no catalog scraping or cross-service search is performed.
 
 ## Security
 

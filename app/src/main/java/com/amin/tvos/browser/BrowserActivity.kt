@@ -7,6 +7,8 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.http.SslError
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -21,6 +23,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.Toast
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -33,6 +36,8 @@ import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import org.json.JSONTokener
 
 /**
  * Mouse-first browser shell for Android TV.
@@ -49,17 +54,25 @@ class BrowserActivity : ComponentActivity() {
     companion object {
         private const val EXTRA_SERVICE_ID = "service_id"
         private const val EXTRA_URL = "url"
+        private const val EXTRA_RESUME_POSITION = "resume_position"
 
-        fun intent(context: Context, serviceId: String, url: String): Intent =
+        fun intent(
+            context: Context,
+            serviceId: String,
+            url: String,
+            resumePosition: Long = 0L
+        ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
                 .putExtra(EXTRA_URL, url)
+                .putExtra(EXTRA_RESUME_POSITION, resumePosition)
     }
 
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
     private lateinit var errorView: TvErrorView
     private lateinit var mouseKeyboard: MouseKeyboardOverlay
+    private lateinit var quickMenu: QuickMenuOverlay
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -67,8 +80,27 @@ class BrowserActivity : ComponentActivity() {
     private var serviceId = ""
     private var serviceName = ""
     private var serviceProfile: StreamingService? = null
+    private var serviceAdapter: ServiceAdapter? = null
     private var loginZoomPercent = 85
     private var lastFailedUrl: String? = null
+    private var requestedResumePosition = 0L
+    private var resumeApplied = false
+
+    private var currentTitle = ""
+    private var currentPoster = ""
+    private var currentResumePosition = 0L
+    private var currentDuration = 0L
+    private var currentIsPlayable = false
+
+    private val metadataHandler = Handler(Looper.getMainLooper())
+    private val metadataRunnable = object : Runnable {
+        override fun run() {
+            if (::webView.isInitialized && !isFinishing && !isDestroyed) {
+                webView.url?.let { captureResumeMetadata(it) }
+                metadataHandler.postDelayed(this, 15_000L)
+            }
+        }
+    }
 
     private val app get() = application as AminTvApp
 
@@ -80,6 +112,7 @@ class BrowserActivity : ComponentActivity() {
 
         serviceId = intent.getStringExtra(EXTRA_SERVICE_ID).orEmpty()
         val startUrl = intent.getStringExtra(EXTRA_URL).orEmpty()
+        requestedResumePosition = intent.getLongExtra(EXTRA_RESUME_POSITION, 0L)
 
         root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         webView = WebView(this).apply {
@@ -115,6 +148,14 @@ class BrowserActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
+        quickMenu = QuickMenuOverlay(this) { handleQuickAction(it) }
+        root.addView(
+            quickMenu,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
         setContentView(root)
 
         configureWebView()
@@ -124,6 +165,7 @@ class BrowserActivity : ComponentActivity() {
             serviceProfile = app.servicesRepository.services.value
                 .firstOrNull { it.id == serviceId }
             serviceName = serviceProfile?.name ?: serviceId
+            serviceAdapter = serviceProfile?.let(::ServiceAdapter)
             loginZoomPercent = serviceProfile?.loginZoomPercent
                 ?: app.settingsRepository.browserZoom.first()
             applyUserAgent()
@@ -167,6 +209,11 @@ class BrowserActivity : ComponentActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
                 errorView.visibility = View.GONE
+                currentTitle = ""
+                currentPoster = ""
+                currentResumePosition = 0L
+                currentDuration = 0L
+                currentIsPlayable = false
                 // Remove a scale left by a previous SPA route immediately.
                 view.evaluateJavascript(
                     "document.documentElement.style.zoom='100%';" +
@@ -180,6 +227,7 @@ class BrowserActivity : ComponentActivity() {
                 installAdaptivePageScale(view)
                 installMouseKeyboardBridge(view)
                 captureResumeMetadata(url)
+                tryRestoreResumePosition(view)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
@@ -187,6 +235,10 @@ class BrowserActivity : ComponentActivity() {
                 // ParsiFlix is an SPA; route changes often do not call onPageFinished.
                 view.postDelayed({ installAdaptivePageScale(view) }, 350)
                 view.postDelayed({ installMouseKeyboardBridge(view) }, 400)
+                url?.let { changedUrl ->
+                    view.postDelayed({ captureResumeMetadata(changedUrl) }, 900)
+                    view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
+                }
             }
 
             override fun onReceivedError(
@@ -229,6 +281,7 @@ class BrowserActivity : ComponentActivity() {
                 webView.visibility = View.GONE
                 errorView.visibility = View.GONE
                 mouseKeyboard.dismiss()
+                quickMenu.dismiss()
                 (view.parent as? ViewGroup)?.removeView(view)
                 root.addView(
                     view,
@@ -270,9 +323,16 @@ class BrowserActivity : ComponentActivity() {
      */
     private fun installAdaptivePageScale(view: WebView = webView) {
         val zoom = loginZoomPercent.coerceIn(60, 100)
+        val playerSelector = JSONObject.quote(
+            serviceAdapter?.playerSelectors.orEmpty().joinToString(",").ifBlank {
+                "video,iframe[allowfullscreen],.video-js,.plyr," +
+                    "[class*='video-player' i],[class*='player-wrapper' i]"
+            }
+        )
         val script = """
             (function() {
               window.__aminLoginZoom = $zoom;
+              window.__aminPlayerSelector = $playerSelector;
 
               function visible(el) {
                 if (!el) return false;
@@ -284,10 +344,9 @@ class BrowserActivity : ComponentActivity() {
 
               function isPlayerPage() {
                 var video = Array.from(document.querySelectorAll('video')).some(visible);
-                var player = Array.from(document.querySelectorAll(
-                  'iframe[allowfullscreen], iframe[src*="player"], iframe[src*="embed"],' +
-                  '.video-js, .plyr, [class*="video-player"], [class*="player-wrapper"]'
-                )).some(visible);
+                var player = Array.from(
+                  document.querySelectorAll(window.__aminPlayerSelector)
+                ).some(visible);
                 return video || player || !!document.fullscreenElement ||
                        !!document.webkitFullscreenElement;
               }
@@ -463,34 +522,260 @@ class BrowserActivity : ComponentActivity() {
         webView.evaluateJavascript(script, null)
     }
 
-    private fun captureResumeMetadata(url: String) {
+    private fun openQuickMenu() {
+        if (customView != null) return
+        if (quickMenu.isShowing) {
+            quickMenu.dismiss()
+            webView.requestFocus()
+            return
+        }
+        mouseKeyboard.dismiss()
+        val url = webView.url.orEmpty()
+        quickMenu.open(
+            title = displayPageTitle(),
+            serviceName = serviceName,
+            isFavorite = app.libraryRepository.isFavorite(url),
+            canGoBack = webView.canGoBack()
+        )
+    }
+
+    private fun handleQuickAction(action: QuickAction) {
+        when (action) {
+            QuickAction.FULLSCREEN -> requestPlayerFullscreen()
+            QuickAction.FAVORITE -> toggleCurrentFavorite()
+            QuickAction.SEARCH -> requestSiteSearch()
+            QuickAction.RELOAD -> webView.reload()
+            QuickAction.BACK -> {
+                if (webView.canGoBack()) webView.goBack() else finish()
+            }
+            QuickAction.HOME -> finish()
+        }
+    }
+
+    private fun toggleCurrentFavorite() {
+        val url = webView.url.orEmpty()
+        if (url.isBlank()) return
+        lifecycleScope.launch {
+            val favorite = app.libraryRepository.toggleFavoriteForPage(
+                serviceId = serviceId,
+                serviceName = serviceName,
+                url = url,
+                title = displayPageTitle(),
+                posterUrl = currentPoster,
+                resumePosition = currentResumePosition,
+                duration = currentDuration,
+                isPlayable = currentIsPlayable
+            )
+            Toast.makeText(
+                this@BrowserActivity,
+                if (favorite) "Added to Favorites" else "Removed from Favorites",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun requestSiteSearch() {
+        val selector = JSONObject.quote(
+            serviceAdapter?.searchSelectors.orEmpty().joinToString(",").ifBlank {
+                "input[type='search'],input[placeholder*='search' i]," +
+                    "input[placeholder*='جست' i],a[href*='search' i]," +
+                    "[class*='search' i] input"
+            }
+        )
         val script = """
             (function() {
-                var img = document.querySelector('meta[property="og:image"]');
+              try {
+                function findInput() {
+                  return document.querySelector(
+                    "input[type='search'],input[placeholder*='search' i]," +
+                    "input[placeholder*='جست' i],[class*='search' i] input"
+                  );
+                }
+                function focusInput(input) {
+                  if (!input) return false;
+                  input.scrollIntoView({block:'center', behavior:'smooth'});
+                  input.click();
+                  input.focus();
+                  return true;
+                }
+                var candidates = Array.from(document.querySelectorAll($selector));
+                var target = candidates.find(function(el) {
+                  var r = el.getBoundingClientRect();
+                  return r.width > 0 && r.height > 0;
+                }) || candidates[0];
+                if (!target) {
+                  target = Array.from(document.querySelectorAll(
+                    "a,button,[role='button']"
+                  )).find(function(el) {
+                    return /search|جستجو|جست‌وجو/i.test(
+                      (el.innerText || el.textContent || '').trim()
+                    );
+                  });
+                }
+                if (!target) return 'none';
+                if (target.matches("input,textarea,[contenteditable='true']")) {
+                  focusInput(target);
+                  return 'focused';
+                }
+                target.click();
+                setTimeout(function() { focusInput(findInput()); }, 300);
+                setTimeout(function() { focusInput(findInput()); }, 900);
+                return 'opened';
+              } catch (e) {
+                return 'none';
+              }
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script) { result ->
+            if (result?.contains("none") == true) {
+                Toast.makeText(
+                    this,
+                    "Search control was not found on this page",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun displayPageTitle(): String {
+        val raw = currentTitle.ifBlank { webView.title.orEmpty() }.trim()
+        val looksLikeAsset = Regex(
+            """(?:^[a-f0-9]{20,}\.(?:jpe?g|png|webp)$)|(?:\.(?:jpe?g|png|webp)$)""",
+            RegexOption.IGNORE_CASE
+        ).containsMatchIn(raw)
+        return if (raw.isBlank() || looksLikeAsset) serviceName else raw.take(100)
+    }
+
+    private fun captureResumeMetadata(url: String) {
+        val playerSelector = JSONObject.quote(
+            serviceAdapter?.playerSelectors.orEmpty().joinToString(",").ifBlank {
+                "video,iframe[allowfullscreen],.video-js,.plyr," +
+                    "[class*='video-player' i],[class*='player-wrapper' i]"
+            }
+        )
+        val script = """
+            (function() {
+                function content(selector) {
+                  var el = document.querySelector(selector);
+                  return el ? (el.content || el.src || '') : '';
+                }
+                var video = document.querySelector('video');
+                var player = null;
+                try { player = document.querySelector($playerSelector); } catch (e) {}
+                var position = video && isFinite(video.currentTime)
+                  ? Math.round(video.currentTime * 1000) : 0;
+                var duration = video && isFinite(video.duration)
+                  ? Math.round(video.duration * 1000) : 0;
+                var largeImage = Array.from(document.images || []).find(function(img) {
+                  var r = img.getBoundingClientRect();
+                  var text = ((img.alt || '') + ' ' + (img.className || '')).toLowerCase();
+                  return r.width >= 160 && r.height >= 160 &&
+                         !/logo|avatar|icon|profile|qr/.test(text);
+                });
+                var poster = content('meta[property="og:image"]') ||
+                             content('meta[name="twitter:image"]') ||
+                             (video ? (video.poster || '') : '') ||
+                             (largeImage ? (largeImage.currentSrc || largeImage.src || '') : '');
                 return JSON.stringify({
-                    title: document.title || '',
-                    poster: img ? (img.content || '') : ''
+                    title: content('meta[property="og:title"]') ||
+                           document.title || '',
+                    poster: poster,
+                    position: position,
+                    duration: duration,
+                    playable: !!(video || player)
                 });
             })();
         """.trimIndent()
         webView.evaluateJavascript(script) { raw ->
-            val cleaned = raw?.trim('"')
-                ?.replace("\\\"", "\"")
-                ?.replace("\\\\", "\\")
-                ?: return@evaluateJavascript
-            val title = Regex("\"title\":\"(.*?)\"")
-                .find(cleaned)?.groupValues?.get(1).orEmpty()
-            val poster = Regex("\"poster\":\"(.*?)\"")
-                .find(cleaned)?.groupValues?.get(1).orEmpty()
+            val payload = decodeJavascriptJson(raw) ?: return@evaluateJavascript
+            val title = payload.optString("title").trim()
+            val poster = payload.optString("poster").trim()
+            val position = payload.optLong("position").coerceAtLeast(0L)
+            val duration = payload.optLong("duration").coerceAtLeast(0L)
+            val detectedPlayer = payload.optBoolean("playable")
+            val adapter = serviceAdapter
+            val playable = detectedPlayer || adapter?.isContentUrl(url) == true
+
+            currentTitle = title
+            currentPoster = poster
+            currentResumePosition = position
+            currentDuration = duration
+            currentIsPlayable = playable
+
+            if (adapter?.shouldRecord(
+                    url = url,
+                    title = title,
+                    hasPoster = poster.isNotBlank(),
+                    playerDetected = detectedPlayer
+                ) != true
+            ) {
+                return@evaluateJavascript
+            }
+
             lifecycleScope.launch {
                 app.libraryRepository.recordVisit(
                     serviceId = serviceId,
                     serviceName = serviceName,
                     url = url,
                     title = title,
-                    posterUrl = poster
+                    posterUrl = poster,
+                    resumePosition = position,
+                    duration = duration,
+                    isPlayable = playable
                 )
             }
+        }
+    }
+
+    private fun decodeJavascriptJson(raw: String?): JSONObject? = runCatching {
+        val decoded = JSONTokener(raw.orEmpty()).nextValue() as? String
+            ?: return@runCatching null
+        JSONObject(decoded)
+    }.getOrNull()
+
+    /**
+     * Best-effort resume for ordinary HTML5 video. Some DRM or iframe players
+     * intentionally prevent seeking from the host page; in that case the exact
+     * content URL still resumes and the website remains in control.
+     */
+    private fun tryRestoreResumePosition(view: WebView = webView) {
+        if (requestedResumePosition < 5_000L || resumeApplied) return
+        val seconds = requestedResumePosition / 1000.0
+        val script = """
+            (function() {
+              window.__aminResumeTarget = $seconds;
+              function applyResume() {
+                var video = document.querySelector('video');
+                if (!video || !isFinite(video.duration) || video.duration <= 0) return false;
+                var target = Math.min(
+                  window.__aminResumeTarget,
+                  Math.max(0, video.duration - 10)
+                );
+                try {
+                  if (Math.abs((video.currentTime || 0) - target) > 3) {
+                    video.currentTime = target;
+                  }
+                  return true;
+                } catch (e) {
+                  return false;
+                }
+              }
+              if (applyResume()) return true;
+              if (!window.__aminResumeTimer) {
+                var tries = 0;
+                window.__aminResumeTimer = setInterval(function() {
+                  tries++;
+                  if (applyResume() || tries >= 30) {
+                    clearInterval(window.__aminResumeTimer);
+                    window.__aminResumeTimer = 0;
+                  }
+                }, 500);
+              }
+              return false;
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            if (result == "true") resumeApplied = true
         }
     }
 
@@ -498,6 +783,10 @@ class BrowserActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    quickMenu.isShowing -> {
+                        quickMenu.dismiss()
+                        webView.requestFocus()
+                    }
                     mouseKeyboard.isShowing -> mouseKeyboard.dismiss()
                     customView != null -> webView.webChromeClient?.onHideCustomView()
                     errorView.visibility == View.VISIBLE && webView.canGoBack() -> {
@@ -514,6 +803,10 @@ class BrowserActivity : ComponentActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_MENU,
+            KeyEvent.KEYCODE_INFO -> {
+                openQuickMenu()
+                return true
+            }
             KeyEvent.KEYCODE_PROG_RED,
             KeyEvent.KEYCODE_F11 -> {
                 requestPlayerFullscreen()
@@ -534,6 +827,10 @@ class BrowserActivity : ComponentActivity() {
         // USB mouse back/forward buttons behave like browser navigation.
         if (event.actionMasked == MotionEvent.ACTION_BUTTON_PRESS) {
             when (event.actionButton) {
+                MotionEvent.BUTTON_SECONDARY -> {
+                    openQuickMenu()
+                    return true
+                }
                 MotionEvent.BUTTON_BACK -> {
                     onBackPressedDispatcher.onBackPressed()
                     return true
@@ -568,6 +865,8 @@ class BrowserActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        metadataHandler.removeCallbacks(metadataRunnable)
+        if (::webView.isInitialized) webView.url?.let { captureResumeMetadata(it) }
         CookieManager.getInstance().flush()
         webView.onPause()
         super.onPause()
@@ -576,6 +875,8 @@ class BrowserActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         webView.onResume()
+        metadataHandler.removeCallbacks(metadataRunnable)
+        metadataHandler.postDelayed(metadataRunnable, 8_000L)
         hideSystemUi()
     }
 
@@ -585,6 +886,7 @@ class BrowserActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        metadataHandler.removeCallbacks(metadataRunnable)
         customView?.let { root.removeView(it) }
         customView = null
         webView.apply {
