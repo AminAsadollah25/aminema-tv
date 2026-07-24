@@ -26,14 +26,36 @@ class ServicesRepository(private val context: Context) {
     val services: StateFlow<List<StreamingService>> = _services.asStateFlow()
 
     suspend fun load() = withContext(Dispatchers.IO) {
+        val bundled = runCatching {
+            context.assets.open("services.json").bufferedReader().use {
+                json.decodeFromString<List<StreamingService>>(it.readText())
+            }
+        }.getOrDefault(emptyList())
+
         if (!file.exists()) {
             context.assets.open("services.json").use { input ->
                 file.outputStream().use { input.copyTo(it) }
             }
         }
-        _services.value = runCatching {
+        val saved = runCatching {
             json.decodeFromString<List<StreamingService>>(file.readText())
         }.getOrDefault(emptyList())
+
+        // Add newly shipped presentation metadata to existing installs without
+        // replacing the user's URL, service order, or custom services.
+        val enriched = saved.map { current ->
+            val defaults = bundled.firstOrNull { it.id == current.id }
+            if (defaults == null) current else current.copy(
+                subtitle = current.subtitle.ifBlank { defaults.subtitle },
+                artwork = current.artwork.ifBlank { defaults.artwork },
+                loginZoomPercent = current.loginZoomPercent ?: defaults.loginZoomPercent,
+                userAgent = current.userAgent ?: defaults.userAgent,
+                fullscreenSelectors = current.fullscreenSelectors
+                    .ifEmpty { defaults.fullscreenSelectors }
+            )
+        }
+        if (enriched != saved) file.writeText(json.encodeToString(enriched))
+        _services.value = enriched
     }
 
     suspend fun addService(service: StreamingService) = withContext(Dispatchers.IO) {

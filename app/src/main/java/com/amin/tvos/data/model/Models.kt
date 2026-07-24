@@ -16,6 +16,10 @@ data class StreamingService(
     val name: String,
     val url: String,
     val icon: String = "",
+    /** Optional short label displayed on the cinematic home card. */
+    val subtitle: String = "",
+    /** Drawable resource name or remote image URL for the service card. */
+    val artwork: String = "",
     val color: String = "#E50914",
     val type: ServiceType = ServiceType.STREAMING,
     /** Optional service-specific scale used only on login / QR pages. */

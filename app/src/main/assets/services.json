@@ -4,6 +4,8 @@
     "name": "ParsiFlix",
     "url": "https://app.parsiflix.com",
     "icon": "parsiflix",
+    "subtitle": "Iranian Cinema",
+    "artwork": "service_parsiflix",
     "color": "#E50914",
     "type": "STREAMING",
     "loginZoomPercent": 85,
@@ -21,6 +23,8 @@
     "name": "FilmRooz",
     "url": "https://example.com/CHANGE_ME",
     "icon": "filmrooz",
+    "subtitle": "International Cinema",
+    "artwork": "service_filmrooz",
     "color": "#1F80E0",
     "type": "STREAMING"
   }

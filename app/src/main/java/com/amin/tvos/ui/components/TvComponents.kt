@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -72,7 +73,7 @@ fun FocusableCard(
     val hovered by interactionSource.collectIsHoveredAsState()
     val focused = dpadFocused || hovered
     val scale by animateFloatAsState(
-        targetValue = if (focused) 1.08f else 1f,
+        targetValue = if (focused) 1.05f else 1f,
         animationSpec = tween(160),
         label = "focusScale"
     )
@@ -108,38 +109,99 @@ fun ServiceCard(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null
 ) {
+    val context = LocalContext.current
     val accent = remember(service.color) {
         runCatching { Color(android.graphics.Color.parseColor(service.color)) }
             .getOrDefault(CinemaRed)
     }
+    val artworkModel = remember(service.artwork) {
+        when {
+            service.artwork.startsWith("http") -> service.artwork
+            service.artwork.isNotBlank() -> context.resources.getIdentifier(
+                service.artwork,
+                "drawable",
+                context.packageName
+            ).takeIf { it != 0 }
+            else -> null
+        }
+    }
     FocusableCard(
-        modifier = Modifier.width(260.dp).height(140.dp),
+        modifier = Modifier.width(400.dp).height(220.dp),
         onClick = onClick,
         onLongClick = onLongClick
     ) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        listOf(accent.copy(alpha = 0.35f), SurfaceElevated)
-                    )
+        Box(Modifier.fillMaxSize()) {
+            if (artworkModel != null) {
+                AsyncImage(
+                    model = artworkModel,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
-        ) {
-            Column(
-                Modifier.align(Alignment.CenterStart).padding(20.dp)
-            ) {
+            } else {
                 Box(
                     Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(accent),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White)
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                listOf(accent.copy(alpha = 0.4f), SurfaceElevated)
+                            )
+                        )
+                )
+            }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Black.copy(alpha = 0.92f),
+                                Color.Black.copy(alpha = 0.58f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.58f))
+                        )
+                    )
+            )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(28.dp)
+            ) {
+                if (service.subtitle.isNotBlank()) {
+                    Text(
+                        service.subtitle.uppercase(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = accent
+                    )
+                    Spacer(Modifier.height(6.dp))
                 }
-                Spacer(Modifier.height(12.dp))
-                Text(service.name, style = MaterialTheme.typography.titleLarge)
+                Text(service.name, style = MaterialTheme.typography.headlineMedium)
+                Spacer(Modifier.height(14.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.White.copy(alpha = 0.14f))
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Open", style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-# Amin TV OS v0.2 — MVP test report
+# Amin TV OS v0.3 — MVP test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug build.
 
@@ -14,6 +14,8 @@ Tested on the Android TV 1080p emulator (Android TV API 36) using the debug buil
 - Android Back exits native fullscreen.
 - Remote `MENU` shortcut requests fullscreen successfully.
 - Home-screen headings and card content use the correct white-on-dark colors.
+- Both cinematic service cards fit side-by-side at 1920×1080.
+- Existing service data is enriched with artwork while preserving saved URLs.
 
 ## Real box acceptance checks
 

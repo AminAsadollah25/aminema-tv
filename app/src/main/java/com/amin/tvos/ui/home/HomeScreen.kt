@@ -97,6 +97,20 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        // ---------- My Services ----------
+        SectionRow("Choose a Service") {
+            services.forEach { service ->
+                ServiceCard(service = service, onClick = { openService(service) })
+            }
+            if (services.isEmpty()) {
+                Text(
+                    "No services configured. Add them in Settings or edit services.json.",
+                    color = TextSecondary
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+
         // ---------- Continue Watching ----------
         if (continueWatching.isNotEmpty()) {
             SectionRow("Continue Watching") {
@@ -111,20 +125,6 @@ fun HomeScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
-
-        // ---------- My Services ----------
-        SectionRow("My Services") {
-            services.forEach { service ->
-                ServiceCard(service = service, onClick = { openService(service) })
-            }
-            if (services.isEmpty()) {
-                Text(
-                    "No services configured. Add them in Settings or edit services.json.",
-                    color = TextSecondary
-                )
-            }
-        }
-        Spacer(Modifier.height(16.dp))
 
         // ---------- Recently Opened ----------
         if (recents.isNotEmpty()) {
