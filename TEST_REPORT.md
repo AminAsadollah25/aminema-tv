@@ -1,47 +1,62 @@
-# Amin TV OS v0.5.0 — MVP test report
+# Amin TV OS v0.6.0 — test report
 
-Tested on the Android TV 1080p emulator (Android TV API 36) using the debug build.
+Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
+build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
+
+## Root-cause diagnosis
+
+### FilmRooz poster
+
+- FilmRooz detail pages do not publish an `og:image`.
+- The visible poster is a same-origin image that returns HTML without the
+  authenticated WebView session but returns a valid image inside that session.
+- A normal image loader therefore could not display it reliably.
+- Fix: discover only the current detail page's visible poster, fetch it with
+  `credentials: include` inside WebView, validate type/size/host, and save it
+  to app-private poster storage. Cookies and image bytes are not exported.
+
+### ParsiFlix resume
+
+- ParsiFlix uses a stable `/medias/.../<id>` detail route.
+- Its `/play` route is transient and redirects to the service root after a
+  reload, so saving `/play` cannot provide reliable Continue Watching.
+- Fix: save the stable detail route and, on Continue, activate the website's
+  own visible `ادامه تماشا` button. The website remains responsible for its
+  episode and playback state.
+
+### Recent-page pollution
+
+- An older generic content pattern treated `/play` as content.
+- An overly broad ParsiFlix exclusion pattern also matched valid detail pages.
+- Fix: migrate away from both legacy patterns and use explicit content,
+  playback, root, login, category, and excluded-route rules.
 
 ## Verified
 
-- Gradle `assembleDebug`: successful.
-- App installation and launch: successful.
-- Existing ParsiFlix session persisted after APK replacement.
-- Home → Continue Watching with an Android `mouse` input source: successful.
-- ParsiFlix detail → Continue playback with a `mouse` input source: successful.
-- Player page renders at 100% with no Amin TV zoom overlay.
-- Website fullscreen control enters native fullscreen through `WebChromeClient`.
-- Android Back exits native fullscreen.
-- Remote `MENU` shortcut requests fullscreen successfully.
-- Home-screen headings and card content use the correct white-on-dark colors.
-- Both cinematic service cards fit side-by-side at 1920×1080.
-- Existing service data is enriched with artwork while preserving saved URLs.
-- Native TV pointer mode is enabled with `android.software.leanback.supports_touch`.
-- FilmRooz login fields open the Amin TV OS mouse keyboard.
-- Keyboard letter buttons accept emulator touchscreen/mouse-equivalent clicks.
-- Password input is masked by default in the native overlay.
-- Show/Hide reveals and masks the currently typed password without submitting it.
-- Caps Lock changes the English layout and typed characters to uppercase, with a visible active indicator.
-- Rebuilding the keyboard for Caps Lock or language changes no longer closes the browser.
-- Existing authenticated ParsiFlix and FilmRooz sessions persist after the v0.5 APK replacement.
-- MENU opens the hidden Quick Menu without covering the website during normal browsing.
-- Quick Menu fits at 1920×1080 and is clickable with a mouse.
-- Quick Menu receives DPAD focus even after mouse input; DPAD Down + OK activates actions.
-- ParsiFlix native search is opened from Quick Menu and automatically launches the Amin TV mouse keyboard.
-- The current FilmRooz movie page can be added to Favorites and reports the new state when the menu is reopened.
-- Returning Home displays the saved movie in Continue Watching with the favorite indicator.
-- Service home, login, profile, and direct image/asset URLs are excluded from new library entries.
-- Player/search/content/excluded-route adapter rules migrate into existing service configuration without replacing saved URLs.
-- HTML5 position/duration capture and best-effort resume-seek code compile and run without WebView crashes.
+- Gradle `clean assembleDebug`: successful.
+- APK install/replace and launch: successful.
+- Existing authenticated sessions survive APK replacement.
+- FilmRooz detail poster is cached privately and renders on Home.
+- FilmRooz Continue opens the stable normal `/stream/...` page and restored the
+  HTML5 position (tested around 425 seconds).
+- ParsiFlix detail is recorded with the visible title and poster.
+- A real ParsiFlix HTML5 playback event creates a Continue session with:
+  stable detail page as content, `/play` as browser playback page, and
+  `CLICK_SITE_CONTINUE` strategy.
+- ParsiFlix Continue reopens its detail page, activates the site's own Continue
+  control, reaches `/play`, and restored playback near the saved position.
+- Continue Watching is populated only by real video playback events.
+- Recently Opened contains only explicit detail routes.
+- Service roots, login/profile/category pages, `/play`, and FilmRooz `/stream`
+  pages are absent from Recently Opened.
+- Continue progress bars and both authenticated posters render correctly.
+- No protected media URL is read, stored, logged, or displayed.
+- No app crash was found in final emulator logcat.
 
-## Real box acceptance checks
+## Physical Android Box acceptance checks
 
-Run these on the target Android Box before marking v0.5 stable:
-
-1. Pair/login with the ParsiFlix QR page at 85% scale.
-2. Verify USB mouse click, hover, wheel, and Back side button.
-3. Play at least 20 minutes and test pause/resume after app interruption.
-4. Test native fullscreen and Back with the physical remote.
-5. Reboot the box and confirm the ParsiFlix login session persists.
-6. Start an HTML5 title, watch for two minutes, return Home, and reopen its
-   Continue Watching card to verify whether that site's player permits seeking.
+1. Play one title on each service, return Home, and reopen both Continue cards.
+2. Confirm physical USB mouse hover/click/wheel and remote DPAD/OK/Back.
+3. Interrupt a long playback, reopen the app, and verify the saved position.
+4. Reboot the box and confirm both login sessions and private posters persist.
+5. Verify fullscreen and Back behavior with the physical remote.

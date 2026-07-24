@@ -32,6 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.data.model.MovieItem
+import com.amin.tvos.data.model.PlaybackSession
+import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.PosterCard
@@ -60,9 +62,32 @@ fun HomeScreen(
                 context,
                 item.serviceId,
                 item.url,
-                item.resumePosition
+                item.resumePosition,
+                contentUrl = item.url,
+                contentTitle = item.title,
+                contentPoster = item.posterUrl
             )
         )
+
+    fun openPlayback(session: PlaybackSession) {
+        val startUrl = when (session.resumeStrategy) {
+            ResumeStrategy.OPEN_PLAYBACK_PAGE ->
+                session.playbackUrl.ifBlank { session.contentUrl }
+            ResumeStrategy.CLICK_SITE_CONTINUE -> session.contentUrl
+        }
+        context.startActivity(
+            BrowserActivity.intent(
+                context = context,
+                serviceId = session.serviceId,
+                url = startUrl,
+                resumePosition = session.resumePosition,
+                contentUrl = session.contentUrl,
+                contentTitle = session.title,
+                contentPoster = session.posterUrl,
+                autoResume = true
+            )
+        )
+    }
 
     Column(
         Modifier
@@ -121,11 +146,24 @@ fun HomeScreen(
         // ---------- Continue Watching ----------
         if (continueWatching.isNotEmpty()) {
             SectionRow("Continue Watching") {
-                continueWatching.forEach { item ->
+                continueWatching.forEach { session ->
+                    val item = MovieItem(
+                        id = session.id,
+                        title = session.title,
+                        posterUrl = session.posterUrl,
+                        serviceId = session.serviceId,
+                        serviceName = session.serviceName,
+                        url = session.contentUrl,
+                        lastOpened = session.lastPlayed,
+                        resumePosition = session.resumePosition,
+                        duration = session.duration,
+                        isPlayable = true,
+                        isFavorite = favorites.any { it.id == session.id }
+                    )
                     PosterCard(
                         item = item,
                         showContinueBadge = true,
-                        onClick = { openItem(item) },
+                        onClick = { openPlayback(session) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
                 }

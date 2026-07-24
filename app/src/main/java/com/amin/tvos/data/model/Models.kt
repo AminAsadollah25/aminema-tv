@@ -9,6 +9,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class ServiceType { STREAMING, LIVE_TV }
 
+@Serializable
+enum class ResumeStrategy {
+    /** Open a stable, normal browser player page (FilmRooz). */
+    OPEN_PLAYBACK_PAGE,
+
+    /** Open the detail page, then activate the website's own Continue button. */
+    CLICK_SITE_CONTINUE
+}
+
 /** A streaming service configured via services.json — never hardcoded. */
 @Serializable
 data class StreamingService(
@@ -34,8 +43,14 @@ data class StreamingService(
     val searchSelectors: List<String> = emptyList(),
     /** Regex patterns that identify movie, series, episode, or watch routes. */
     val contentUrlPatterns: List<String> = emptyList(),
+    /** Regex patterns that identify normal top-level player pages. */
+    val playbackUrlPatterns: List<String> = emptyList(),
     /** Regex patterns that must never appear in the personal library. */
-    val excludedUrlPatterns: List<String> = emptyList()
+    val excludedUrlPatterns: List<String> = emptyList(),
+    /** How Continue Watching should re-enter this service. */
+    val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE,
+    /** Text patterns for the website's own Continue/Resume button. */
+    val resumeButtonTextPatterns: List<String> = emptyList()
 )
 
 /**
@@ -58,6 +73,26 @@ data class MovieItem(
     /** True for a detected player or a service-adapter content route. */
     val isPlayable: Boolean = false,
     val isFavorite: Boolean = false
+)
+
+/**
+ * A real playback event, separate from a recently opened detail page.
+ * playbackUrl is a normal top-level browser page; no media/stream URL is stored.
+ */
+@Serializable
+data class PlaybackSession(
+    val id: String,
+    val title: String,
+    val subtitle: String = "",
+    val posterUrl: String = "",
+    val serviceId: String,
+    val serviceName: String,
+    val contentUrl: String,
+    val playbackUrl: String,
+    val lastPlayed: Long,
+    val resumePosition: Long = 0L,
+    val duration: Long = 0L,
+    val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE
 )
 
 /** User-agent modes for the embedded browser. */

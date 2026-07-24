@@ -19,6 +19,11 @@ import java.io.File
  */
 class ServicesRepository(private val context: Context) {
 
+    private val legacyGenericContentPattern =
+        "(/|#)(movie|film|series|episode|watch|play|title|content)(/|$|[?#])"
+    private val legacyBroadParsiExcludedPattern =
+        "/medias/(movies|series|search|live)($|[?#/])"
+
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val file: File get() = File(context.filesDir, "services.json")
 
@@ -62,11 +67,26 @@ class ServicesRepository(private val context: Context) {
                 searchSelectors = (
                     current.searchSelectors + defaults.searchSelectors
                     ).distinct(),
+                // v0.5 used one broad fallback rule. On ParsiFlix that rule
+                // classified /play as content and replaced the stable detail
+                // URL needed by Continue Watching. Remove only that legacy
+                // rule while preserving any user-added, service-specific ones.
                 contentUrlPatterns = (
-                    current.contentUrlPatterns + defaults.contentUrlPatterns
+                    current.contentUrlPatterns
+                        .filterNot { it == legacyGenericContentPattern } +
+                        defaults.contentUrlPatterns
+                    ).distinct(),
+                playbackUrlPatterns = (
+                    current.playbackUrlPatterns + defaults.playbackUrlPatterns
                     ).distinct(),
                 excludedUrlPatterns = (
-                    current.excludedUrlPatterns + defaults.excludedUrlPatterns
+                    current.excludedUrlPatterns
+                        .filterNot { it == legacyBroadParsiExcludedPattern } +
+                        defaults.excludedUrlPatterns
+                    ).distinct(),
+                resumeStrategy = defaults.resumeStrategy,
+                resumeButtonTextPatterns = (
+                    current.resumeButtonTextPatterns + defaults.resumeButtonTextPatterns
                     ).distinct()
             )
         }

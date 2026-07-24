@@ -30,6 +30,16 @@ pages, HTML5 playback time is saved every 15 seconds, and reopening a card
 attempts a best-effort seek to the saved position. Service-specific content,
 player, search, fullscreen, and excluded-route rules now live in JSON adapters.
 
+Version 0.6 separates **Recently Opened** from **Continue Watching**. Recent
+contains only recognized content-detail pages; service roots, login/category
+pages, and player pages are excluded. Continue is created only after a real
+HTML5 video playback event and stores the top-level browser page plus progress
+(never a media/stream URL). FilmRooz resumes its stable normal player page.
+ParsiFlix reopens the stable detail page and activates the site's own
+`ادامه تماشا` control because its `/play` route is not reload-stable.
+Authenticated FilmRooz posters are fetched inside the signed-in WebView and
+saved to app-private storage, fixing missing cards without exporting cookies.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.
@@ -50,8 +60,9 @@ Services are defined in JSON only. The bundled defaults live at `app/src/main/as
 - Optional presentation fields: `subtitle` and `artwork` (drawable resource name or remote image URL).
 - Optional compatibility fields: `loginZoomPercent`, `userAgent` (`TV`, `DESKTOP`, `MOBILE`), and `fullscreenSelectors`.
 - Adapter fields: `playerSelectors`, `searchSelectors`, `contentUrlPatterns`,
-  and `excludedUrlPatterns`. These isolate site-specific behavior while keeping
-  the browser and library shared.
+  `playbackUrlPatterns`, `excludedUrlPatterns`, `resumeStrategy`, and
+  `resumeButtonTextPatterns`. These isolate site-specific behavior while
+  keeping the browser and library shared.
 
 The bundled FilmRooz entry currently points to the user-provided subscribed site.
 You can replace any service URL through Settings or JSON without changing code.
@@ -63,7 +74,7 @@ com.amin.tvos
 ├── AminTvApp.kt            Application + lightweight service locator
 ├── MainActivity.kt         Compose NavHost (home / settings)
 ├── data/
-│   ├── model/Models.kt     StreamingService, MovieItem, ServiceType, UserAgentMode
+│   ├── model/Models.kt     StreamingService, MovieItem, PlaybackSession, ResumeStrategy
 │   ├── ServicesRepository  JSON-file-backed service list (StateFlow)
 │   ├── LibraryRepository   Smart Resume / recents / favorites store
 │   └── SettingsRepository  DataStore preferences (User-Agent)
@@ -73,7 +84,7 @@ com.amin.tvos
 │   ├── home/               HomeScreen + HomeViewModel
 │   └── settings/           SettingsScreen + SettingsViewModel
 └── browser/
-    ├── BrowserActivity     Resume capture, mouse-first browser, native fullscreen
+    ├── BrowserActivity     Playback bridge, poster cache, resume, native fullscreen
     ├── ServiceAdapter      JSON-driven page/player/search rules per service
     ├── QuickMenuOverlay    Hidden MENU/INFO/right-click browser controls
     ├── MouseKeyboardOverlay Mouse keyboard with Caps and password Show/Hide

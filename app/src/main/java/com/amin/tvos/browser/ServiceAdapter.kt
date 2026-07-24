@@ -1,6 +1,7 @@
 package com.amin.tvos.browser
 
 import android.net.Uri
+import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 
 /**
@@ -36,8 +37,19 @@ class ServiceAdapter(private val service: StreamingService) {
             )
         }
 
+    val resumeStrategy: ResumeStrategy get() = service.resumeStrategy
+
+    val resumeButtonTextPatterns: List<String> =
+        service.resumeButtonTextPatterns.ifEmpty {
+            listOf("ادامه تماشا", "Continue Watching", "Resume")
+        }
+
     fun isContentUrl(url: String): Boolean =
-        service.contentUrlPatterns.any { pattern -> matches(pattern, url) }
+        !isPlaybackUrl(url) &&
+            service.contentUrlPatterns.any { pattern -> matches(pattern, url) }
+
+    fun isPlaybackUrl(url: String): Boolean =
+        service.playbackUrlPatterns.any { pattern -> matches(pattern, url) }
 
     fun isExcluded(url: String): Boolean {
         if (Regex(
@@ -56,13 +68,19 @@ class ServiceAdapter(private val service: StreamingService) {
         playerDetected: Boolean
     ): Boolean {
         if (url.isBlank() || isExcluded(url)) return false
+        // Playback sessions are stored separately after a real <video> play
+        // event; player pages must never appear in Recently Opened.
+        if (isPlaybackUrl(url)) return false
         if (title.isBlank() || title.equals(service.name, ignoreCase = true)) {
-            return playerDetected || isContentUrl(url)
+            return isContentUrl(url)
         }
+        if (service.contentUrlPatterns.isNotEmpty()) return isContentUrl(url)
+
+        // Fallback for user-added services without adapter rules.
         val pathDepth = runCatching {
             Uri.parse(url).pathSegments.count { it.isNotBlank() }
         }.getOrDefault(0)
-        return playerDetected || isContentUrl(url) || (hasPoster && pathDepth >= 2)
+        return !playerDetected && hasPoster && pathDepth >= 2
     }
 
     private fun isServiceRoot(url: String): Boolean = runCatching {

@@ -35,10 +35,20 @@
       "[class*='search' i] input"
     ],
     "contentUrlPatterns": [
-      "(/|#)(movie|film|series|episode|watch|play|title|content)(/|$|[?#])"
+      "/medias/(movies|series)/[0-9]+($|[?#/])"
+    ],
+    "playbackUrlPatterns": [
+      "/play($|[?#/])"
     ],
     "excludedUrlPatterns": [
-      "(/|#)(login|signin|sign-in|auth|account|profile|settings|device|pair|qr)(/|$|[?#])"
+      "(/|#)(login|signin|sign-in|auth|account|profile|settings|device|pair|qr)(/|$|[?#])",
+      "/medias/(movies|series|search|live)/?(?:[?#].*)?$"
+    ],
+    "resumeStrategy": "CLICK_SITE_CONTINUE",
+    "resumeButtonTextPatterns": [
+      "ادامه تماشا",
+      "Continue Watching",
+      "Resume"
     ]
   },
   {
@@ -64,6 +74,7 @@
       "iframe[src*='player' i]",
       ".video-js",
       ".plyr",
+      ".jwplayer",
       "[class*='video-player' i]",
       "[class*='player-wrapper' i]"
     ],
@@ -76,10 +87,15 @@
       "[class*='search' i] input"
     ],
     "contentUrlPatterns": [
-      "(/|#)(movie|film|series|episode|watch|play|title|content)(/|$|[?#])"
+      "/post/(film|series)/[0-9]+/"
+    ],
+    "playbackUrlPatterns": [
+      "/stream/[0-9]+/[0-9]+/"
     ],
     "excludedUrlPatterns": [
       "(/|#)(login|signin|sign-in|auth|account|profile|settings)(/|$|[?#])"
-    ]
+    ],
+    "resumeStrategy": "OPEN_PLAYBACK_PAGE",
+    "resumeButtonTextPatterns": []
   }
 ]

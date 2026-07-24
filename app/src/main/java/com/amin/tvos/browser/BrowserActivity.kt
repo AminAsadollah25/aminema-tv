@@ -9,6 +9,7 @@ import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -32,6 +33,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.amin.tvos.AminTvApp
+import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
 import kotlinx.coroutines.flow.first
@@ -55,17 +57,29 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_SERVICE_ID = "service_id"
         private const val EXTRA_URL = "url"
         private const val EXTRA_RESUME_POSITION = "resume_position"
+        private const val EXTRA_CONTENT_URL = "content_url"
+        private const val EXTRA_CONTENT_TITLE = "content_title"
+        private const val EXTRA_CONTENT_POSTER = "content_poster"
+        private const val EXTRA_AUTO_RESUME = "auto_resume"
 
         fun intent(
             context: Context,
             serviceId: String,
             url: String,
-            resumePosition: Long = 0L
+            resumePosition: Long = 0L,
+            contentUrl: String = "",
+            contentTitle: String = "",
+            contentPoster: String = "",
+            autoResume: Boolean = false
         ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
                 .putExtra(EXTRA_URL, url)
                 .putExtra(EXTRA_RESUME_POSITION, resumePosition)
+                .putExtra(EXTRA_CONTENT_URL, contentUrl)
+                .putExtra(EXTRA_CONTENT_TITLE, contentTitle)
+                .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
+                .putExtra(EXTRA_AUTO_RESUME, autoResume)
     }
 
     private lateinit var root: FrameLayout
@@ -85,6 +99,12 @@ class BrowserActivity : ComponentActivity() {
     private var lastFailedUrl: String? = null
     private var requestedResumePosition = 0L
     private var resumeApplied = false
+    private var autoResumeRequested = false
+    private var autoResumeActionTriggered = false
+
+    private var lastContentUrl = ""
+    private var lastContentTitle = ""
+    private var lastContentPoster = ""
 
     private var currentTitle = ""
     private var currentPoster = ""
@@ -113,6 +133,10 @@ class BrowserActivity : ComponentActivity() {
         serviceId = intent.getStringExtra(EXTRA_SERVICE_ID).orEmpty()
         val startUrl = intent.getStringExtra(EXTRA_URL).orEmpty()
         requestedResumePosition = intent.getLongExtra(EXTRA_RESUME_POSITION, 0L)
+        lastContentUrl = intent.getStringExtra(EXTRA_CONTENT_URL).orEmpty()
+        lastContentTitle = intent.getStringExtra(EXTRA_CONTENT_TITLE).orEmpty()
+        lastContentPoster = intent.getStringExtra(EXTRA_CONTENT_POSTER).orEmpty()
+        autoResumeRequested = intent.getBooleanExtra(EXTRA_AUTO_RESUME, false)
 
         root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         webView = WebView(this).apply {
@@ -164,6 +188,14 @@ class BrowserActivity : ComponentActivity() {
         lifecycleScope.launch {
             serviceProfile = app.servicesRepository.services.value
                 .firstOrNull { it.id == serviceId }
+            // BrowserActivity can also be restored or launched before Home's
+            // ViewModel has populated the repository. Never continue without
+            // the adapter rules: they distinguish details, roots and players.
+            if (serviceProfile == null) {
+                app.servicesRepository.load()
+                serviceProfile = app.servicesRepository.services.value
+                    .firstOrNull { it.id == serviceId }
+            }
             serviceName = serviceProfile?.name ?: serviceId
             serviceAdapter = serviceProfile?.let(::ServiceAdapter)
             loginZoomPercent = serviceProfile?.loginZoomPercent
@@ -205,6 +237,8 @@ class BrowserActivity : ComponentActivity() {
             setAcceptThirdPartyCookies(webView, true)
         }
         webView.addJavascriptInterface(KeyboardBridge(), "AminKeyboard")
+        webView.addJavascriptInterface(PlaybackBridge(), "AminPlayback")
+        webView.addJavascriptInterface(PosterBridge(), "AminPoster")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
@@ -226,8 +260,10 @@ class BrowserActivity : ComponentActivity() {
                 CookieManager.getInstance().flush()
                 installAdaptivePageScale(view)
                 installMouseKeyboardBridge(view)
+                installPlaybackBridge(view)
                 captureResumeMetadata(url)
                 tryRestoreResumePosition(view)
+                scheduleSiteContinue(view)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
@@ -235,9 +271,11 @@ class BrowserActivity : ComponentActivity() {
                 // ParsiFlix is an SPA; route changes often do not call onPageFinished.
                 view.postDelayed({ installAdaptivePageScale(view) }, 350)
                 view.postDelayed({ installMouseKeyboardBridge(view) }, 400)
+                view.postDelayed({ installPlaybackBridge(view) }, 450)
                 url?.let { changedUrl ->
                     view.postDelayed({ captureResumeMetadata(changedUrl) }, 900)
                     view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
+                    view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
                 }
             }
 
@@ -418,6 +456,73 @@ class BrowserActivity : ComponentActivity() {
         view.evaluateJavascript(script, null)
     }
 
+    /**
+     * Reports only real HTML5 playback events. The bridge intentionally sends
+     * the top-level page URL and never reads or stores video.currentSrc.
+     */
+    private fun installPlaybackBridge(view: WebView = webView) {
+        val script = """
+            (function() {
+              if (window.__aminPlaybackInstalled) return;
+              window.__aminPlaybackInstalled = true;
+              window.__aminLastPlaybackReport = 0;
+
+              function report(video, reason) {
+                if (!video || !window.AminPlayback) return;
+                var now = Date.now();
+                if (reason === 'timeupdate' &&
+                    now - window.__aminLastPlaybackReport < 10000) return;
+                window.__aminLastPlaybackReport = now;
+                var duration = isFinite(video.duration)
+                  ? Math.round(video.duration * 1000) : 0;
+                var position = isFinite(video.currentTime)
+                  ? Math.round(video.currentTime * 1000) : 0;
+                var heading = Array.from(document.querySelectorAll('h1,h2'))
+                  .find(function(el) {
+                    var text = (el.innerText || '').trim();
+                    return text.length > 1 && text.length < 140;
+                  });
+                window.AminPlayback.update(JSON.stringify({
+                  pageUrl: location.href,
+                  referrer: document.referrer || '',
+                  title: heading ? heading.innerText.trim() : (document.title || ''),
+                  poster: video.poster || '',
+                  position: position,
+                  duration: duration,
+                  reason: reason
+                }));
+              }
+
+              window.__aminReportActivePlayback = function(reason) {
+                var video = document.querySelector('video');
+                if (video) report(video, reason || 'checkpoint');
+              };
+
+              document.addEventListener('play', function(event) {
+                if (event.target && event.target.tagName === 'VIDEO') {
+                  report(event.target, 'play');
+                }
+              }, true);
+              document.addEventListener('timeupdate', function(event) {
+                if (event.target && event.target.tagName === 'VIDEO') {
+                  report(event.target, 'timeupdate');
+                }
+              }, true);
+              document.addEventListener('pause', function(event) {
+                if (event.target && event.target.tagName === 'VIDEO') {
+                  report(event.target, 'pause');
+                }
+              }, true);
+              document.addEventListener('ended', function(event) {
+                if (event.target && event.target.tagName === 'VIDEO') {
+                  report(event.target, 'ended');
+                }
+              }, true);
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script, null)
+    }
+
     private inner class KeyboardBridge {
         @JavascriptInterface
         fun open(inputType: String?, initialValue: String?) {
@@ -429,6 +534,88 @@ class BrowserActivity : ComponentActivity() {
                 )
                 root.postDelayed({ hideSystemKeyboard() }, 120)
                 root.postDelayed({ hideSystemKeyboard() }, 400)
+            }
+        }
+    }
+
+    private inner class PlaybackBridge {
+        @JavascriptInterface
+        fun update(payload: String?) {
+            val data = runCatching { JSONObject(payload.orEmpty()) }.getOrNull()
+                ?: return
+            runOnUiThread {
+                val playbackUrl = data.optString("pageUrl").take(2_000)
+                val referrer = data.optString("referrer").take(2_000)
+                val adapter = serviceAdapter ?: return@runOnUiThread
+                val contentUrl = lastContentUrl.ifBlank {
+                    referrer.takeIf { adapter.isContentUrl(it) }.orEmpty()
+                }.ifBlank {
+                    playbackUrl.takeIf { adapter.isContentUrl(it) }.orEmpty()
+                }
+                if (contentUrl.isBlank()) return@runOnUiThread
+
+                val position = data.optLong("position").coerceAtLeast(0L)
+                val duration = data.optLong("duration").coerceAtLeast(0L)
+                val title = lastContentTitle.ifBlank {
+                    data.optString("title").trim()
+                }
+                val poster = lastContentPoster.ifBlank {
+                    data.optString("poster").trim()
+                }
+                currentResumePosition = position
+                currentDuration = duration
+                currentIsPlayable = true
+
+                lifecycleScope.launch {
+                    app.libraryRepository.recordPlayback(
+                        serviceId = serviceId,
+                        serviceName = serviceName,
+                        contentUrl = contentUrl,
+                        playbackUrl = playbackUrl,
+                        title = title,
+                        posterUrl = poster,
+                        resumePosition = position,
+                        duration = duration,
+                        resumeStrategy = adapter.resumeStrategy
+                    )
+                }
+            }
+        }
+    }
+
+    private inner class PosterBridge {
+        @JavascriptInterface
+        fun save(
+            pageUrl: String?,
+            imageUrl: String?,
+            mimeType: String?,
+            encoded: String?
+        ) {
+            val page = pageUrl.orEmpty().take(2_000)
+            val image = imageUrl.orEmpty().take(2_000)
+            val mime = mimeType.orEmpty().lowercase().substringBefore(';')
+            val payload = encoded.orEmpty()
+            if (payload.length > 2_100_000) return
+            val sameHost = runCatching {
+                android.net.Uri.parse(page).host.equals(
+                    android.net.Uri.parse(image).host,
+                    ignoreCase = true
+                )
+            }.getOrDefault(false)
+            if (!sameHost || serviceAdapter?.isContentUrl(page) != true) return
+            val bytes = runCatching {
+                Base64.decode(payload, Base64.DEFAULT)
+            }.getOrNull() ?: return
+            lifecycleScope.launch {
+                val localUrl = app.libraryRepository.saveLocalPoster(
+                    contentUrl = page,
+                    mimeType = mime,
+                    bytes = bytes
+                ) ?: return@launch
+                if (lastContentUrl == page) {
+                    lastContentPoster = localUrl
+                    currentPoster = localUrl
+                }
             }
         }
     }
@@ -531,10 +718,15 @@ class BrowserActivity : ComponentActivity() {
         }
         mouseKeyboard.dismiss()
         val url = webView.url.orEmpty()
+        val favoriteUrl = if (serviceAdapter?.isPlaybackUrl(url) == true) {
+            lastContentUrl.ifBlank { url }
+        } else {
+            url
+        }
         quickMenu.open(
             title = displayPageTitle(),
             serviceName = serviceName,
-            isFavorite = app.libraryRepository.isFavorite(url),
+            isFavorite = app.libraryRepository.isFavorite(favoriteUrl),
             canGoBack = webView.canGoBack()
         )
     }
@@ -553,15 +745,25 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun toggleCurrentFavorite() {
-        val url = webView.url.orEmpty()
+        val pageUrl = webView.url.orEmpty()
+        val onPlaybackPage = serviceAdapter?.isPlaybackUrl(pageUrl) == true
+        val url = if (onPlaybackPage) lastContentUrl.ifBlank { pageUrl } else pageUrl
         if (url.isBlank()) return
         lifecycleScope.launch {
             val favorite = app.libraryRepository.toggleFavoriteForPage(
                 serviceId = serviceId,
                 serviceName = serviceName,
                 url = url,
-                title = displayPageTitle(),
-                posterUrl = currentPoster,
+                title = if (onPlaybackPage) {
+                    lastContentTitle.ifBlank { displayPageTitle() }
+                } else {
+                    displayPageTitle()
+                },
+                posterUrl = if (onPlaybackPage) {
+                    lastContentPoster.ifBlank { currentPoster }
+                } else {
+                    currentPoster
+                },
                 resumePosition = currentResumePosition,
                 duration = currentDuration,
                 isPlayable = currentIsPlayable
@@ -638,12 +840,77 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun displayPageTitle(): String {
+        if (
+            serviceAdapter?.isPlaybackUrl(webView.url.orEmpty()) == true &&
+            lastContentTitle.isNotBlank()
+        ) return lastContentTitle.take(100)
         val raw = currentTitle.ifBlank { webView.title.orEmpty() }.trim()
         val looksLikeAsset = Regex(
             """(?:^[a-f0-9]{20,}\.(?:jpe?g|png|webp)$)|(?:\.(?:jpe?g|png|webp)$)""",
             RegexOption.IGNORE_CASE
         ).containsMatchIn(raw)
         return if (raw.isBlank() || looksLikeAsset) serviceName else raw.take(100)
+    }
+
+    private fun scheduleSiteContinue(view: WebView = webView) {
+        val adapter = serviceAdapter ?: return
+        if (
+            !autoResumeRequested ||
+            autoResumeActionTriggered ||
+            adapter.resumeStrategy != ResumeStrategy.CLICK_SITE_CONTINUE
+        ) return
+        listOf(250L, 800L, 1_600L, 3_000L).forEach { delay ->
+            view.postDelayed({ tryClickSiteContinue(view) }, delay)
+        }
+    }
+
+    /**
+     * ParsiFlix's /play route is intentionally not reloadable. The stable path
+     * is its detail page, followed by the website's own Continue Watching
+     * button. This replays that normal UI action without touching media URLs.
+     */
+    private fun tryClickSiteContinue(view: WebView = webView) {
+        if (autoResumeActionTriggered) return
+        val adapter = serviceAdapter ?: return
+        if (!adapter.isContentUrl(view.url.orEmpty())) return
+        val pattern = JSONObject.quote(
+            adapter.resumeButtonTextPatterns.joinToString("|") { "(?:$it)" }
+        )
+        val script = """
+            (function() {
+              try {
+                var matcher = new RegExp($pattern, 'i');
+                var candidates = Array.from(document.querySelectorAll(
+                  'button,[role="button"],a'
+                )).filter(function(el) {
+                  var text = (el.innerText || el.textContent || '').trim();
+                  var r = el.getBoundingClientRect();
+                  return text && matcher.test(text) &&
+                         r.width > 30 && r.height > 20;
+                });
+                if (!candidates.length) return 'none';
+                candidates.sort(function(a, b) {
+                  function score(el) {
+                    var text = (el.innerText || '').trim();
+                    var r = el.getBoundingClientRect();
+                    return r.width + text.length * 4 +
+                      (/فصل|قسمت|episode|season/i.test(text) ? 1000 : 0);
+                  }
+                  return score(b) - score(a);
+                });
+                candidates[0].click();
+                return (candidates[0].innerText || 'clicked').trim().slice(0, 120);
+              } catch (e) {
+                return 'none';
+              }
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            if (!result.isNullOrBlank() && result != "\"none\"" && result != "null") {
+                autoResumeActionTriggered = true
+                view.postDelayed({ tryRestoreResumePosition(view) }, 1_000L)
+            }
+        }
     }
 
     private fun captureResumeMetadata(url: String) {
@@ -676,8 +943,21 @@ class BrowserActivity : ComponentActivity() {
                              content('meta[name="twitter:image"]') ||
                              (video ? (video.poster || '') : '') ||
                              (largeImage ? (largeImage.currentSrc || largeImage.src || '') : '');
+                var heading = Array.from(document.querySelectorAll('h1,h2'))
+                  .find(function(el) {
+                    var r = el.getBoundingClientRect();
+                    var text = (el.innerText || '').trim();
+                    return r.width > 0 && r.height > 0 &&
+                           text.length > 1 && text.length < 140;
+                  });
+                var imageTitle = largeImage ? (largeImage.alt || '') : '';
+                imageTitle = imageTitle.replace(/\s*کاور\s*$/i, '').trim();
                 return JSON.stringify({
-                    title: content('meta[property="og:title"]') ||
+                    // Several TV sites keep a generic app name in og:title.
+                    // Prefer the visible content heading for a useful card.
+                    title: (heading ? heading.innerText.trim() : '') ||
+                           imageTitle ||
+                           content('meta[property="og:title"]') ||
                            document.title || '',
                     poster: poster,
                     position: position,
@@ -694,18 +974,30 @@ class BrowserActivity : ComponentActivity() {
             val duration = payload.optLong("duration").coerceAtLeast(0L)
             val detectedPlayer = payload.optBoolean("playable")
             val adapter = serviceAdapter
-            val playable = detectedPlayer || adapter?.isContentUrl(url) == true
+            val isContent = adapter?.isContentUrl(url) == true
+            val playable = detectedPlayer || adapter?.isPlaybackUrl(url) == true
+            val savedLocalPoster = if (isContent) {
+                app.libraryRepository.localPoster(url)
+            } else {
+                null
+            }
+            val resolvedPoster = savedLocalPoster ?: poster
 
             currentTitle = title
-            currentPoster = poster
+            currentPoster = resolvedPoster
             currentResumePosition = position
             currentDuration = duration
             currentIsPlayable = playable
+            if (isContent) {
+                lastContentUrl = url
+                lastContentTitle = title
+                lastContentPoster = resolvedPoster
+            }
 
             if (adapter?.shouldRecord(
                     url = url,
                     title = title,
-                    hasPoster = poster.isNotBlank(),
+                    hasPoster = resolvedPoster.isNotBlank(),
                     playerDetected = detectedPlayer
                 ) != true
             ) {
@@ -718,10 +1010,20 @@ class BrowserActivity : ComponentActivity() {
                     serviceName = serviceName,
                     url = url,
                     title = title,
-                    posterUrl = poster,
-                    resumePosition = position,
-                    duration = duration,
-                    isPlayable = playable
+                    posterUrl = resolvedPoster,
+                    resumePosition = 0L,
+                    duration = 0L,
+                    isPlayable = false
+                )
+            }
+            if (
+                isContent &&
+                savedLocalPoster == null &&
+                poster.startsWith("http")
+            ) {
+                webView.postDelayed(
+                    { cacheAuthenticatedPoster(url, poster) },
+                    500L
                 )
             }
         }
@@ -732,6 +1034,57 @@ class BrowserActivity : ComponentActivity() {
             ?: return@runCatching null
         JSONObject(decoded)
     }.getOrNull()
+
+    private fun cacheAuthenticatedPoster(pageUrl: String, posterUrl: String) {
+        val sameHost = runCatching {
+            android.net.Uri.parse(pageUrl).host.equals(
+                android.net.Uri.parse(posterUrl).host,
+                ignoreCase = true
+            )
+        }.getOrDefault(false)
+        if (!sameHost || app.libraryRepository.hasLocalPoster(pageUrl)) return
+        val safePage = JSONObject.quote(pageUrl)
+        val safePoster = JSONObject.quote(posterUrl)
+        val script = """
+            (function() {
+              if (!window.AminPoster) return;
+              window.__aminPosterCache = window.__aminPosterCache || {};
+              if (window.__aminPosterCache[$safePoster]) return;
+              window.__aminPosterCache[$safePoster] = true;
+              fetch($safePoster, {credentials:'include'})
+                .then(function(response) {
+                  var type = (response.headers.get('content-type') || '')
+                    .toLowerCase().split(';')[0];
+                  if (!response.ok || type.indexOf('image/') !== 0) {
+                    throw new Error('not-image');
+                  }
+                  return response.blob().then(function(blob) {
+                    return {blob:blob, type:type};
+                  });
+                })
+                .then(function(result) {
+                  if (result.blob.size > 1500000) throw new Error('too-large');
+                  var reader = new FileReader();
+                  reader.onload = function() {
+                    var value = String(reader.result || '');
+                    var comma = value.indexOf(',');
+                    if (comma < 0) return;
+                    window.AminPoster.save(
+                      $safePage,
+                      $safePoster,
+                      result.type,
+                      value.slice(comma + 1)
+                    );
+                  };
+                  reader.readAsDataURL(result.blob);
+                })
+                .catch(function() {
+                  window.__aminPosterCache[$safePoster] = false;
+                });
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+    }
 
     /**
      * Best-effort resume for ordinary HTML5 video. Some DRM or iframe players
@@ -866,7 +1219,14 @@ class BrowserActivity : ComponentActivity() {
 
     override fun onPause() {
         metadataHandler.removeCallbacks(metadataRunnable)
-        if (::webView.isInitialized) webView.url?.let { captureResumeMetadata(it) }
+        if (::webView.isInitialized) {
+            webView.evaluateJavascript(
+                "if(window.__aminReportActivePlayback)" +
+                    "window.__aminReportActivePlayback('checkpoint');",
+                null
+            )
+            webView.url?.let { captureResumeMetadata(it) }
+        }
         CookieManager.getInstance().flush()
         webView.onPause()
         super.onPause()

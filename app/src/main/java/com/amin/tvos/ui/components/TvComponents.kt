@@ -1,5 +1,7 @@
 package com.amin.tvos.ui.components
 
+import android.net.Uri
+import android.webkit.CookieManager
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -48,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.theme.CinemaRed
@@ -215,6 +218,36 @@ fun PosterCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val posterModel = remember(item.posterUrl, item.url) {
+        if (item.posterUrl.startsWith("http")) {
+            ImageRequest.Builder(context)
+                .data(item.posterUrl)
+                .apply {
+                    val posterHost = runCatching {
+                        Uri.parse(item.posterUrl).host
+                    }.getOrNull()
+                    val pageHost = runCatching {
+                        Uri.parse(item.url).host
+                    }.getOrNull()
+                    // FilmRooz returns HTML for poster requests without the
+                    // authenticated WebView cookie. Cookies are attached only
+                    // to the exact same host to prevent cross-domain leakage.
+                    if (
+                        !posterHost.isNullOrBlank() &&
+                        posterHost.equals(pageHost, ignoreCase = true)
+                    ) {
+                        CookieManager.getInstance().getCookie(item.posterUrl)
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { addHeader("Cookie", it) }
+                        addHeader("Referer", item.url)
+                    }
+                }
+                .build()
+        } else {
+            item.posterUrl
+        }
+    }
     FocusableCard(
         modifier = Modifier.width(190.dp),
         onClick = onClick,
@@ -224,7 +257,7 @@ fun PosterCard(
             Box(Modifier.fillMaxWidth().height(260.dp)) {
                 if (item.posterUrl.isNotBlank()) {
                     AsyncImage(
-                        model = item.posterUrl,
+                        model = posterModel,
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
