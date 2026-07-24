@@ -23,6 +23,12 @@
         android:theme="@style/Theme.AminTvOs"
         android:usesCleartextTraffic="true">
 
+        <!-- Enable real pointer/cursor mode for USB/Bluetooth mice and
+             pointer remotes instead of TV touch-compatibility emulation. -->
+        <meta-data
+            android:name="android.software.leanback.supports_touch"
+            android:value="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

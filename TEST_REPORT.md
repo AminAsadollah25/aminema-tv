@@ -1,4 +1,4 @@
-# Amin TV OS v0.3 — MVP test report
+# Amin TV OS v0.3.1 — MVP test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug build.
 
@@ -16,6 +16,7 @@ Tested on the Android TV 1080p emulator (Android TV API 36) using the debug buil
 - Home-screen headings and card content use the correct white-on-dark colors.
 - Both cinematic service cards fit side-by-side at 1920×1080.
 - Existing service data is enriched with artwork while preserving saved URLs.
+- Native TV pointer mode is enabled with `android.software.leanback.supports_touch`.
 
 ## Real box acceptance checks
 

@@ -8,6 +8,11 @@ Netflix-style dark home screen with Continue Watching, My Services, Recently Ope
 
 Version 0.3 adds a service-first home layout with two large cinematic artwork cards. Existing installs automatically receive new bundled presentation metadata without replacing user-defined service URLs.
 
+Version 0.3.1 declares `android.software.leanback.supports_touch=true` so
+Android TV uses native pointer/cursor mode for USB/Bluetooth mice and pointer
+remotes. Hover, click, wheel scrolling, and browser mouse side buttons can be
+tested directly in the TV emulator or on a physical box.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.
