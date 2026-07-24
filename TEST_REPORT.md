@@ -1,4 +1,4 @@
-# Amin TV OS v0.7.0 — test report
+# Amin TV OS v0.7.1 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
@@ -31,6 +31,12 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
 - The overlay reopens in password mode with masking, Show/Hide, and **Done**.
 - Cancel, remote Back, and mouse Back dismiss the keyboard and release the
   focused website input, so the login page can always be used again.
+- Root cause hardened for physical boxes: the native Android TV IME could keep
+  its own WebView input connection, consume Back/Next, and re-focus the same
+  HTML field behind the Amin keyboard. Browser WebView now exposes no native
+  IME connection; all mouse-keyboard input stays in the explicit page bridge.
+- The terminal Done/close path no longer requests WebView focus immediately
+  after dismissal, which previously could reopen the same website input.
 
 ## Verified
 
@@ -46,8 +52,16 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
   images were cached privately when available.
 - Synthetic two-field login test: username **Next** focused the password input,
   retained the username value, and reopened the masked password keyboard.
-- Remote Back closed the keyboard, cleared its tracked input, focused WebView,
-  and did not leave an unresponsive overlay.
+- The test used the same plain HTML field structure as FilmRooz's public login
+  form (`username`, `password`, submit) without real credentials.
+- No system IME package appeared while the Amin keyboard was open.
+- Remote Back closed the keyboard, cleared its tracked input, kept the page
+  open, and remained closed after the focus-suppression window.
+- Clicking Password again with the mouse reopened the correct masked keyboard.
+- Cancel also closed the keyboard, cleared the tracked input, and did not
+  reopen automatically.
+- A form-replacement stress case is retried once so Next can target newly
+  mounted username/password nodes.
 - FilmRooz Continue opens the stable normal `/stream/...` page and restored the
   HTML5 position (tested around 425 seconds).
 - ParsiFlix detail is recorded with the visible title and poster.

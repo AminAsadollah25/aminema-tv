@@ -44,6 +44,7 @@ class MouseKeyboardOverlay(
         visibility = View.GONE
         isClickable = true
         isFocusable = true
+        isFocusableInTouchMode = true
         setBackgroundColor(Color.parseColor("#99000000"))
         setOnClickListener { dismiss() }
 

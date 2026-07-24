@@ -54,6 +54,23 @@ keyboard in masked password mode. **Done** submits password/search fields;
 **Cancel**, remote Back, and mouse Back always dismiss the keyboard, clear the
 website input focus, and return control to the page.
 
+Version 0.7.1 hardens that keyboard fix for physical Android boxes. The browser
+no longer creates a second native TV-IME input connection behind Amin TV OS's
+keyboard. Closing the overlay suppresses immediate focus-based reopening,
+clears the active website field, and leaves focus on the app rather than
+refocusing WebView. Next also re-finds a password field if a website rebuilds
+its form during an input/change event and retries that transition once.
+
+## Next update queue (not implemented in v0.7.1)
+
+- **Latest Iranian:** a Home row sourced from the signed-in ParsiFlix website's
+  own latest section, showing title, poster, and normal content-page link.
+- **Latest International:** a Home row sourced from FilmRooz's signed-in
+  `archive/category/featured-films/` page, showing title, poster, and normal
+  content-page link.
+- These rows will be implemented only after the physical-TV keyboard fix is
+  confirmed. They will not inspect or store protected media/stream URLs.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.

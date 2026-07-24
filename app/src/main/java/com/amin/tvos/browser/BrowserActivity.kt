@@ -9,6 +9,7 @@ import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Base64
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -112,6 +113,9 @@ class BrowserActivity : ComponentActivity() {
     private var autoResumeActionTriggered = false
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
+    private var keyboardOpenSuppressedUntil = 0L
+    private var keyboardTransitionInProgress = false
+    private var keyboardTransitionGeneration = 0
 
     private var lastContentUrl = ""
     private var lastContentTitle = ""
@@ -155,8 +159,12 @@ class BrowserActivity : ComponentActivity() {
         requestedActionButtonPatterns =
             intent.getStringArrayListExtra(EXTRA_ACTION_BUTTON_PATTERNS).orEmpty()
 
-        root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
-        webView = WebView(this).apply {
+        root = FrameLayout(this).apply {
+            setBackgroundColor(Color.BLACK)
+            isFocusable = true
+            isFocusableInTouchMode = true
+        }
+        webView = KeyboardSafeWebView(this).apply {
             setBackgroundColor(Color.BLACK)
             isFocusable = true
             isFocusableInTouchMode = true
@@ -459,6 +467,7 @@ class BrowserActivity : ComponentActivity() {
               if (window.__aminKeyboardInstalled) return;
               window.__aminKeyboardInstalled = true;
               document.addEventListener('focusin', function(event) {
+                if (Date.now() < (window.__aminKeyboardSuppressUntil || 0)) return;
                 var el = event.target;
                 if (!el) return;
                 var tag = (el.tagName || '').toLowerCase();
@@ -549,6 +558,11 @@ class BrowserActivity : ComponentActivity() {
         @JavascriptInterface
         fun open(inputType: String?, initialValue: String?) {
             runOnUiThread {
+                if (
+                    keyboardTransitionInProgress ||
+                    SystemClock.uptimeMillis() < keyboardOpenSuppressedUntil
+                ) return@runOnUiThread
+                keyboardOpenSuppressedUntil = 0L
                 hideSystemKeyboard()
                 mouseKeyboard.open(
                     initialValue = initialValue.orEmpty().take(160),
@@ -645,13 +659,63 @@ class BrowserActivity : ComponentActivity() {
     private fun updateFocusedWebInput(
         value: String,
         submit: Boolean,
-        finalize: Boolean
+        finalize: Boolean,
+        retryCount: Int = 0
     ) {
+        val transitionGeneration = if (finalize && !submit) {
+            keyboardTransitionInProgress = true
+            ++keyboardTransitionGeneration
+        } else {
+            keyboardTransitionGeneration
+        }
+        if (finalize && !submit) {
+            // A few old WebView builds fail to deliver evaluateJavascript's
+            // callback if the page replaces the focused form mid-event. Never
+            // leave the keyboard controller locked in that transition.
+            root.postDelayed(
+                {
+                    if (
+                        keyboardTransitionInProgress &&
+                        keyboardTransitionGeneration == transitionGeneration
+                    ) {
+                        keyboardTransitionInProgress = false
+                        if (retryCount == 0 && mouseKeyboard.isShowing) {
+                            updateFocusedWebInput(
+                                value = value,
+                                submit = false,
+                                finalize = true,
+                                retryCount = 1
+                            )
+                        }
+                    }
+                },
+                900L
+            )
+        }
         val quoted = org.json.JSONObject.quote(value)
         val script = """
             (function() {
               var el = window.__aminActiveInput || document.activeElement;
-              if (!el) return;
+              if (!el) return JSON.stringify({action:'missing'});
+
+              function editableFields(scope) {
+                return Array.from((scope || document).querySelectorAll(
+                  "input:not([type='hidden']):not([disabled])," +
+                  "textarea:not([disabled]),[contenteditable='true']"
+                )).filter(function(field) {
+                  var type = (field.type || 'text').toLowerCase();
+                  var r = field.getBoundingClientRect();
+                  var style = window.getComputedStyle(field);
+                  return !/button|submit|checkbox|radio|file|range|color/.test(type) &&
+                         r.width > 20 && r.height > 15 &&
+                         style.display !== 'none' && style.visibility !== 'hidden';
+                });
+              }
+
+              var fieldsBefore = editableFields(document);
+              var currentIndex = fieldsBefore.indexOf(el);
+              var currentName = el.name || '';
+              var currentId = el.id || '';
               if ('value' in el) {
                 var setter = Object.getOwnPropertyDescriptor(
                   HTMLInputElement.prototype, 'value'
@@ -665,36 +729,59 @@ class BrowserActivity : ComponentActivity() {
                 el.textContent = $quoted;
               }
               el.dispatchEvent(new Event('input', {bubbles:true}));
-              el.dispatchEvent(new Event('change', {bubbles:true}));
               if (!$finalize) {
                 return JSON.stringify({action:'updated'});
               }
+              el.dispatchEvent(new Event('change', {bubbles:true}));
               if ($submit) {
-                ['keydown','keypress','keyup'].forEach(function(name) {
-                  el.dispatchEvent(new KeyboardEvent(name, {
-                    key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
-                  }));
-                });
+                try {
+                  ['keydown','keypress','keyup'].forEach(function(name) {
+                    el.dispatchEvent(new KeyboardEvent(name, {
+                      key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
+                    }));
+                  });
+                } catch (_) {}
                 if (el.form && (el.type === 'search' || el.type === 'password')) {
-                  if (el.form.requestSubmit) el.form.requestSubmit();
+                  if (el.form.requestSubmit) {
+                    el.form.requestSubmit();
+                  } else {
+                    var submitButton = el.form.querySelector(
+                      "button[type='submit'],input[type='submit']"
+                    );
+                    if (submitButton) submitButton.click();
+                  }
                 }
                 return JSON.stringify({action:'submitted'});
               }
-              var fields = Array.from(document.querySelectorAll(
-                "input:not([type='hidden']):not([disabled])," +
-                "textarea:not([disabled]),[contenteditable='true']"
-              )).filter(function(field) {
-                var type = (field.type || 'text').toLowerCase();
-                var r = field.getBoundingClientRect();
-                return !/button|submit|checkbox|radio|file|range|color/.test(type) &&
-                       r.width > 20 && r.height > 15;
+
+              // A framework may replace the username node after its input/change
+              // events. Re-find it, then prefer a visible password in the same
+              // form instead of relying only on object identity.
+              var fields = editableFields(document);
+              var live = document.contains(el) ? el : fields.find(function(field) {
+                return (currentId && field.id === currentId) ||
+                       (currentName && field.name === currentName);
               });
-              var index = fields.indexOf(el);
-              var next = index >= 0 ? fields[index + 1] : null;
+              var scope = live && live.form ? live.form : document;
+              var scopedFields = editableFields(scope);
+              var next = scopedFields.find(function(field) {
+                return field !== live &&
+                       (field.type || '').toLowerCase() === 'password';
+              });
+              if (!next) {
+                var index = scopedFields.indexOf(live);
+                next = index >= 0 ? scopedFields[index + 1] : null;
+              }
+              if (!next && currentIndex >= 0) {
+                next = fields[currentIndex + 1] || null;
+              }
               if (next) {
-                next.scrollIntoView({block:'center', behavior:'smooth'});
-                next.focus();
-                next.click();
+                try { next.scrollIntoView(false); } catch (_) {}
+                try {
+                  next.focus({preventScroll:true});
+                } catch (_) {
+                  next.focus();
+                }
                 window.__aminActiveInput = next;
                 return JSON.stringify({
                   action:'next',
@@ -708,16 +795,33 @@ class BrowserActivity : ComponentActivity() {
         """.trimIndent()
         webView.evaluateJavascript(script) { raw ->
             val result = decodeJavascriptJson(raw)
+            if (keyboardTransitionGeneration == transitionGeneration) {
+                keyboardTransitionInProgress = false
+            }
             if (!finalize) {
                 hideSystemKeyboard()
             } else if (result?.optString("action") == "next") {
+                keyboardOpenSuppressedUntil = 0L
                 mouseKeyboard.open(
                     initialValue = "",
                     inputType = result.optString("type").ifBlank { "text" }
                 )
+            } else if (!submit && retryCount == 0) {
+                // If the website replaced its form during input/change, retry
+                // once against the newly mounted username/password nodes.
+                webView.postDelayed(
+                    {
+                        updateFocusedWebInput(
+                            value = value,
+                            submit = false,
+                            finalize = true,
+                            retryCount = 1
+                        )
+                    },
+                    120L
+                )
             } else {
                 mouseKeyboard.dismiss()
-                webView.requestFocus()
             }
             hideSystemKeyboard()
         }
@@ -725,18 +829,25 @@ class BrowserActivity : ComponentActivity() {
 
     private fun releaseFocusedWebInput() {
         if (!::webView.isInitialized) return
+        keyboardTransitionInProgress = false
+        keyboardTransitionGeneration++
+        keyboardOpenSuppressedUntil = SystemClock.uptimeMillis() + 1_200L
         webView.evaluateJavascript(
             """
                 (function() {
+                  window.__aminKeyboardSuppressUntil = Date.now() + 1200;
                   var el = window.__aminActiveInput || document.activeElement;
                   if (el && el.blur) el.blur();
+                  var active = document.activeElement;
+                  if (active && active !== el && active.blur) active.blur();
                   window.__aminActiveInput = null;
                 })();
             """.trimIndent(),
             null
         )
         hideSystemKeyboard()
-        webView.requestFocus()
+        webView.clearFocus()
+        root.requestFocus()
     }
 
     private fun hideSystemKeyboard() {
@@ -1241,7 +1352,7 @@ class BrowserActivity : ComponentActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && mouseKeyboard.isShowing) {
+        if (isKeyboardDismissKey(keyCode) && mouseKeyboard.isShowing) {
             mouseKeyboard.dismiss()
             return true
         }
@@ -1269,7 +1380,7 @@ class BrowserActivity : ComponentActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (
-            event.keyCode == KeyEvent.KEYCODE_BACK &&
+            isKeyboardDismissKey(event.keyCode) &&
             mouseKeyboard.isShowing
         ) {
             if (event.action == KeyEvent.ACTION_DOWN) mouseKeyboard.dismiss()
@@ -1277,6 +1388,11 @@ class BrowserActivity : ComponentActivity() {
         }
         return super.dispatchKeyEvent(event)
     }
+
+    private fun isKeyboardDismissKey(keyCode: Int): Boolean =
+        keyCode == KeyEvent.KEYCODE_BACK ||
+            keyCode == KeyEvent.KEYCODE_ESCAPE ||
+            keyCode == KeyEvent.KEYCODE_BUTTON_B
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         // USB mouse back/forward buttons behave like browser navigation.

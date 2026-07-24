@@ -184,7 +184,7 @@ fun SettingsScreen(
         // ---------- About ----------
         Text("About", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Amin TV OS  •  v0.7.0", style = MaterialTheme.typography.titleMedium)
+        Text("Amin TV OS  •  v0.7.1", style = MaterialTheme.typography.titleMedium)
         Text(
             "A personal entertainment dashboard. Not a streaming service — it only opens " +
                 "your own subscribed websites in an optimized TV browser. No content is " +
