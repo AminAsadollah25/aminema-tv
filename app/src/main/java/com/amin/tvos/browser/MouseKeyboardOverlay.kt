@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -29,11 +28,14 @@ class MouseKeyboardOverlay(
     private val preview = TextView(context)
     private val keysContainer = LinearLayout(context)
     private val actionButton = Button(context)
+    private val revealButton = Button(context)
 
     private var buffer = ""
     private var passwordMode = false
     private var searchMode = false
     private var persian = false
+    private var capsLock = false
+    private var showPassword = false
 
     val isShowing: Boolean get() = visibility == View.VISIBLE
 
@@ -84,7 +86,27 @@ class MouseKeyboardOverlay(
             preview,
             LinearLayout.LayoutParams(0, dp(48), 1f).apply {
                 marginEnd = dp(10)
+                }
+        )
+        revealButton.apply {
+            visibility = View.GONE
+            text = "Show"
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
+            background = rounded("#30303C", 12)
+            setOnClickListener {
+                showPassword = !showPassword
+                text = if (showPassword) "Hide" else "Show"
+                updatePreview()
             }
+        }
+        header.addView(
+            revealButton,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(48)
+            ).apply { marginEnd = dp(10) }
         )
         header.addView(makeControlButton("Cancel") { dismiss() })
         panel.addView(
@@ -122,6 +144,9 @@ class MouseKeyboardOverlay(
     fun open(initialValue: String, inputType: String) {
         passwordMode = inputType.equals("password", ignoreCase = true)
         searchMode = inputType.equals("search", ignoreCase = true)
+        showPassword = false
+        revealButton.text = "Show"
+        revealButton.visibility = if (passwordMode) View.VISIBLE else View.GONE
         // Never pull an existing password out of the website into Android UI.
         buffer = if (passwordMode) "" else initialValue.take(160)
         actionButton.text = if (searchMode) "Search" else "Done"
@@ -144,15 +169,26 @@ class MouseKeyboardOverlay(
             addKeyRow(listOf("ش", "س", "ی", "ب", "ل", "ا", "ت", "ن", "م", "ک", "گ"))
             addKeyRow(listOf("ظ", "ط", "ز", "ر", "ذ", "د", "پ", "و"))
         } else {
-            addKeyRow(listOf("Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"))
-            addKeyRow(listOf("A", "S", "D", "F", "G", "H", "J", "K", "L"))
-            addKeyRow(listOf("Z", "X", "C", "V", "B", "N", "M"))
+            val rows = listOf(
+                listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
+                listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
+                listOf("z", "x", "c", "v", "b", "n", "m")
+            )
+            rows.forEach { row ->
+                addKeyRow(
+                    if (capsLock) row.map { it.uppercase() } else row
+                )
+            }
         }
 
         val controls = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
+        controls.addView(makeWeightedButton(if (capsLock) "CAPS ●" else "Caps") {
+            capsLock = !capsLock
+            rebuildKeys()
+        })
         controls.addView(makeWeightedButton(if (persian) "EN" else "فا") {
             persian = !persian
             rebuildKeys()
@@ -170,6 +206,9 @@ class MouseKeyboardOverlay(
                 valueChanged()
             }
         })
+        // The action button is reused between keyboard rebuilds (Caps/language).
+        // Detach it from the old controls row before attaching it to the new row.
+        (actionButton.parent as? ViewGroup)?.removeView(actionButton)
         controls.addView(
             actionButton,
             LinearLayout.LayoutParams(0, dp(46), 1.5f).apply {
@@ -204,7 +243,11 @@ class MouseKeyboardOverlay(
 
     private fun append(value: String) {
         if (buffer.length >= 160) return
-        buffer += if (persian) value else value.lowercase()
+        buffer += when {
+            persian -> value
+            capsLock -> value.uppercase()
+            else -> value.lowercase()
+        }
         valueChanged()
     }
 
@@ -216,7 +259,7 @@ class MouseKeyboardOverlay(
     private fun updatePreview() {
         preview.text = when {
             buffer.isEmpty() -> if (passwordMode) "Password" else "Type with mouse…"
-            passwordMode -> "•".repeat(buffer.length)
+            passwordMode && !showPassword -> "•".repeat(buffer.length)
             else -> buffer
         }
     }

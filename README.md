@@ -18,6 +18,10 @@ DPAD-only Android TV IMEs for website login and search fields, supports English,
 Persian, numbers, email punctuation, password masking, Backspace, Space, and
 Done/Search, and never reads an existing password from a website.
 
+Version 0.4.1 adds a visible Caps Lock state and a password Show/Hide button.
+Passwords remain masked by default and are revealed only while the user chooses
+`Show`.
+
 ## Requirements
 
 Android Studio (Koala or newer), JDK 17, Android SDK 35. Target device: Android 9+ TV / box, landscape.
@@ -38,7 +42,8 @@ Services are defined in JSON only. The bundled defaults live at `app/src/main/as
 - Optional presentation fields: `subtitle` and `artwork` (drawable resource name or remote image URL).
 - Optional compatibility fields: `loginZoomPercent`, `userAgent` (`TV`, `DESKTOP`, `MOBILE`), and `fullscreenSelectors`.
 
-Set the FilmRooz `url` (currently a `CHANGE_ME` placeholder) to your own subscribed site.
+The bundled FilmRooz entry currently points to the user-provided subscribed site.
+You can replace any service URL through Settings or JSON without changing code.
 
 ## Architecture
 

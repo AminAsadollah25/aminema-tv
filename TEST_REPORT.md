@@ -1,4 +1,4 @@
-# Amin TV OS v0.4.0 — MVP test report
+# Amin TV OS v0.4.1 — MVP test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug build.
 
@@ -19,7 +19,10 @@ Tested on the Android TV 1080p emulator (Android TV API 36) using the debug buil
 - Native TV pointer mode is enabled with `android.software.leanback.supports_touch`.
 - FilmRooz login fields open the Amin TV OS mouse keyboard.
 - Keyboard letter buttons accept emulator touchscreen/mouse-equivalent clicks.
-- Password input is masked in the native overlay.
+- Password input is masked by default in the native overlay.
+- Show/Hide reveals and masks the currently typed password without submitting it.
+- Caps Lock changes the English layout and typed characters to uppercase, with a visible active indicator.
+- Rebuilding the keyboard for Caps Lock or language changes no longer closes the browser.
 
 ## Real box acceptance checks
 
