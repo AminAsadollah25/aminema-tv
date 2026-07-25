@@ -1,4 +1,4 @@
-# Amin TV OS v0.7.1 — test report
+# Amin TV OS v0.7.2 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
@@ -38,6 +38,19 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
 - The terminal Done/close path no longer requests WebView focus immediately
   after dismissal, which previously could reopen the same website input.
 
+### Caps Lock returned typing to Username
+
+- Root cause: Caps rebuilt and removed the entire native key row, including the
+  clicked/focused Caps button. Some Android TV boxes then restored WebView's
+  first HTML input (`username`).
+- Caps now changes existing English key labels in place; no focused key row is
+  removed.
+- The selected password DOM element is locked as the keyboard's write target.
+  A programmatic/native fallback to Username is rejected unless the user
+  explicitly clicks another website input.
+- Caps, language rebuild, and Show/Hide reinforce Password immediately and
+  again after the native focus transition settles.
+
 ## Verified
 
 - Gradle `clean assembleDebug`: successful.
@@ -62,6 +75,13 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
   reopen automatically.
 - A form-replacement stress case is retried once so Next can target newly
   mounted username/password nodes.
+- The real logged-out FilmRooz login page was tested with dummy values:
+  `Username → Next → Password → Caps → A → فا → ض`.
+- A simulated old-box focus fallback to Username was injected during both Caps
+  and language changes. Visible focus and the locked target returned to
+  Password; Username stayed `a` and Password became `Aض`.
+- Back then cleared the target, focused the page body, and kept the keyboard
+  closed. No crash appeared in final logcat.
 - FilmRooz Continue opens the stable normal `/stream/...` page and restored the
   HTML5 position (tested around 425 seconds).
 - ParsiFlix detail is recorded with the visible title and poster.

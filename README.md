@@ -61,6 +61,14 @@ clears the active website field, and leaves focus on the app rather than
 refocusing WebView. Next also re-finds a password field if a website rebuilds
 its form during an input/change event and retries that transition once.
 
+Version 0.7.2 fixes a physical-box-only Caps/language focus regression on the
+FilmRooz login form. Caps now updates existing letter labels in place instead
+of deleting and rebuilding the focused native key row. The browser also locks
+the keyboard session to the selected password element until the user explicitly
+chooses another website input. Caps, language, and Show/Hide reassert that
+target after native focus settles, so a TV box restoring the first HTML field
+cannot redirect password typing back into Username.
+
 ## Next update queue (not implemented in v0.7.1)
 
 - **Latest Iranian:** a Home row sourced from the signed-in ParsiFlix website's

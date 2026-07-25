@@ -22,7 +22,8 @@ class MouseKeyboardOverlay(
     context: Context,
     private val onValueChanged: (String) -> Unit,
     private val onAction: (String, Boolean) -> Unit,
-    private val onDismissed: () -> Unit
+    private val onDismissed: () -> Unit,
+    private val onModeChanged: () -> Unit
 ) : FrameLayout(context) {
 
     private val panel = LinearLayout(context)
@@ -30,6 +31,9 @@ class MouseKeyboardOverlay(
     private val keysContainer = LinearLayout(context)
     private val actionButton = Button(context)
     private val revealButton = Button(context)
+    private val alphabetButtons = mutableListOf<Button>()
+    private lateinit var capsButton: Button
+    private lateinit var languageButton: Button
 
     private var buffer = ""
     private var passwordMode = false
@@ -39,6 +43,7 @@ class MouseKeyboardOverlay(
     private var showPassword = false
 
     val isShowing: Boolean get() = visibility == View.VISIBLE
+    val isPasswordMode: Boolean get() = passwordMode
 
     init {
         visibility = View.GONE
@@ -101,6 +106,7 @@ class MouseKeyboardOverlay(
                 showPassword = !showPassword
                 text = if (showPassword) "Hide" else "Show"
                 updatePreview()
+                onModeChanged()
             }
         }
         header.addView(
@@ -170,7 +176,13 @@ class MouseKeyboardOverlay(
     }
 
     private fun rebuildKeys() {
+        // Move Android focus to a stable view before removing key rows. On
+        // several physical TV boxes, removing the currently focused Caps/فا
+        // button hands focus back to WebView and reactivates Username.
+        val focusedLabel = (findFocus() as? Button)?.text?.toString()
+        requestFocus()
         keysContainer.removeAllViews()
+        alphabetButtons.clear()
 
         addKeyRow(listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"))
         if (persian) {
@@ -184,9 +196,7 @@ class MouseKeyboardOverlay(
                 listOf("z", "x", "c", "v", "b", "n", "m")
             )
             rows.forEach { row ->
-                addKeyRow(
-                    if (capsLock) row.map { it.uppercase() } else row
-                )
+                addAlphabetRow(row)
             }
         }
 
@@ -194,14 +204,17 @@ class MouseKeyboardOverlay(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        controls.addView(makeWeightedButton(if (capsLock) "CAPS ●" else "Caps") {
+        capsButton = makeWeightedButton(if (capsLock) "CAPS ●" else "Caps") {
             capsLock = !capsLock
-            rebuildKeys()
-        })
-        controls.addView(makeWeightedButton(if (persian) "EN" else "فا") {
+            updateCapsLabels()
+        }
+        controls.addView(capsButton)
+        languageButton = makeWeightedButton(if (persian) "EN" else "فا") {
             persian = !persian
             rebuildKeys()
-        })
+            post { onModeChanged() }
+        }
+        controls.addView(languageButton)
         controls.addView(makeWeightedButton("@") { append("@") })
         controls.addView(makeWeightedButton(".") { append(".") })
         controls.addView(makeWeightedButton("_") { append("_") })
@@ -226,6 +239,51 @@ class MouseKeyboardOverlay(
         )
         keysContainer.addView(
             controls,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+        when {
+            focusedLabel == "Caps" || focusedLabel == "CAPS ●" ->
+                capsButton.requestFocus()
+            focusedLabel == "فا" || focusedLabel == "EN" ->
+                languageButton.requestFocus()
+            else -> requestFocus()
+        }
+    }
+
+    /**
+     * Caps only changes labels in place. Rebuilding the whole native keyboard
+     * here used to remove the focused Caps button and could return DOM focus to
+     * FilmRooz's username input on older Android TV boxes.
+     */
+    private fun updateCapsLabels() {
+        capsButton.text = if (capsLock) "CAPS ●" else "Caps"
+        alphabetButtons.forEach { button ->
+            val base = button.tag as? String ?: return@forEach
+            button.text = if (capsLock) base.uppercase() else base
+        }
+        capsButton.requestFocus()
+        post { onModeChanged() }
+    }
+
+    private fun addAlphabetRow(keys: List<String>) {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        keys.forEach { base ->
+            val button = makeWeightedButton(
+                if (capsLock) base.uppercase() else base
+            ) {
+                append(if (capsLock) base.uppercase() else base)
+            }.apply { tag = base }
+            alphabetButtons += button
+            row.addView(button)
+        }
+        keysContainer.addView(
+            row,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT

@@ -193,7 +193,8 @@ class BrowserActivity : ComponentActivity() {
             onAction = { value, submit ->
                 updateFocusedWebInput(value, submit, finalize = true)
             },
-            onDismissed = { releaseFocusedWebInput() }
+            onDismissed = { releaseFocusedWebInput() },
+            onModeChanged = { reinforceKeyboardTarget() }
         )
         root.addView(
             mouseKeyboard,
@@ -466,20 +467,64 @@ class BrowserActivity : ComponentActivity() {
             (function() {
               if (window.__aminKeyboardInstalled) return;
               window.__aminKeyboardInstalled = true;
+
+              function editable(el) {
+                if (!el) return false;
+                var tag = (el.tagName || '').toLowerCase();
+                var type = (el.type || 'text').toLowerCase();
+                return (tag === 'input' || tag === 'textarea' ||
+                        el.isContentEditable) &&
+                       !/button|submit|checkbox|radio|file|range|color/.test(type);
+              }
+
+              function markExplicitTarget(event) {
+                var el = event.target;
+                if (!editable(el)) return;
+                window.__aminExplicitKeyboardTarget = el;
+                window.__aminExplicitKeyboardTargetAt = Date.now();
+              }
+              document.addEventListener('pointerdown', markExplicitTarget, true);
+              document.addEventListener('mousedown', markExplicitTarget, true);
+              document.addEventListener('touchstart', markExplicitTarget, true);
+
               document.addEventListener('focusin', function(event) {
                 if (Date.now() < (window.__aminKeyboardSuppressUntil || 0)) return;
                 var el = event.target;
-                if (!el) return;
-                var tag = (el.tagName || '').toLowerCase();
-                var editable = tag === 'input' || tag === 'textarea' ||
-                               el.isContentEditable;
-                if (!editable) return;
+                if (!editable(el)) return;
                 var type = (el.type || 'text').toLowerCase();
-                if (/button|submit|checkbox|radio|file|range|color/.test(type)) return;
+
+                var explicit = window.__aminExplicitKeyboardTarget === el &&
+                  Date.now() - (window.__aminExplicitKeyboardTargetAt || 0) < 1200;
+                var locked = window.__aminKeyboardTarget;
+
+                // Caps/language rebuilds on some boxes briefly restore WebView
+                // focus to the first input. Keep Password locked unless the
+                // user actually clicked/touched another website field.
+                if (
+                  locked && locked !== el &&
+                  (locked.type || '').toLowerCase() === 'password' &&
+                  !explicit
+                ) {
+                  // Refocusing synchronously from inside focusin is ignored by
+                  // some older WebView builds. Repeat on the next event-loop
+                  // turn so the visible website focus also returns to Password.
+                  setTimeout(function() {
+                    if (window.__aminKeyboardTarget !== locked) return;
+                    try { locked.focus({preventScroll:true}); }
+                    catch (_) { try { locked.focus(); } catch (_) {} }
+                  }, 0);
+                  return;
+                }
+
                 window.__aminActiveInput = el;
+                window.__aminKeyboardTarget = el;
                 var value = type === 'password' ? '' : (el.value || el.textContent || '');
                 if (window.AminKeyboard) {
-                  window.AminKeyboard.open(type, String(value).slice(0, 160));
+                  window.AminKeyboard.open(
+                    type,
+                    String(value).slice(0, 160),
+                    explicit
+                  );
                 }
               }, true);
             })();
@@ -556,17 +601,28 @@ class BrowserActivity : ComponentActivity() {
 
     private inner class KeyboardBridge {
         @JavascriptInterface
-        fun open(inputType: String?, initialValue: String?) {
+        fun open(
+            inputType: String?,
+            initialValue: String?,
+            explicitUserTarget: Boolean
+        ) {
             runOnUiThread {
                 if (
                     keyboardTransitionInProgress ||
                     SystemClock.uptimeMillis() < keyboardOpenSuppressedUntil
                 ) return@runOnUiThread
+                val requestedType = inputType.orEmpty().take(24)
+                if (
+                    mouseKeyboard.isShowing &&
+                    mouseKeyboard.isPasswordMode &&
+                    !requestedType.equals("password", ignoreCase = true) &&
+                    !explicitUserTarget
+                ) return@runOnUiThread
                 keyboardOpenSuppressedUntil = 0L
                 hideSystemKeyboard()
                 mouseKeyboard.open(
                     initialValue = initialValue.orEmpty().take(160),
-                    inputType = inputType.orEmpty().take(24)
+                    inputType = requestedType
                 )
                 root.postDelayed({ hideSystemKeyboard() }, 120)
                 root.postDelayed({ hideSystemKeyboard() }, 400)
@@ -695,7 +751,9 @@ class BrowserActivity : ComponentActivity() {
         val quoted = org.json.JSONObject.quote(value)
         val script = """
             (function() {
-              var el = window.__aminActiveInput || document.activeElement;
+              var el = window.__aminKeyboardTarget ||
+                       window.__aminActiveInput ||
+                       document.activeElement;
               if (!el) return JSON.stringify({action:'missing'});
 
               function editableFields(scope) {
@@ -716,6 +774,10 @@ class BrowserActivity : ComponentActivity() {
               var currentIndex = fieldsBefore.indexOf(el);
               var currentName = el.name || '';
               var currentId = el.id || '';
+              if (document.activeElement !== el) {
+                try { el.focus({preventScroll:true}); }
+                catch (_) { try { el.focus(); } catch (_) {} }
+              }
               if ('value' in el) {
                 var setter = Object.getOwnPropertyDescriptor(
                   HTMLInputElement.prototype, 'value'
@@ -762,6 +824,10 @@ class BrowserActivity : ComponentActivity() {
                 return (currentId && field.id === currentId) ||
                        (currentName && field.name === currentName);
               });
+              if (live) {
+                window.__aminActiveInput = live;
+                window.__aminKeyboardTarget = live;
+              }
               var scope = live && live.form ? live.form : document;
               var scopedFields = editableFields(scope);
               var next = scopedFields.find(function(field) {
@@ -783,6 +849,7 @@ class BrowserActivity : ComponentActivity() {
                   next.focus();
                 }
                 window.__aminActiveInput = next;
+                window.__aminKeyboardTarget = next;
                 return JSON.stringify({
                   action:'next',
                   type:(next.type || 'text').toLowerCase()
@@ -836,11 +903,16 @@ class BrowserActivity : ComponentActivity() {
             """
                 (function() {
                   window.__aminKeyboardSuppressUntil = Date.now() + 1200;
-                  var el = window.__aminActiveInput || document.activeElement;
+                  var el = window.__aminKeyboardTarget ||
+                           window.__aminActiveInput ||
+                           document.activeElement;
                   if (el && el.blur) el.blur();
                   var active = document.activeElement;
                   if (active && active !== el && active.blur) active.blur();
                   window.__aminActiveInput = null;
+                  window.__aminKeyboardTarget = null;
+                  window.__aminExplicitKeyboardTarget = null;
+                  window.__aminExplicitKeyboardTargetAt = 0;
                 })();
             """.trimIndent(),
             null
@@ -848,6 +920,34 @@ class BrowserActivity : ComponentActivity() {
         hideSystemKeyboard()
         webView.clearFocus()
         root.requestFocus()
+    }
+
+    /**
+     * Native keyboard controls (especially Caps on older boxes) can cause
+     * WebView to restore its first HTML input. Reassert the locked DOM target
+     * after the native click settles, without changing or reading its value.
+     */
+    private fun reinforceKeyboardTarget() {
+        if (!mouseKeyboard.isShowing) return
+        val script = """
+            (function() {
+              var target = window.__aminKeyboardTarget;
+              if (!target || !document.contains(target)) return false;
+              window.__aminActiveInput = target;
+              try { target.focus({preventScroll:true}); }
+              catch (_) { try { target.focus(); } catch (_) {} }
+              return document.activeElement === target;
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+        root.postDelayed(
+            {
+                if (mouseKeyboard.isShowing) {
+                    webView.evaluateJavascript(script, null)
+                }
+            },
+            180L
+        )
     }
 
     private fun hideSystemKeyboard() {
