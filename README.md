@@ -105,11 +105,23 @@ previously cached items instead of emptying the row or affecting the other one.
 Only title, poster and the stable detail-page link are stored; provider brand
 names never appear on Home.
 
-## Next update queue (not implemented in v0.8.0)
+Version 0.8.1 makes Home feel awake. The static "امشب چی می‌بینیم؟" heading is now a
+live greeting computed from the local clock and the calendar: time of day, the Dutch week
+(the weekend starts Friday evening and runs through Sunday, with Sunday night treated as a
+school night), and occasions — Christmas Eve, Christmas, New Year's Eve, New Year, plus
+Nowruz, Sizdah Bedar and Yalda via an in-app Gregorian→Jalali conversion. Each greeting
+carries one action chip that actually does something (resume the last unfinished title,
+filter both latest rows to movies or series, or open a random cached title), and the chip
+is hidden whenever the data cannot serve it. Home also gained a cinematic backdrop built
+from the last watched title's artwork: the image is fetched at a deliberately tiny size and
+scaled up, which blurs it on every device including Android 9, where `Modifier.blur` is a
+no-op.
 
-- **Keyboard redesign:** explicit
+## Next update queue (not implemented in v0.8.1)
+
+- **Keyboard redesign (0.9.1):** explicit
   `Username → Password → Caps → Language → Show/Hide → Done` state machine.
-- **Unified search:** one Home search bar with `ایرانی | خارجی` result groups,
+- **Unified search (0.9.0):** one Home search bar with `ایرانی | خارجی` result groups,
   reusing the 0.8.0 catalog adapters.
 - Neither will inspect or store protected media/stream URLs.
 

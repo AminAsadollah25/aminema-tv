@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.data.model.CatalogFilter
+import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
@@ -44,6 +45,16 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun setCatalogFilter(serviceId: String, filter: CatalogFilter) = viewModelScope.launch {
         settingsRepo.setCatalogFilter(serviceId, filter)
     }
+
+    /** Used by the greeting's "show me movies / series" suggestion. */
+    fun setAllCatalogFilters(filter: CatalogFilter) = viewModelScope.launch {
+        settingsRepo.setCatalogFilter(IRANIAN_SERVICE_ID, filter)
+        settingsRepo.setCatalogFilter(INTERNATIONAL_SERVICE_ID, filter)
+    }
+
+    /** One random title from the cached rows, for the greeting's "surprise me". */
+    fun randomCatalogItem(): CatalogItem? =
+        catalogSections.value.flatMap { it.all }.randomOrNull()
 
     val continueWatching: StateFlow<List<PlaybackSession>> =
         libraryRepo.playbackSessions

@@ -21,8 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +38,7 @@ import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.browser.CatalogSyncActivity
+import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
@@ -45,6 +50,8 @@ import com.amin.tvos.ui.components.SectionRow
 import com.amin.tvos.ui.components.ServiceCard
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
+import java.util.Calendar
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -114,6 +121,38 @@ fun HomeScreen(
         )
     }
 
+    // The backdrop follows the most recent title, falling back to the last opened one.
+    val backdropSource = remember(continueWatching, recents) {
+        continueWatching.firstOrNull()
+            ?.let { it.posterUrl to it.contentUrl }
+            ?: recents.firstOrNull()?.let { it.posterUrl to it.url }
+            ?: ("" to "")
+    }
+
+    // Recomputed every minute so the greeting keeps up with the clock on a TV that is
+    // left running, and again whenever the underlying data changes.
+    var greetingVariant by remember { mutableIntStateOf(0) }
+    var minuteTick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000L)
+            minuteTick++
+        }
+    }
+    val greeting = remember(
+        greetingVariant, minuteTick, continueWatching.size, catalogSections
+    ) {
+        buildSmartGreeting(
+            now = Calendar.getInstance(),
+            variant = greetingVariant,
+            hasContinue = continueWatching.isNotEmpty(),
+            hasCatalog = catalogSections.any { it.all.isNotEmpty() }
+        )
+    }
+
+    Box(Modifier.fillMaxSize()) {
+    CinematicBackground(posterUrl = backdropSource.first, pageUrl = backdropSource.second)
+
     Column(
         Modifier
             .fillMaxSize()
@@ -178,8 +217,30 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        // ---------- Smart greeting ----------
+        SmartGreetingHeader(
+            greeting = greeting,
+            onAction = { action ->
+                when (action) {
+                    GreetingAction.CONTINUE_LAST ->
+                        continueWatching.firstOrNull()?.let { openPlayback(it) }
+                    GreetingAction.PICK_MOVIE -> viewModel.setAllCatalogFilters(
+                        CatalogFilter.MOVIE
+                    )
+                    GreetingAction.PICK_SERIES -> viewModel.setAllCatalogFilters(
+                        CatalogFilter.SERIES
+                    )
+                    GreetingAction.SURPRISE ->
+                        viewModel.randomCatalogItem()?.let { openCatalogItem(it) }
+                    GreetingAction.NONE -> Unit
+                }
+            },
+            onShuffle = { greetingVariant++ }
+        )
+        Spacer(Modifier.height(20.dp))
+
         // ---------- Cinemas ----------
-        SectionRow("امشب چی می‌بینیم؟") {
+        SectionRow("سینماهای من") {
             services.forEach { service ->
                 ServiceCard(service = service, onClick = { openService(service) })
             }
@@ -286,5 +347,6 @@ fun HomeScreen(
             }
         }
         Spacer(Modifier.height(32.dp))
+    }
     }
 }
