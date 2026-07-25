@@ -203,7 +203,7 @@ fun ServiceCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("Open", style = MaterialTheme.typography.labelLarge)
+                    Text("ورود", style = MaterialTheme.typography.labelLarge)
                 }
             }
         }

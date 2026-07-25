@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.model.UserAgentMode
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.theme.CinemaRed
@@ -184,7 +185,7 @@ fun SettingsScreen(
         // ---------- About ----------
         Text("About", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Amin TV OS  •  v0.7.2", style = MaterialTheme.typography.titleMedium)
+        Text("Aminema  •  v${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium)
         Text(
             "A personal entertainment dashboard. Not a streaming service — it only opens " +
                 "your own subscribed websites in an optimized TV browser. No content is " +

@@ -7,7 +7,7 @@ import android.view.inputmethod.InputConnection
 import android.webkit.WebView
 
 /**
- * WebView used with Amin TV OS's own mouse/remote keyboard.
+ * WebView used with Aminema's own mouse/remote keyboard.
  *
  * Some Android boxes keep their system TV IME attached after an HTML input
  * loses focus. That IME consumes Back/Next before BrowserActivity can handle

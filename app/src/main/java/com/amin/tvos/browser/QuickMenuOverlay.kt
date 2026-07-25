@@ -67,7 +67,7 @@ class QuickMenuOverlay(
         )
 
         TextView(context).apply {
-            text = "AMIN TV  •  QUICK MENU"
+            text = "AMINEMA  •  QUICK MENU"
             setTextColor(Color.parseColor("#E50914"))
             setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
             typeface = Typeface.DEFAULT_BOLD
@@ -165,7 +165,7 @@ class QuickMenuOverlay(
         addAction("⌕   Search this service", QuickAction.SEARCH)
         addAction("↻   Reload page", QuickAction.RELOAD)
         if (canGoBack) addAction("←   Browser back", QuickAction.BACK)
-        addAction("⌂   Amin TV Home", QuickAction.HOME, accent = true)
+        addAction("⌂   Aminema Home", QuickAction.HOME, accent = true)
     }
 
     private fun addAction(label: String, action: QuickAction, accent: Boolean = false) {

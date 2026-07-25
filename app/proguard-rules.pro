@@ -1,4 +1,4 @@
-# Amin TV OS
+# Aminema
 -keepattributes *Annotation*, InnerClasses
 # kotlinx.serialization
 -keepclassmembers class com.amin.tvos.data.model.** {

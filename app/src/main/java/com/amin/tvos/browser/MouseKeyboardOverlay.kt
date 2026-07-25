@@ -13,7 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * A mouse-clickable keyboard owned by Amin TV OS.
+ * A mouse-clickable keyboard owned by Aminema.
  *
  * Android TV IMEs are commonly DPAD-only. This overlay keeps login/search usable
  * on boxes where a USB mouse is the primary input device.

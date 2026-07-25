@@ -461,7 +461,7 @@ class BrowserActivity : ComponentActivity() {
         view.evaluateJavascript(script, null)
     }
 
-    /** Hooks normal website inputs to Amin TV OS's mouse-clickable keyboard. */
+    /** Hooks normal website inputs to Aminema's mouse-clickable keyboard. */
     private fun installMouseKeyboardBridge(view: WebView = webView) {
         val script = """
             (function() {

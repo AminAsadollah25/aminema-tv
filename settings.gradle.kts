@@ -15,5 +15,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "AminTVOS"
+rootProject.name = "Aminema"
 include(":app")

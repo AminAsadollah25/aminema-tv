@@ -51,11 +51,30 @@ class ServicesRepository(private val context: Context) {
         val enriched = saved.map { current ->
             val defaults = bundled.firstOrNull { it.id == current.id }
             if (defaults == null) current else current.copy(
+                name = if (current.name in setOf("ParsiFlix", "FilmRooz")) {
+                    defaults.name
+                } else {
+                    current.name
+                },
                 url = if (
                     current.url.contains("example.com/CHANGE_ME", ignoreCase = true)
                 ) defaults.url else current.url,
-                subtitle = current.subtitle.ifBlank { defaults.subtitle },
-                artwork = current.artwork.ifBlank { defaults.artwork },
+                subtitle = if (
+                    current.subtitle.isBlank() ||
+                    current.subtitle in setOf("Iranian Cinema", "International Cinema")
+                ) {
+                    defaults.subtitle
+                } else {
+                    current.subtitle
+                },
+                artwork = if (
+                    current.artwork.isBlank() ||
+                    current.artwork in setOf("service_parsiflix", "service_filmrooz")
+                ) {
+                    defaults.artwork
+                } else {
+                    current.artwork
+                },
                 loginZoomPercent = current.loginZoomPercent ?: defaults.loginZoomPercent,
                 userAgent = current.userAgent ?: defaults.userAgent,
                 fullscreenSelectors = (

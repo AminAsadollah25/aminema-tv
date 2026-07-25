@@ -1,7 +1,23 @@
-# Amin TV OS v0.7.2 — test report
+# Aminema v0.7.3 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
+
+## v0.7.3 brand update
+
+- App label changed to **Aminema**.
+- Launcher icon, Android TV banner, Home logo, and About name now use the new
+  mustachioed Aminema mascot.
+- Two new 16:9 Home artworks present the configured destinations as
+  **فیلم ایرانی** and **فیلم خارجی**; provider names are no longer shown on
+  the main cards.
+- Existing `services.json` files migrate only the known legacy names,
+  subtitles, and bundled artwork. Service IDs, URLs, order, login/session data,
+  and user-added services remain unchanged.
+- Existing library items resolve their visible service label from the current
+  JSON configuration without rewriting saved content URLs.
+- Package remains `com.amin.tvos.debug`; version is `0.7.3` (`versionCode 13`),
+  allowing installation over v0.7.2.
 
 ## v0.7 fixes
 
@@ -54,7 +70,17 @@ build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
 ## Verified
 
 - Gradle `clean assembleDebug`: successful.
-- APK install/replace and launch: successful.
+- APK install/replace and launch: successful. Emulator package data showed the
+  original `firstInstallTime` and a newer `lastUpdateTime`, confirming an
+  in-place update rather than a fresh install.
+- Package metadata reports `com.amin.tvos.debug`, version `0.7.3`, code `13`,
+  minimum Android 9, and application label `Aminema`.
+- APK signing certificate SHA-256 is identical to v0.7.2, so Android accepts it
+  as an authenticated update to the installed debug build.
+- New Home header, both mascot banners, Persian labels, Settings service names,
+  and dynamic About version rendered correctly at 1920×1080.
+- Clicking the Iranian-film card opened `BrowserActivity`; Back returned to the
+  same Aminema Home state.
 - Existing authenticated sessions survive APK replacement.
 - User-triggered account sync completed with 8 ParsiFlix and 11 FilmRooz rows.
 - 19 merged Continue sessions rendered; 17 were account-synced and the two

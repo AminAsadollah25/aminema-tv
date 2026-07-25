@@ -24,8 +24,16 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     val continueWatching: StateFlow<List<PlaybackSession>> =
         libraryRepo.playbackSessions
-        .map { libraryRepo.continueWatching(it) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+            .combine(servicesRepo.services) { sessions, configuredServices ->
+                libraryRepo.continueWatching(sessions).map { session ->
+                    session.copy(
+                        serviceName = configuredServices.firstOrNull {
+                            it.id == session.serviceId
+                        }?.name ?: session.serviceName
+                    )
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val recentlyOpened: StateFlow<List<MovieItem>> = libraryRepo.items
         .combine(servicesRepo.services) { list, configuredServices ->
@@ -44,6 +52,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                         else -> genericExcluded(item.url)
                     }
                 }
+                .map { item ->
+                    item.copy(
+                        serviceName = configuredServices.firstOrNull {
+                            it.id == item.serviceId
+                        }?.name ?: item.serviceName
+                    )
+                }
                 .sortedByDescending { it.lastOpened }
                 .take(20)
                 .toList()
@@ -51,7 +66,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val favorites: StateFlow<List<MovieItem>> = libraryRepo.items
-        .map { list -> list.filter { it.isFavorite } }
+        .combine(servicesRepo.services) { list, configuredServices ->
+            list.filter { it.isFavorite }.map { item ->
+                item.copy(
+                    serviceName = configuredServices.firstOrNull {
+                        it.id == item.serviceId
+                    }?.name ?: item.serviceName
+                )
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     init {

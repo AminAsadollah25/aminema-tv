@@ -62,11 +62,11 @@ class AccountSyncActivity : ComponentActivity() {
     private val stageTimeout = Runnable {
         when (stage) {
             Stage.PARSI -> {
-                errors += "ParsiFlix timed out"
+                errors += "فیلم ایرانی: timeout"
                 startFilmRooz()
             }
             Stage.FILMROOZ -> {
-                errors += "FilmRooz timed out"
+                errors += "فیلم خارجی: timeout"
                 finishSync()
             }
             Stage.DONE -> Unit
@@ -164,10 +164,10 @@ class AccountSyncActivity : ComponentActivity() {
     private fun startParsiFlix() {
         stage = Stage.PARSI
         scriptStarted = false
-        setStatus("Syncing ParsiFlix Continue Watching…")
+        setStatus("در حال همگام‌سازی فیلم‌های ایرانی…")
         val service = app.servicesRepository.findById("parsiflix")
         if (service == null) {
-            errors += "ParsiFlix is not configured"
+            errors += "بخش فیلم ایرانی تنظیم نشده است"
             startFilmRooz()
             return
         }
@@ -181,10 +181,10 @@ class AccountSyncActivity : ComponentActivity() {
         stage = Stage.FILMROOZ
         scriptStarted = false
         filmCompleteRequested = false
-        setStatus("Syncing FilmRooz recent watching…")
+        setStatus("در حال همگام‌سازی فیلم‌های خارجی…")
         val service = app.servicesRepository.findById("filmrooz")
         if (service == null) {
-            errors += "FilmRooz is not configured"
+            errors += "بخش فیلم خارجی تنظیم نشده است"
             finishSync()
             return
         }
@@ -300,7 +300,7 @@ class AccountSyncActivity : ComponentActivity() {
                     var seconds = resumeKey
                       ? Number(localStorage.getItem(resumeKey)) : 0;
                     return {
-                      title: title || 'FilmRooz title',
+                      title: title || 'فیلم خارجی',
                       contentUrl: url.origin + url.pathname,
                       posterUrl: poster,
                       resumePosition: isFinite(seconds)
@@ -422,7 +422,7 @@ class AccountSyncActivity : ComponentActivity() {
         fun failed(serviceId: String?, reason: String?) {
             val id = serviceId.orEmpty()
             runOnUiThread {
-                errors += "${if (id == "parsiflix") "ParsiFlix" else "FilmRooz"}: " +
+                errors += "${if (id == "parsiflix") "فیلم ایرانی" else "فیلم خارجی"}: " +
                     reason.orEmpty().take(80)
                 if (id == "parsiflix") startFilmRooz() else finishSync()
             }
@@ -485,7 +485,7 @@ class AccountSyncActivity : ComponentActivity() {
         progress.visibility = View.GONE
         val total = parsiCount + filmRoozCount
         val detail = if (errors.isEmpty()) {
-            "ParsiFlix: $parsiCount  •  FilmRooz: $filmRoozCount"
+            "فیلم ایرانی: $parsiCount  •  فیلم خارجی: $filmRoozCount"
         } else {
             "Synced $total items\n" + errors.joinToString("\n")
         }

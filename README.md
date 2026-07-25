@@ -1,4 +1,4 @@
-# Amin TV OS
+# Aminema
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
@@ -13,7 +13,7 @@ Android TV uses native pointer/cursor mode for USB/Bluetooth mice and pointer
 remotes. Hover, click, wheel scrolling, and browser mouse side buttons can be
 tested directly in the TV emulator or on a physical box.
 
-Version 0.4 adds Amin TV OS's own mouse-clickable web keyboard. It replaces
+Version 0.4 adds Aminema's own mouse-clickable web keyboard. It replaces
 DPAD-only Android TV IMEs for website login and search fields, supports English,
 Persian, numbers, email punctuation, password masking, Backspace, Space, and
 Done/Search, and never reads an existing password from a website.
@@ -24,7 +24,7 @@ Passwords remain masked by default and are revealed only while the user chooses
 
 Version 0.5 turns the browser into a personal TV hub. A hidden Quick Menu opens
 with MENU/INFO or mouse right-click and provides fullscreen, favorite, native
-website search, reload, browser back, and Amin TV Home actions. Favorites can be
+website search, reload, browser back, and Aminema Home actions. Favorites can be
 saved from the current page, Continue Watching only includes detected content
 pages, HTML5 playback time is saved every 15 seconds, and reopening a card
 attempts a best-effort seek to the saved position. Service-specific content,
@@ -55,7 +55,7 @@ keyboard in masked password mode. **Done** submits password/search fields;
 website input focus, and return control to the page.
 
 Version 0.7.1 hardens that keyboard fix for physical Android boxes. The browser
-no longer creates a second native TV-IME input connection behind Amin TV OS's
+no longer creates a second native TV-IME input connection behind Aminema's
 keyboard. Closing the overlay suppresses immediate focus-based reopening,
 clears the active website field, and leaves focus on the app rather than
 refocusing WebView. Next also re-finds a password field if a website rebuilds
@@ -69,7 +69,16 @@ chooses another website input. Caps, language, and Show/Hide reassert that
 target after native focus settles, so a TV box restoring the first HTML field
 cannot redirect password typing back into Username.
 
-## Next update queue (not implemented in v0.7.1)
+Version 0.7.3 introduces the **Aminema** identity while keeping the same
+application ID and debug signing identity, so it installs as an update and
+preserves cookies, sessions, settings, and the personal library. The new
+mustachioed cinema mascot now appears in the launcher icon, Android TV banner,
+Home header, and two dedicated cinematic cards. The Home cards are presented
+as **فیلم ایرانی** and **فیلم خارجی** without showing provider brand names.
+Existing installs automatically migrate the old card labels and artwork while
+keeping service IDs, URLs, login data, and custom services unchanged.
+
+## Next update queue (not implemented in v0.7.3)
 
 - **Latest Iranian:** a Home row sourced from the signed-in ParsiFlix website's
   own latest section, showing title, poster, and normal content-page link.
@@ -135,7 +144,7 @@ Design decisions: MVVM with repositories exposed as StateFlow; JSON-file persist
 
 ## Navigation model
 
-Back inside the browser: exits fullscreen video first, then steps back through WebView history, then returns to the Amin TV home screen. DPAD focus and USB-mouse hover both scale cards with a red glow.
+Back inside the browser: exits fullscreen video first, then steps back through WebView history, then returns to the Aminema home screen. DPAD focus and USB-mouse hover both scale cards with a red glow.
 
 ### Browser rules in v0.2
 
@@ -147,7 +156,7 @@ Back inside the browser: exits fullscreen video first, then steps back through W
 - `MENU` or `INFO` opens the hidden Quick Menu; mouse right-click does the same.
 - Red color key, `F11`, or long-press OK requests player fullscreen directly.
 - A USB mouse is the primary pointer: left click and wheel go directly to WebView; Back/Forward side buttons navigate browser history.
-- Quick Menu search focuses the website's own search field and opens the Amin TV
+- Quick Menu search focuses the website's own search field and opens the Aminema
   mouse keyboard; no catalog scraping or cross-service search is performed.
 
 ## Security

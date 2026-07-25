@@ -107,17 +107,19 @@ fun HomeScreen(
                 .padding(horizontal = 48.dp)
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_logo),
-                contentDescription = null,
-                modifier = Modifier.size(56.dp)
+                painter = painterResource(R.drawable.aminema_mascot),
+                contentDescription = "Aminema",
+                modifier = Modifier.size(72.dp)
             )
             Spacer(Modifier.width(16.dp))
-            Text("AMIN ", style = MaterialTheme.typography.displayMedium)
-            Text(
-                "TV OS",
-                style = MaterialTheme.typography.displayMedium,
-                color = CinemaRed
-            )
+            Column {
+                Text("AMINEMA", style = MaterialTheme.typography.displayMedium)
+                Text(
+                    "YOUR PERSONAL CINEMA",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = CinemaRed
+                )
+            }
             Spacer(Modifier.weight(1f))
             FocusableCard(
                 shape = RoundedCornerShape(50),
@@ -155,8 +157,8 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // ---------- My Services ----------
-        SectionRow("Choose a Service") {
+        // ---------- Cinemas ----------
+        SectionRow("امشب چی می‌بینیم؟") {
             services.forEach { service ->
                 ServiceCard(service = service, onClick = { openService(service) })
             }
