@@ -92,15 +92,26 @@ cap. `Settings ➜ Startup Intro` offers `Play intro` and `Mute intro`; these tw
 flags live in SharedPreferences rather than the DataStore settings, because the
 decision has to be made synchronously before the first frame.
 
-## Next update queue (not implemented in v0.7.4)
+Version 0.8.0 adds the two **latest rows** to Home — «تازه‌های ایرانی» and
+«تازه‌های خارجی» — each with a remembered `همه | فیلم | سریال` selector, a
+refresh button and a last-sync label. Every source is the service's own view
+of its own catalog, read inside the signed-in WebView by `CatalogSyncActivity`:
+the Iranian row uses the account home's `جدیدترین‌ها` section plus the
+`/medias?type=…` call the website itself makes for its movie and series pages,
+and the international row uses the signed-in menu's own `فیلم های جدید` and
+`سریال های جدید` pages. Each service has its own adapter and its own cache
+entry in `catalog.json`, so a failing source records an error and keeps its
+previously cached items instead of emptying the row or affecting the other one.
+Only title, poster and the stable detail-page link are stored; provider brand
+names never appear on Home.
 
-- **Latest Iranian:** a Home row sourced from the signed-in ParsiFlix website's
-  own latest section, showing title, poster, and normal content-page link.
-- **Latest International:** a Home row sourced from FilmRooz's signed-in
-  `archive/category/featured-films/` page, showing title, poster, and normal
-  content-page link.
-- These rows will be implemented only after the physical-TV keyboard fix is
-  confirmed. They will not inspect or store protected media/stream URLs.
+## Next update queue (not implemented in v0.8.0)
+
+- **Keyboard redesign:** explicit
+  `Username → Password → Caps → Language → Show/Hide → Done` state machine.
+- **Unified search:** one Home search bar with `ایرانی | خارجی` result groups,
+  reusing the 0.8.0 catalog adapters.
+- Neither will inspect or store protected media/stream URLs.
 
 ## Requirements
 

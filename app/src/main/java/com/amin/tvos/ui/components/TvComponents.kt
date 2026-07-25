@@ -218,36 +218,9 @@ fun PosterCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val posterModel = remember(item.posterUrl, item.url) {
-        if (item.posterUrl.startsWith("http")) {
-            ImageRequest.Builder(context)
-                .data(item.posterUrl)
-                .apply {
-                    val posterHost = runCatching {
-                        Uri.parse(item.posterUrl).host
-                    }.getOrNull()
-                    val pageHost = runCatching {
-                        Uri.parse(item.url).host
-                    }.getOrNull()
-                    // FilmRooz returns HTML for poster requests without the
-                    // authenticated WebView cookie. Cookies are attached only
-                    // to the exact same host to prevent cross-domain leakage.
-                    if (
-                        !posterHost.isNullOrBlank() &&
-                        posterHost.equals(pageHost, ignoreCase = true)
-                    ) {
-                        CookieManager.getInstance().getCookie(item.posterUrl)
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let { addHeader("Cookie", it) }
-                        addHeader("Referer", item.url)
-                    }
-                }
-                .build()
-        } else {
-            item.posterUrl
-        }
-    }
+    // FilmRooz returns HTML for poster requests without the authenticated WebView
+    // cookie, so the shared helper attaches it for same-host images only.
+    val posterModel = authenticatedPosterModel(item.posterUrl, item.url)
     FocusableCard(
         modifier = Modifier.width(190.dp),
         onClick = onClick,

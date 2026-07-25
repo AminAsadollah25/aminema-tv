@@ -1,7 +1,68 @@
-# Aminema v0.7.4 — test report
+# Aminema v0.8.0 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
+
+## v0.8.0 latest-catalog rows
+
+Build: `clean assembleDebug` with JDK 17 — successful. Version `0.8.0`,
+`versionCode 15`, package and debug signing certificate unchanged.
+
+### Sources confirmed against the live signed-in accounts
+
+Nothing here was guessed. Each endpoint/path was observed first with a
+throwaway debug probe against the signed-in sites, then implemented:
+
+- ParsiFlix combined latest = the account home's own `جدیدترین‌ها` section.
+- ParsiFlix per type = `GET /medias?type=MOVIE|SERIES&page=1&size=20`, which
+  is the exact call the website itself issues when its own `/medias/movies`
+  and `/medias/series` pages are opened (captured by hooking the site's
+  fetch/XHR and clicking its own navigation).
+- FilmRooz movies = `فیلم های جدید` → `/archive/category/new-films/`.
+- FilmRooz series = `سریال های جدید` → `/archive/category/new-tv-show/`.
+  Read from the signed-in menu, which resolves the open question about the
+  international series path.
+
+### Verified
+
+- Both adapters synced: ParsiFlix 10 combined / 20 movies / 20 series;
+  FilmRooz 8 movies / 15 series / 20 combined. The FilmRooz movie count is
+  the site's own page-1 count — the other 8 `/post/` links on that page are
+  its sidebar series block and are correctly excluded by type.
+- Titles, posters and types render correctly on the TV layout, including
+  FilmRooz posters, which only load with the signed-in cookie.
+- Every stored link is a normal detail page (`/medias/{movies,series}/<id>`
+  and `/post/{film,series}/<id>/<slug>/`). No media URL, stream URL, DRM
+  value or token appears anywhere in `catalog.json`.
+- Opening a card opened exactly that title's normal detail page in
+  `BrowserActivity` while signed in; Back returned to the same Home state.
+- `همه | فیلم | سریال` switches the row live, is written to settings, and
+  survives a full app restart.
+- The last-sync label renders and updates ("هم‌اکنون", "۳ دقیقه پیش").
+- Empty state before the first sync shows the refresh prompt rather than a
+  blank row.
+- Adapter isolation: with the ParsiFlix endpoint deliberately pointed at an
+  unreachable host, that row recorded `Service unavailable`, **kept its
+  previously cached 10/20/20 items**, and the FilmRooz row refreshed normally.
+  A later successful sync cleared the error.
+- Logcat contains no `FATAL EXCEPTION` across sync, filtering, card opening
+  and the induced failure.
+- The debug-only probe used for discovery is not part of the shipped build:
+  the final APK's manifest and dex contain no `CatalogProbeActivity`.
+
+### Known limitations
+
+- FilmRooz answers an unknown category path with HTTP 200 and a generic
+  page instead of a 404. If the site ever renames those two categories, the
+  adapter would return plausible-looking but wrong items rather than an
+  error. Title extraction was hardened for this case (it now requires the
+  title link to point at the same item and rejects episode-status text), but
+  a category rename still needs to be caught by eye.
+- An offline test via emulator airplane mode was inconclusive because the
+  emulator keeps its host NAT connection; the failure path was therefore
+  verified with a forced unreachable endpoint instead.
+- Auto-refresh is intentionally not implemented: only the manual refresh
+  button goes to the network.
 
 ## v0.7.4 cold-start intro
 

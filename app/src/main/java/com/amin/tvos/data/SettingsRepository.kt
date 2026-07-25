@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.UserAgentMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -43,5 +44,23 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit {
             it[zoomKey] = percent.coerceIn(MIN_BROWSER_ZOOM, MAX_BROWSER_ZOOM)
         }
+    }
+
+    // ---- Remembered "همه | فیلم | سریال" choice per latest row ----
+
+    private fun catalogFilterKey(serviceId: String) =
+        stringPreferencesKey("catalog_filter_$serviceId")
+
+    fun catalogFilter(serviceId: String): Flow<CatalogFilter> =
+        context.dataStore.data.map { prefs ->
+            runCatching {
+                CatalogFilter.valueOf(
+                    prefs[catalogFilterKey(serviceId)] ?: CatalogFilter.ALL.name
+                )
+            }.getOrDefault(CatalogFilter.ALL)
+        }
+
+    suspend fun setCatalogFilter(serviceId: String, filter: CatalogFilter) {
+        context.dataStore.edit { it[catalogFilterKey(serviceId)] = filter.name }
     }
 }

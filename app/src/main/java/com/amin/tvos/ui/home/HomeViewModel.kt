@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amin.tvos.AminTvApp
+import com.amin.tvos.data.model.CatalogFilter
+import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.StreamingService
@@ -19,8 +21,29 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val tvApp = app as AminTvApp
     private val servicesRepo = tvApp.servicesRepository
     private val libraryRepo = tvApp.libraryRepository
+    private val catalogRepo = tvApp.catalogRepository
+    private val settingsRepo = tvApp.settingsRepository
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
+
+    // ---- "Latest" rows ----
+
+    val catalogSections: StateFlow<List<CatalogSection>> = catalogRepo.sections
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun section(serviceId: String): CatalogSection? =
+        catalogSections.value.firstOrNull { it.serviceId == serviceId }
+
+    private fun filterFlow(serviceId: String): StateFlow<CatalogFilter> =
+        settingsRepo.catalogFilter(serviceId)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CatalogFilter.ALL)
+
+    val iranianFilter: StateFlow<CatalogFilter> = filterFlow(IRANIAN_SERVICE_ID)
+    val internationalFilter: StateFlow<CatalogFilter> = filterFlow(INTERNATIONAL_SERVICE_ID)
+
+    fun setCatalogFilter(serviceId: String, filter: CatalogFilter) = viewModelScope.launch {
+        settingsRepo.setCatalogFilter(serviceId, filter)
+    }
 
     val continueWatching: StateFlow<List<PlaybackSession>> =
         libraryRepo.playbackSessions
@@ -84,6 +107,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = viewModelScope.launch {
         servicesRepo.load()
         libraryRepo.load()
+        catalogRepo.load()
     }
 
     fun toggleFavorite(id: String) = viewModelScope.launch {
@@ -100,6 +124,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             """(?:^|/)(?:login|signin|sign-in|auth|account|profile|settings)(?:/|$)""",
             RegexOption.IGNORE_CASE
         ).containsMatchIn(url)
+
+    companion object {
+        /** Internal adapter ids; Home only ever shows «ایرانی» and «خارجی». */
+        const val IRANIAN_SERVICE_ID = "parsiflix"
+        const val INTERNATIONAL_SERVICE_ID = "filmrooz"
+    }
 
     private fun isServiceRoot(current: String, home: String): Boolean =
         runCatching {

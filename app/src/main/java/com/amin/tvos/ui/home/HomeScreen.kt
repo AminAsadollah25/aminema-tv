@@ -33,6 +33,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
+import com.amin.tvos.browser.CatalogSyncActivity
+import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.ResumeStrategy
@@ -54,6 +56,25 @@ fun HomeScreen(
     val continueWatching by viewModel.continueWatching.collectAsState()
     val recents by viewModel.recentlyOpened.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
+    val catalogSections by viewModel.catalogSections.collectAsState()
+    val iranianFilter by viewModel.iranianFilter.collectAsState()
+    val internationalFilter by viewModel.internationalFilter.collectAsState()
+
+    fun refreshCatalog() = context.startActivity(
+        android.content.Intent(context, CatalogSyncActivity::class.java)
+    )
+
+    fun openCatalogItem(item: CatalogItem) =
+        context.startActivity(
+            BrowserActivity.intent(
+                context,
+                item.serviceId,
+                item.contentUrl,
+                contentUrl = item.contentUrl,
+                contentTitle = item.title,
+                contentPoster = item.posterUrl
+            )
+        )
 
     fun openService(service: StreamingService) =
         context.startActivity(BrowserActivity.intent(context, service.id, service.url))
@@ -198,6 +219,35 @@ fun HomeScreen(
             }
             Spacer(Modifier.height(16.dp))
         }
+
+        // ---------- Latest Iranian / International ----------
+        CatalogSectionRow(
+            title = "تازه‌های ایرانی",
+            section = catalogSections.firstOrNull {
+                it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
+            },
+            filter = iranianFilter,
+            onFilterChange = {
+                viewModel.setCatalogFilter(HomeViewModel.IRANIAN_SERVICE_ID, it)
+            },
+            onRefresh = { refreshCatalog() },
+            onOpen = { openCatalogItem(it) }
+        )
+        Spacer(Modifier.height(16.dp))
+
+        CatalogSectionRow(
+            title = "تازه‌های خارجی",
+            section = catalogSections.firstOrNull {
+                it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
+            },
+            filter = internationalFilter,
+            onFilterChange = {
+                viewModel.setCatalogFilter(HomeViewModel.INTERNATIONAL_SERVICE_ID, it)
+            },
+            onRefresh = { refreshCatalog() },
+            onOpen = { openCatalogItem(it) }
+        )
+        Spacer(Modifier.height(16.dp))
 
         // ---------- Recently Opened ----------
         if (recents.isNotEmpty()) {
