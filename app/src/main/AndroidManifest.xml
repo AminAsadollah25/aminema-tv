@@ -50,6 +50,12 @@
             android:screenOrientation="landscape" />
 
         <activity
+            android:name=".ui.search.SearchActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".browser.CatalogSyncActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
             android:exported="false"

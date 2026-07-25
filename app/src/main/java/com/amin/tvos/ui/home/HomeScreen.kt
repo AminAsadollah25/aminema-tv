@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
@@ -49,6 +50,7 @@ import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.PosterCard
 import com.amin.tvos.ui.components.SectionRow
 import com.amin.tvos.ui.components.ServiceCard
+import com.amin.tvos.ui.search.SearchActivity
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
 import java.util.Calendar
@@ -185,6 +187,28 @@ fun HomeScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
+            FocusableCard(
+                shape = RoundedCornerShape(50),
+                onClick = {
+                    context.startActivity(
+                        android.content.Intent(context, SearchActivity::class.java)
+                    )
+                }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("جستجو", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
             FocusableCard(
                 shape = RoundedCornerShape(50),
                 onClick = {
