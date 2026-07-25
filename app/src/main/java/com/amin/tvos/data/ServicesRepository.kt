@@ -103,9 +103,11 @@ class ServicesRepository(private val context: Context) {
                         .filterNot { it == legacyBroadParsiExcludedPattern } +
                         defaults.excludedUrlPatterns
                     ).distinct(),
-                // Newly shipped adapter capability: adopt it on existing installs, but
-                // never overwrite a configuration the user has customised themselves.
-                directPlay = current.directPlay ?: defaults.directPlay,
+                // Adapter capability, not user content: the bundled version always wins,
+                // exactly like resumeStrategy below. Keeping a stored copy would pin every
+                // existing install to the rules it was first shipped with — which is how a
+                // fix to those rules would never reach the device.
+                directPlay = defaults.directPlay ?: current.directPlay,
                 resumeStrategy = defaults.resumeStrategy,
                 resumeButtonTextPatterns = (
                     current.resumeButtonTextPatterns + defaults.resumeButtonTextPatterns

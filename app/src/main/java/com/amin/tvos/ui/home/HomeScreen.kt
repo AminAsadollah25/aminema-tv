@@ -27,10 +27,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -54,6 +57,7 @@ import com.amin.tvos.ui.search.SearchActivity
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
 import java.util.Calendar
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 @Composable
@@ -156,13 +160,18 @@ fun HomeScreen(
         )
     }
 
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    // Where the Continue Watching row starts, so the greeting can jump to it.
+    var continueRowOffset by remember { mutableIntStateOf(0) }
+
     Box(Modifier.fillMaxSize()) {
     CinematicBackground(posterUrl = backdropSource.first, pageUrl = backdropSource.second)
 
     Column(
         Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(vertical = 28.dp)
     ) {
         // ---------- Header ----------
@@ -250,8 +259,11 @@ fun HomeScreen(
             greeting = greeting,
             onAction = { action ->
                 when (action) {
-                    GreetingAction.CONTINUE_LAST ->
-                        continueWatching.firstOrNull()?.let { openPlayback(it) }
+                    // Scroll to the row rather than launching straight into the last
+                    // title: the user still gets to choose which one to resume.
+                    GreetingAction.CONTINUE_LAST -> coroutineScope.launch {
+                        scrollState.animateScrollTo(continueRowOffset)
+                    }
                     GreetingAction.PICK_MOVIE -> viewModel.setAllCatalogFilters(
                         CatalogFilter.MOVIE
                     )
@@ -283,6 +295,12 @@ fun HomeScreen(
 
         // ---------- Continue Watching ----------
         if (continueWatching.isNotEmpty()) {
+            Box(
+                Modifier.onGloballyPositioned { coordinates ->
+                    continueRowOffset =
+                        (coordinates.positionInParent().y.toInt() - 24).coerceAtLeast(0)
+                }
+            ) {
             SectionRow("Continue Watching") {
                 continueWatching.forEach { session ->
                     val item = MovieItem(
@@ -305,6 +323,7 @@ fun HomeScreen(
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
                 }
+            }
             }
             Spacer(Modifier.height(16.dp))
         }

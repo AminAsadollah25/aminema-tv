@@ -1250,25 +1250,38 @@ class BrowserActivity : ComponentActivity() {
                 view.loadUrl(target)
             } else {
                 // Services that show one visible watch button instead of a quality list.
-                tryClickWatchButton(view, config.buttonTextPatterns)
+                tryClickWatchButton(
+                    view,
+                    config.buttonTextPatterns,
+                    config.excludeButtonTextPatterns
+                )
             }
         }
     }
 
     /** Clicks the website's own visible watch control — the same click the user would make. */
-    private fun tryClickWatchButton(view: WebView, textPatterns: List<String>) {
+    private fun tryClickWatchButton(
+        view: WebView,
+        textPatterns: List<String>,
+        excludePatterns: List<String>
+    ) {
         if (directPlayTriggered || textPatterns.isEmpty()) return
         val pattern = JSONObject.quote(textPatterns.joinToString("|") { "(?:$it)" })
+        val exclude = JSONObject.quote(
+            excludePatterns.ifEmpty { listOf("\\u0000") }.joinToString("|") { "(?:$it)" }
+        )
         val script = """
             (function() {
               try {
                 var matcher = new RegExp($pattern, 'i');
+                var blocked = new RegExp($exclude, 'i');
                 var candidates = Array.from(document.querySelectorAll(
                   'button,[role="button"],a'
                 )).filter(function(el) {
                   var text = (el.innerText || el.textContent || '').trim();
                   var box = el.getBoundingClientRect();
                   return text && text.length < 40 && matcher.test(text) &&
+                    !blocked.test(text) &&
                     box.width > 30 && box.height > 20;
                 });
                 if (!candidates.length) return 'none';

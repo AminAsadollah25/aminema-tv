@@ -157,13 +157,13 @@ fun buildSmartGreeting(
             SmartGreeting(
                 "آخر شب شد…",
                 "یه چیز آرام و کوتاه، نه یه سریال ده‌قسمتی.",
-                "همان نیمه‌کاره",
+                "ادامه تماشا",
                 if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
             ),
             SmartGreeting(
                 "نصفه‌شب و بیدار؟",
                 "پس بی‌سروصدا ادامه بدهیم.",
-                "ادامه بده",
+                "برو به ادامه‌ها",
                 if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
             )
         )
@@ -178,7 +178,7 @@ fun buildSmartGreeting(
             SmartGreeting(
                 "سلامِ صبح ☀️",
                 "قهوه دستت باشد، بقیه‌اش با ما.",
-                "همان نیمه‌کاره",
+                "ادامه تماشا",
                 if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
             )
         )
@@ -203,7 +203,7 @@ fun buildSmartGreeting(
             SmartGreeting(
                 "وقت ناهار",
                 "یک قسمت کوتاه، نه بیشتر.",
-                "همان نیمه‌کاره",
+                "ادامه تماشا",
                 if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
             )
         )
@@ -212,7 +212,7 @@ fun buildSmartGreeting(
             SmartGreeting(
                 "عصر بخیر",
                 "تا شام وقت هست؛ یک قسمت بگذاریم؟",
-                "همان نیمه‌کاره",
+                "ادامه تماشا",
                 if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
             ),
             SmartGreeting(
@@ -243,7 +243,7 @@ fun buildSmartGreeting(
                 SmartGreeting(
                     "یکشنبه‌شب 🌙",
                     "فردا دوشنبه است؛ یک قسمت و تمام.",
-                    "همان نیمه‌کاره",
+                    "ادامه تماشا",
                     if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
                 )
             )
@@ -267,7 +267,7 @@ fun buildSmartGreeting(
                 SmartGreeting(
                     "امشب چی می‌بینیم؟",
                     "بهترین ساعتِ شب برای یک انتخاب درست.",
-                    "همان نیمه‌کاره",
+                    "ادامه تماشا",
                     if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
                 ),
                 SmartGreeting(
@@ -284,7 +284,7 @@ fun buildSmartGreeting(
                 SmartGreeting(
                     "یکشنبه‌شب، دیروقت 🌙",
                     "فردا دوشنبه است… یک قسمت، قول؟",
-                    "همان نیمه‌کاره",
+                    "ادامه تماشا",
                     if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
                 )
             )
@@ -308,7 +308,7 @@ fun buildSmartGreeting(
                 SmartGreeting(
                     "دیروقت شد…",
                     "یک فیلم کوتاه یا ادامهٔ همان قبلی؟",
-                    "همان نیمه‌کاره",
+                    "ادامه تماشا",
                     if (hasContinue) GreetingAction.CONTINUE_LAST else GreetingAction.NONE
                 ),
                 SmartGreeting(

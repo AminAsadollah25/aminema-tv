@@ -38,7 +38,13 @@ data class DirectPlayConfig(
      * Fallback for services that expose a single visible watch button instead of a list
      * of quality options: the site's own button is clicked, exactly as the user would.
      */
-    val buttonTextPatterns: List<String> = emptyList()
+    val buttonTextPatterns: List<String> = emptyList(),
+    /**
+     * Buttons whose text matches any of these are never clicked, even when they also match
+     * an include pattern. A page can offer an unrelated player — live TV, for instance —
+     * whose label starts with the same verb as the title's own watch button.
+     */
+    val excludeButtonTextPatterns: List<String> = emptyList()
 )
 
 /** A streaming service configured via services.json — never hardcoded. */

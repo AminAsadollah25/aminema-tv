@@ -47,10 +47,14 @@
     "directPlay": {
       "buttonTextPatterns": [
         "ادامه تماشا",
-        "تماشا",
-        "پخش",
-        "Watch",
-        "Play"
+        "تماشا"
+      ],
+      "excludeButtonTextPatterns": [
+        "زنده",
+        "شبکه",
+        "تلویزیون",
+        "رادیو",
+        "live"
       ]
     },
     "resumeStrategy": "CLICK_SITE_CONTINUE",
