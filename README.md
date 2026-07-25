@@ -78,7 +78,21 @@ as **فیلم ایرانی** and **فیلم خارجی** without showing provide
 Existing installs automatically migrate the old card labels and artwork while
 keeping service IDs, URLs, login data, and custom services unchanged.
 
-## Next update queue (not implemented in v0.7.3)
+Version 0.7.4 adds the **cold-start intro**: a local, offline branded video in
+`app/src/main/res/raw/aminema_intro.mp4` that plays full-screen once per
+process launch, above a Home screen that is already being composed underneath.
+It never loops and never touches the network. OK/Enter/DPAD_CENTER/Back or a
+mouse click skips it instantly, and while it is on screen it is modal, so a
+skip key cannot also activate a Home card. Returning from the browser, the
+account sync, or Settings does not replay it — `IntroGate` is a one-shot,
+process-scoped gate and a recreated activity (configuration change or process
+death) is treated as "already played". Any decoder error, missing file, or
+stall falls through to Home, guarded by a prepare timeout and a hard playback
+cap. `Settings ➜ Startup Intro` offers `Play intro` and `Mute intro`; these two
+flags live in SharedPreferences rather than the DataStore settings, because the
+decision has to be made synchronously before the first frame.
+
+## Next update queue (not implemented in v0.7.4)
 
 - **Latest Iranian:** a Home row sourced from the signed-in ParsiFlix website's
   own latest section, showing title, poster, and normal content-page link.

@@ -165,6 +165,44 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(32.dp))
 
+        // ---------- Startup intro ----------
+        val playIntro by viewModel.playIntro.collectAsState()
+        val muteIntro by viewModel.muteIntro.collectAsState()
+        Text("Startup Intro", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            "The Aminema intro plays once per cold start. OK, Back or a mouse click skips it.",
+            color = TextSecondary
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            FocusableCard(onClick = { viewModel.setPlayIntro(!playIntro) }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    if (playIntro) {
+                        Icon(Icons.Filled.Check, contentDescription = null, tint = CinemaRed)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Play intro")
+                }
+            }
+            FocusableCard(onClick = { viewModel.setMuteIntro(!muteIntro) }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    if (muteIntro) {
+                        Icon(Icons.Filled.Check, contentDescription = null, tint = CinemaRed)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Mute intro")
+                }
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
+
         // ---------- Privacy / storage ----------
         Text("Privacy & Storage", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))

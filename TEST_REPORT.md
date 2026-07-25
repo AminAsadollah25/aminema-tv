@@ -1,7 +1,45 @@
-# Aminema v0.7.3 — test report
+# Aminema v0.7.4 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug
 build and the user's existing authenticated ParsiFlix and FilmRooz sessions.
+
+## v0.7.4 cold-start intro
+
+Build: `clean assembleDebug` with JDK 17 (Android Studio JBR) — successful, no
+errors. Package `com.amin.tvos.debug`, version `0.7.4`, `versionCode 14`.
+The debug signing certificate SHA-256 is byte-identical to the installed
+v0.7.3 APK (`ba6ac8c4…38ba13d3`), so this build updates the TV install in
+place. `res/raw/aminema_intro.mp4` ships inside the APK at 10,635,285 bytes,
+stored uncompressed.
+
+Verified on the emulator:
+
+- Cold start plays the intro full-screen at 1920×1080, 16:9, once. Both closing
+  texts (`تقدیم به فارسی‌زبانان کهکشان…` and `AMINEMA`) render inside the TV
+  safe area.
+- The video does not loop; Home opens by itself when playback completes
+  (~7 s).
+- `DPAD_CENTER`/OK skips instantly and lands on Home. The same key press does
+  **not** leak through to Home — no service card is opened.
+- `Back` skips instantly and does not exit the app.
+- A mouse click anywhere skips instantly.
+- Opening a service card and returning with Back shows Home immediately — no
+  replay. Leaving to the TV launcher and reopening the app also does not
+  replay it (same process).
+- Turning **Settings ➜ Startup Intro ➜ Play intro** off makes the next cold
+  start go straight to Home; the flag persists in `intro_prefs.xml`.
+- Error fallback: a deliberately corrupted `aminema_intro.mp4` (40 KB of random
+  bytes) was packaged and installed. Home appeared in about one second, no
+  crash, and no system "can't play this video" dialog. Only the expected
+  `MediaPlayer Error (1,-2147483648)` line appears in logcat.
+- Logcat contains no `FATAL EXCEPTION` for the app across every intro run.
+- Home, Settings, service cards, browser launch and Back are unchanged.
+
+Not verifiable in the emulator, left for the physical box:
+
+- Real remote/mouse key codes for skip on the Android Box.
+- Audio level against the device's own media volume.
+- Decoder behaviour on the weaker TV hardware.
 
 ## v0.7.3 brand update
 

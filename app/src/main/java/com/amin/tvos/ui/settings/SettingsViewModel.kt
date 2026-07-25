@@ -9,9 +9,12 @@ import com.amin.tvos.AminTvApp
 import com.amin.tvos.data.model.ServiceType
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
+import com.amin.tvos.intro.IntroPreferences
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +25,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val servicesRepo = tvApp.servicesRepository
     private val settingsRepo = tvApp.settingsRepository
     private val libraryRepo = tvApp.libraryRepository
+    private val introPrefs = IntroPreferences(app)
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
@@ -44,6 +48,25 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun resetBrowserZoom() = viewModelScope.launch {
         settingsRepo.setBrowserZoom(com.amin.tvos.data.SettingsRepository.DEFAULT_BROWSER_ZOOM)
+    }
+
+    // ---- Cold-start intro ----
+    // Backed by SharedPreferences (see IntroPreferences), mirrored here so Settings recomposes.
+
+    private val _playIntro = MutableStateFlow(introPrefs.playIntro)
+    val playIntro: StateFlow<Boolean> = _playIntro.asStateFlow()
+
+    private val _muteIntro = MutableStateFlow(introPrefs.muteIntro)
+    val muteIntro: StateFlow<Boolean> = _muteIntro.asStateFlow()
+
+    fun setPlayIntro(enabled: Boolean) {
+        introPrefs.playIntro = enabled
+        _playIntro.value = enabled
+    }
+
+    fun setMuteIntro(muted: Boolean) {
+        introPrefs.muteIntro = muted
+        _muteIntro.value = muted
     }
 
     fun addService(name: String, url: String) = viewModelScope.launch {
