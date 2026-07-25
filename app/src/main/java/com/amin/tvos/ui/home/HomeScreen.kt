@@ -40,6 +40,7 @@ import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.browser.CatalogSyncActivity
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
+import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.ResumeStrategy
@@ -79,7 +80,10 @@ fun HomeScreen(
                 item.contentUrl,
                 contentUrl = item.contentUrl,
                 contentTitle = item.title,
-                contentPoster = item.posterUrl
+                contentPoster = item.posterUrl,
+                // Films go one step further, straight to the site's own player page.
+                // Series still open on their detail page until episode selection lands.
+                directPlay = item.kind == CatalogKind.MOVIE
             )
         )
 

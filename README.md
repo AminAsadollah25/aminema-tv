@@ -117,10 +117,22 @@ from the last watched title's artwork: the image is fetched at a deliberately ti
 scaled up, which blurs it on every device including Android 9, where `Modifier.blur` is a
 no-op.
 
-## Next update queue (not implemented in v0.8.1)
+Version 0.8.2 takes a film card one step further. Instead of stopping on the detail page,
+the browser follows the website's own **Play online** control to its normal `/stream/...`
+page, choosing a Persian dub when one exists and the height ladder 1080 → 720 → 480 (2160p
+is never auto-selected). The choice reads only the numeric `h=` and `lang=` values the page
+already exposes, so release labels like WEBRip or DVDRip cannot affect it, and no media
+URL, signed link, DRM value or token is ever read or stored. Services that instead show a
+single watch button — as the Iranian service does — get that button clicked. Titles with no
+online version simply stay on their detail page. The behaviour is configured per service by
+a `directPlay` block in services.json, which existing installs adopt automatically.
+
+## Next update queue (not implemented in v0.8.2)
 
 - **Keyboard redesign (0.9.1):** explicit
   `Username → Password → Caps → Language → Show/Hide → Done` state machine.
+- **Episode selection for series:** open the first episode the user has not watched,
+  inferred from Aminema's own Continue data since the site tracks watched state per title.
 - **Unified search (0.9.0):** one Home search bar with `ایرانی | خارجی` result groups,
   reusing the 0.8.0 catalog adapters.
 - Neither will inspect or store protected media/stream URLs.

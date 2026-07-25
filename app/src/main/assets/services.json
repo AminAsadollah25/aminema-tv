@@ -44,6 +44,15 @@
       "(/|#)(login|signin|sign-in|auth|account|profile|settings|device|pair|qr)(/|$|[?#])",
       "/medias/(movies|series|search|live)/?(?:[?#].*)?$"
     ],
+    "directPlay": {
+      "buttonTextPatterns": [
+        "ادامه تماشا",
+        "تماشا",
+        "پخش",
+        "Watch",
+        "Play"
+      ]
+    },
     "resumeStrategy": "CLICK_SITE_CONTINUE",
     "resumeButtonTextPatterns": [
       "ادامه تماشا",
@@ -95,6 +104,10 @@
     "excludedUrlPatterns": [
       "(/|#)(login|signin|sign-in|auth|account|profile|settings)(/|$|[?#])"
     ],
+    "directPlay": {
+      "preferredLanguages": ["dubbed-fa", "original"],
+      "preferredHeights": [1080, 720, 480]
+    },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
     "resumeButtonTextPatterns": []
   }

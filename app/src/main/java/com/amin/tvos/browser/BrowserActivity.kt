@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.http.SslError
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -39,6 +40,7 @@ import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 
@@ -64,6 +66,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_AUTO_RESUME = "auto_resume"
         private const val EXTRA_RESUME_STRATEGY = "resume_strategy"
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
+        private const val EXTRA_DIRECT_PLAY = "direct_play"
 
         fun intent(
             context: Context,
@@ -74,6 +77,8 @@ class BrowserActivity : ComponentActivity() {
             contentTitle: String = "",
             contentPoster: String = "",
             autoResume: Boolean = false,
+            /** Follow the site's own best Play-online option instead of stopping on detail. */
+            directPlay: Boolean = false,
             resumeStrategyOverride: ResumeStrategy? = null,
             actionButtonTextPatterns: List<String> = emptyList()
         ): Intent =
@@ -85,6 +90,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_CONTENT_TITLE, contentTitle)
                 .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
+                .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
                 .putStringArrayListExtra(
                     EXTRA_ACTION_BUTTON_PATTERNS,
@@ -111,6 +117,8 @@ class BrowserActivity : ComponentActivity() {
     private var resumeApplied = false
     private var autoResumeRequested = false
     private var autoResumeActionTriggered = false
+    private var directPlayRequested = false
+    private var directPlayTriggered = false
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
     private var keyboardOpenSuppressedUntil = 0L
@@ -152,6 +160,7 @@ class BrowserActivity : ComponentActivity() {
         lastContentTitle = intent.getStringExtra(EXTRA_CONTENT_TITLE).orEmpty()
         lastContentPoster = intent.getStringExtra(EXTRA_CONTENT_POSTER).orEmpty()
         autoResumeRequested = intent.getBooleanExtra(EXTRA_AUTO_RESUME, false)
+        directPlayRequested = intent.getBooleanExtra(EXTRA_DIRECT_PLAY, false)
         requestedResumeStrategy = intent.getStringExtra(EXTRA_RESUME_STRATEGY)
             ?.let { name ->
                 ResumeStrategy.entries.firstOrNull { it.name == name }
@@ -295,6 +304,7 @@ class BrowserActivity : ComponentActivity() {
                 captureResumeMetadata(url)
                 tryRestoreResumePosition(view)
                 scheduleSiteContinue(view)
+                scheduleDirectPlay(view)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
@@ -1143,6 +1153,135 @@ class BrowserActivity : ComponentActivity() {
             RegexOption.IGNORE_CASE
         ).containsMatchIn(raw)
         return if (raw.isBlank() || looksLikeAsset) serviceName else raw.take(100)
+    }
+
+    private fun scheduleDirectPlay(view: WebView = webView) {
+        if (!directPlayRequested || directPlayTriggered) return
+        if (serviceAdapter?.directPlay == null) return
+        listOf(300L, 1_200L, 2_500L).forEach { delay ->
+            view.postDelayed({ tryOpenBestStream(view) }, delay)
+        }
+    }
+
+    /**
+     * Takes the detail page one step further, to the site's own player page.
+     *
+     * It reads only what the page already shows the user — the website's own Play-online
+     * controls with their language and quality labels — and then goes to the same normal
+     * `/stream/...` page a click would open. Heights outside the configured ladder (2160p)
+     * are never chosen, and if nothing matches, the detail page simply stays open.
+     *
+     * No media file URL, DRM value or token is read, stored or logged.
+     */
+    private fun tryOpenBestStream(view: WebView = webView) {
+        if (directPlayTriggered) return
+        val adapter = serviceAdapter ?: return
+        val config = adapter.directPlay ?: return
+        val currentUrl = view.url.orEmpty()
+        if (!adapter.isContentUrl(currentUrl)) return
+
+        val languages = JSONArray(config.preferredLanguages).toString()
+        val heights = JSONArray(config.preferredHeights).toString()
+        val script = """
+            (function() {
+              try {
+                var languages = $languages;
+                var heights = $heights;
+                var options = [];
+                Array.from(document.querySelectorAll('[onclick]')).forEach(function(el) {
+                  var handler = el.getAttribute('onclick') || '';
+                  var match = /\/stream\/\d+\/\d+\/\?[^'"]+/.exec(handler);
+                  if (!match) return;
+                  var path = match[0].replace(/&amp;/g, '&');
+                  var lang = (/[?&]lang=([A-Za-z0-9_-]+)/.exec(path) || [])[1] || '';
+                  var height = parseInt(
+                    (/[?&]h=(\d+)/.exec(path) || [])[1] || '0', 10
+                  );
+                  // A missing h= is kept as a last-resort candidate: some titles are
+                  // published as a single version with no quality label at all.
+                  options.push({path: path, lang: lang, height: height || 0});
+                });
+                if (!options.length) return 'none';
+
+                function pick(langKey) {
+                  for (var h = 0; h < heights.length; h++) {
+                    var hit = options.find(function(option) {
+                      return (langKey === null || option.lang === langKey) &&
+                        option.height === heights[h];
+                    });
+                    if (hit) return hit.path;
+                  }
+                  return null;
+                }
+
+                // 1) Preferred language (a dub outranks the original), height ladder.
+                for (var l = 0; l < languages.length; l++) {
+                  var best = pick(languages[l]);
+                  if (best) return best;
+                }
+                // 2) Same ladder, any language key — tolerates labels we do not know yet.
+                var anyLang = pick(null);
+                if (anyLang) return anyLang;
+                // 3) Single-version titles with no quality label, dub first.
+                for (var u = 0; u < languages.length; u++) {
+                  var plain = options.find(function(option) {
+                    return option.lang === languages[u] && !option.height;
+                  });
+                  if (plain) return plain.path;
+                }
+                var anyPlain = options.find(function(option) { return !option.height; });
+                if (anyPlain) return anyPlain.path;
+                // Nothing acceptable — e.g. only an excluded height such as 2160p.
+                return 'none';
+              } catch (error) {
+                return 'none';
+              }
+            })();
+        """.trimIndent()
+
+        view.evaluateJavascript(script) { result ->
+            val path = result?.trim('"')?.replace("\\/", "/").orEmpty()
+            if (path.startsWith("/")) {
+                directPlayTriggered = true
+                val target = runCatching {
+                    val base = Uri.parse(currentUrl)
+                    "${base.scheme}://${base.host}$path"
+                }.getOrNull() ?: return@evaluateJavascript
+                view.loadUrl(target)
+            } else {
+                // Services that show one visible watch button instead of a quality list.
+                tryClickWatchButton(view, config.buttonTextPatterns)
+            }
+        }
+    }
+
+    /** Clicks the website's own visible watch control — the same click the user would make. */
+    private fun tryClickWatchButton(view: WebView, textPatterns: List<String>) {
+        if (directPlayTriggered || textPatterns.isEmpty()) return
+        val pattern = JSONObject.quote(textPatterns.joinToString("|") { "(?:$it)" })
+        val script = """
+            (function() {
+              try {
+                var matcher = new RegExp($pattern, 'i');
+                var candidates = Array.from(document.querySelectorAll(
+                  'button,[role="button"],a'
+                )).filter(function(el) {
+                  var text = (el.innerText || el.textContent || '').trim();
+                  var box = el.getBoundingClientRect();
+                  return text && text.length < 40 && matcher.test(text) &&
+                    box.width > 30 && box.height > 20;
+                });
+                if (!candidates.length) return 'none';
+                candidates[0].click();
+                return 'clicked';
+              } catch (error) {
+                return 'none';
+              }
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            if (result?.contains("clicked") == true) directPlayTriggered = true
+        }
     }
 
     private fun scheduleSiteContinue(view: WebView = webView) {

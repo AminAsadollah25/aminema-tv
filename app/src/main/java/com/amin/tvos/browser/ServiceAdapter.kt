@@ -1,6 +1,7 @@
 package com.amin.tvos.browser
 
 import android.net.Uri
+import com.amin.tvos.data.model.DirectPlayConfig
 import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 
@@ -38,6 +39,9 @@ class ServiceAdapter(private val service: StreamingService) {
         }
 
     val resumeStrategy: ResumeStrategy get() = service.resumeStrategy
+
+    /** Present only for services that expose their own online-play options. */
+    val directPlay: DirectPlayConfig? get() = service.directPlay
 
     val resumeButtonTextPatterns: List<String> =
         service.resumeButtonTextPatterns.ifEmpty {

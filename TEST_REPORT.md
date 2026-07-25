@@ -1,3 +1,54 @@
+# Aminema v0.8.2 — test report
+
+## v0.8.2 direct play for films
+
+Build: `clean assembleDebug` — successful. Version `0.8.2`, `versionCode 17`.
+
+### What the site actually exposes (probed, not assumed)
+
+The FilmRooz **پخش آنلاین** control is not a link: it is a `div` whose `onclick`
+opens a normal site page:
+
+```
+/stream/<streamId>/<postId>/?lang=<original|dubbed-fa>&h=<2160|1080|720|480>
+```
+
+Scanning eight streamable films returned 25 `original` and 3 `dubbed-fa`
+options. The same shape covers series, one `streamId` per episode. The page
+also carries signed `/play/<hash>/….mp4` media links; those are deliberately
+**not** read, stored or logged — the feature only needs the normal page URL.
+
+### Verified on the emulator
+
+- Clicking **The Magic Faraway Tree** (the sampled title that has both a dub
+  and an original) went straight from the card to the player page. The URL the
+  app recorded is exactly
+  `…/stream/347872/5737969/?lang=dubbed-fa&h=1080` — the dub, at 1080p.
+- **Colony**, which has no online-play version at all, correctly stayed on its
+  detail page. No error, no empty screen.
+- Series cards still open their detail page, as intended for this version.
+- No `FATAL EXCEPTION` in logcat.
+
+### Bug found and fixed during this work
+
+The new `directPlay` block was ignored on any existing install. Services are
+persisted to `filesDir/services.json` on first run and the enrichment merge in
+`ServicesRepository` did not carry the new field, so the feature silently did
+nothing — including on the physical TV. The merge now adopts a newly shipped
+`directPlay` while preserving a user-customised one. Verified by reading the
+migrated file back from the device.
+
+### Known limitations
+
+- The height ladder is `1080 → 720 → 480`; a title published **only** in 2160p
+  is intentionally left on its detail page rather than auto-played.
+- Source labels (WEBRip, DVDRip, BluRay…) are irrelevant to the choice — only
+  the numeric `h=` value and the `lang=` key are read — so new release types
+  cannot break the selection.
+- The dub preference is implemented for both media kinds, but none of the eight
+  sampled streamable series currently offers a Persian dub, so it will rarely
+  trigger there.
+
 # Aminema v0.8.0 — test report
 
 Tested on the Android TV 1080p emulator (Android TV API 36) using the debug

@@ -103,6 +103,9 @@ class ServicesRepository(private val context: Context) {
                         .filterNot { it == legacyBroadParsiExcludedPattern } +
                         defaults.excludedUrlPatterns
                     ).distinct(),
+                // Newly shipped adapter capability: adopt it on existing installs, but
+                // never overwrite a configuration the user has customised themselves.
+                directPlay = current.directPlay ?: defaults.directPlay,
                 resumeStrategy = defaults.resumeStrategy,
                 resumeButtonTextPatterns = (
                     current.resumeButtonTextPatterns + defaults.resumeButtonTextPatterns

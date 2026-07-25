@@ -18,6 +18,29 @@ enum class ResumeStrategy {
     CLICK_SITE_CONTINUE
 }
 
+/**
+ * Optional "one step further" behaviour: instead of stopping on a title's detail page,
+ * follow the website's own **Play online** control to its normal player page.
+ *
+ * Only the site's own visible options are read — the quality/language choices it renders
+ * on the page. No media URL, stream file, DRM value or token is inspected or stored.
+ */
+@Serializable
+data class DirectPlayConfig(
+    /** Language keys as the site itself names them, best first — a dub wins when present. */
+    val preferredLanguages: List<String> = emptyList(),
+    /**
+     * Accepted heights, best first. A height that is not listed is never auto-selected,
+     * which is how 2160p stays excluded.
+     */
+    val preferredHeights: List<Int> = listOf(1080, 720, 480),
+    /**
+     * Fallback for services that expose a single visible watch button instead of a list
+     * of quality options: the site's own button is clicked, exactly as the user would.
+     */
+    val buttonTextPatterns: List<String> = emptyList()
+)
+
 /** A streaming service configured via services.json — never hardcoded. */
 @Serializable
 data class StreamingService(
@@ -47,6 +70,8 @@ data class StreamingService(
     val playbackUrlPatterns: List<String> = emptyList(),
     /** Regex patterns that must never appear in the personal library. */
     val excludedUrlPatterns: List<String> = emptyList(),
+    /** Optional: follow the site's own Play-online control instead of stopping on detail. */
+    val directPlay: DirectPlayConfig? = null,
     /** How Continue Watching should re-enter this service. */
     val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE,
     /** Text patterns for the website's own Continue/Resume button. */
