@@ -125,6 +125,9 @@ fun HomeScreen(
                 contentTitle = session.title,
                 contentPoster = session.posterUrl,
                 autoResume = true,
+                // Account-synced rows carry no stored player page, so they would land on
+                // the detail page. Let the direct-play resolver take them the last step.
+                directPlay = session.playbackUrl.isBlank(),
                 resumeStrategyOverride = session.resumeStrategy,
                 actionButtonTextPatterns = session.actionButtonTextPatterns
             )

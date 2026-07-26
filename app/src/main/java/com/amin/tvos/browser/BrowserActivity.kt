@@ -1316,7 +1316,8 @@ class BrowserActivity : ComponentActivity() {
      * Play Online. No media URL is read or touched.
      */
     private fun tryClickSiteContinue(view: WebView = webView) {
-        if (autoResumeActionTriggered) return
+        // Direct play already moved the page on; a second click would navigate twice.
+        if (autoResumeActionTriggered || directPlayTriggered) return
         val adapter = serviceAdapter ?: return
         if (!adapter.isContentUrl(view.url.orEmpty())) return
         val textPatterns = requestedActionButtonPatterns.ifEmpty {
