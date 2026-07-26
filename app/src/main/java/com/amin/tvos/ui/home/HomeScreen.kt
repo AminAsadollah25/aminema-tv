@@ -45,6 +45,7 @@ import com.amin.tvos.browser.CatalogSyncActivity
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
+import com.amin.tvos.data.model.catalogKindFromUrl
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.ResumeStrategy
@@ -105,7 +106,10 @@ fun HomeScreen(
                 item.resumePosition,
                 contentUrl = item.url,
                 contentTitle = item.title,
-                contentPoster = item.posterUrl
+                contentPoster = item.posterUrl,
+                // Recently Opened and Favorites predate the catalog's kind field, so the
+                // kind is read back from the saved URL's own path shape.
+                directPlay = catalogKindFromUrl(item.url) == CatalogKind.MOVIE
             )
         )
 

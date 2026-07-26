@@ -6,6 +6,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class CatalogKind { MOVIE, SERIES }
 
+/**
+ * Recognises movie vs. series from a normal detail-page URL alone.
+ *
+ * Recently Opened and Favorites store only [MovieItem], which predates the catalog/search
+ * kind field, so this is how those two rows learn whether direct-play is safe for a given
+ * saved URL: `/medias/movies/`, `/medias/series/` (ParsiFlix) and `/post/film/`,
+ * `/post/series/` (FilmRooz) are the same path segments the adapters already match on.
+ */
+fun catalogKindFromUrl(url: String): CatalogKind? = when {
+    Regex("""/medias/movies/""").containsMatchIn(url) -> CatalogKind.MOVIE
+    Regex("""/medias/series/""").containsMatchIn(url) -> CatalogKind.SERIES
+    Regex("""/post/film/""").containsMatchIn(url) -> CatalogKind.MOVIE
+    Regex("""/post/series/""").containsMatchIn(url) -> CatalogKind.SERIES
+    else -> null
+}
+
 /** The `همه | فیلم | سریال` selector above each latest row. */
 @Serializable
 enum class CatalogFilter(val label: String) {
