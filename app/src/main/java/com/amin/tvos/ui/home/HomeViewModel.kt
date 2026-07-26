@@ -1,18 +1,26 @@
 package com.amin.tvos.ui.home
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amin.tvos.AminTvApp
+import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.StreamingService
+import com.amin.tvos.update.ReleaseInfo
+import com.amin.tvos.update.UpdateState
+import java.io.File
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,6 +32,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val libraryRepo = tvApp.libraryRepository
     private val catalogRepo = tvApp.catalogRepository
     private val settingsRepo = tvApp.settingsRepository
+    private val updateRepo = tvApp.updateRepository
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
@@ -111,14 +120,64 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    // ---- Self-update ----
+
+    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
+    val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
+
     init {
         refresh()
+        checkForUpdate()
     }
 
     fun refresh() = viewModelScope.launch {
         servicesRepo.load()
         libraryRepo.load()
         catalogRepo.load()
+    }
+
+    /** Cold-start check, silent unless a release newer than any previously skipped one exists. */
+    fun checkForUpdate() = viewModelScope.launch {
+        val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE) ?: return@launch
+        val skipped = settingsRepo.skippedUpdateVersionCode.first()
+        if (release.versionCode > skipped) _updateState.value = UpdateState.Available(release)
+    }
+
+    /** Settings' manual "check now" — ignores any previously skipped version. */
+    fun checkForUpdateManually() = viewModelScope.launch {
+        _updateState.value = UpdateState.Checking
+        val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE)
+        _updateState.value = if (release != null) {
+            UpdateState.Available(release)
+        } else {
+            UpdateState.Idle
+        }
+    }
+
+    fun skipUpdate(release: ReleaseInfo) = viewModelScope.launch {
+        settingsRepo.setSkippedUpdateVersionCode(release.versionCode)
+        _updateState.value = UpdateState.Idle
+    }
+
+    fun downloadAndInstall(release: ReleaseInfo, context: Context) = viewModelScope.launch {
+        if (!updateRepo.canRequestInstalls()) {
+            context.startActivity(
+                updateRepo.unknownSourcesSettingsIntent()
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            return@launch
+        }
+        _updateState.value = UpdateState.Downloading(release, 0)
+        val file: File = try {
+            updateRepo.download(release) { percent ->
+                _updateState.value = UpdateState.Downloading(release, percent)
+            }
+        } catch (error: Exception) {
+            _updateState.value = UpdateState.Failed(release, error.message ?: "Download failed")
+            return@launch
+        }
+        context.startActivity(updateRepo.installIntent(file))
+        _updateState.value = UpdateState.Idle
     }
 
     fun toggleFavorite(id: String) = viewModelScope.launch {

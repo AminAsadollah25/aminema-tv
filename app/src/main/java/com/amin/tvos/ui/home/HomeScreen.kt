@@ -55,6 +55,7 @@ import com.amin.tvos.ui.components.PosterCard
 import com.amin.tvos.ui.components.SectionRow
 import com.amin.tvos.ui.components.ServiceCard
 import com.amin.tvos.ui.search.SearchActivity
+import com.amin.tvos.update.UpdateState
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
 import java.util.Calendar
@@ -260,6 +261,20 @@ fun HomeScreen(
         }
 
         Spacer(Modifier.height(24.dp))
+
+        // ---------- Self-update ----------
+        val updateState by viewModel.updateState.collectAsState()
+        UpdateBanner(
+            state = updateState,
+            onInstall = { release -> viewModel.downloadAndInstall(release, context) },
+            onSkip = { release -> viewModel.skipUpdate(release) }
+        )
+        if (updateState is UpdateState.Available ||
+            updateState is UpdateState.Downloading ||
+            updateState is UpdateState.Failed
+        ) {
+            Spacer(Modifier.height(20.dp))
+        }
 
         // ---------- Smart greeting ----------
         SmartGreetingHeader(

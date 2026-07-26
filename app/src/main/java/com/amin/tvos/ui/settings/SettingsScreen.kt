@@ -230,6 +230,20 @@ fun SettingsScreen(
                 "hosted, scraped, or redistributed.",
             color = TextSecondary
         )
+        Spacer(Modifier.height(16.dp))
+        FocusableCard(onClick = {
+            viewModel.checkForUpdate { release ->
+                toast(
+                    if (release != null) {
+                        "نسخه ${release.versionName} موجود است — از صفحه اصلی نصب کنید"
+                    } else {
+                        "شما آخرین نسخه را دارید"
+                    }
+                )
+            }
+        }) {
+            Text("بررسی بروزرسانی", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+        }
         Spacer(Modifier.height(32.dp))
     }
 

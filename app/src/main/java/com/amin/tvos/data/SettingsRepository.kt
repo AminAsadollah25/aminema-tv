@@ -63,4 +63,16 @@ class SettingsRepository(private val context: Context) {
     suspend fun setCatalogFilter(serviceId: String, filter: CatalogFilter) {
         context.dataStore.edit { it[catalogFilterKey(serviceId)] = filter.name }
     }
+
+    // ---- Self-update: last version code the user chose to skip ----
+
+    private val skippedUpdateKey = intPreferencesKey("skipped_update_version_code")
+
+    val skippedUpdateVersionCode: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[skippedUpdateKey] ?: 0
+    }
+
+    suspend fun setSkippedUpdateVersionCode(versionCode: Int) {
+        context.dataStore.edit { it[skippedUpdateKey] = versionCode }
+    }
 }

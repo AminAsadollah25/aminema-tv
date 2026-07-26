@@ -6,6 +6,7 @@ import com.amin.tvos.data.CatalogRepository
 import com.amin.tvos.data.LibraryRepository
 import com.amin.tvos.data.ServicesRepository
 import com.amin.tvos.data.SettingsRepository
+import com.amin.tvos.update.UpdateRepository
 
 /**
  * Application + lightweight service locator.
@@ -17,6 +18,7 @@ class AminTvApp : Application() {
     val libraryRepository by lazy { LibraryRepository(this) }
     val catalogRepository by lazy { CatalogRepository(this) }
     val settingsRepository by lazy { SettingsRepository(this) }
+    val updateRepository by lazy { UpdateRepository(this) }
 
     override fun onCreate() {
         super.onCreate()

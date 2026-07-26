@@ -26,6 +26,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val settingsRepo = tvApp.settingsRepository
     private val libraryRepo = tvApp.libraryRepository
     private val introPrefs = IntroPreferences(app)
+    private val updateRepo = tvApp.updateRepository
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
@@ -100,4 +101,11 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearHistory() = viewModelScope.launch { libraryRepo.clearHistory() }
+
+    /** Manual "check now" — reports the result via [onResult] instead of a shared banner. */
+    fun checkForUpdate(onResult: (com.amin.tvos.update.ReleaseInfo?) -> Unit) =
+        viewModelScope.launch {
+            val release = updateRepo.checkForUpdate(com.amin.tvos.BuildConfig.VERSION_CODE)
+            onResult(release)
+        }
 }
