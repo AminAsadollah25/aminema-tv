@@ -60,9 +60,10 @@ fun UpdateBanner(
                         "نسخه ${state.release.versionName} موجود است",
                         style = MaterialTheme.typography.titleMedium
                     )
-                    if (state.release.notes.isNotBlank()) {
+                    val summary = firstNoteLine(state.release.notes)
+                    if (summary.isNotBlank()) {
                         Text(
-                            state.release.notes.lineSequence().firstOrNull().orEmpty(),
+                            summary,
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary,
                             maxLines = 1
@@ -144,6 +145,20 @@ fun UpdateBanner(
         UpdateState.Idle, UpdateState.Checking -> Unit
     }
 }
+
+/**
+ * The first line worth showing from a GitHub release body: skips the blank lines and the
+ * markdown title heading (`# Aminema x.y.z`) that every one of this project's release notes
+ * starts with, and stops at the metadata footer (`---`) some of them end with.
+ */
+private fun firstNoteLine(notes: String): String =
+    notes.lineSequence()
+        .map { it.trim() }
+        .firstOrNull { line ->
+            line.isNotBlank() && !line.startsWith("#") && line != "---"
+        }
+        .orEmpty()
+        .trimStart('#', ' ')
 
 @Composable
 private fun ProgressTrack(percent: Int) {
