@@ -15,8 +15,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +50,7 @@ import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.catalogKindFromUrl
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
+import com.amin.tvos.data.model.QuickLink
 import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.components.FocusableCard
@@ -97,6 +100,24 @@ fun HomeScreen(
 
     fun openService(service: StreamingService) =
         context.startActivity(BrowserActivity.intent(context, service.id, service.url))
+
+    // Opens a named shortcut into a page the site itself already builds — Live TV,
+    // YouTube tab, etc. A normal page open: no direct-play or resume logic applies.
+    fun openQuickLink(service: StreamingService, quickLink: QuickLink) =
+        context.startActivity(
+            BrowserActivity.intent(
+                context,
+                service.id,
+                service.url.trimEnd('/') + quickLink.path
+            )
+        )
+
+    val prominentQuickLinks = remember(services) {
+        services.flatMap { service -> service.quickLinks.filter { it.prominent }.map { service to it } }
+    }
+    val secondaryQuickLinks = remember(services) {
+        services.flatMap { service -> service.quickLinks.filterNot { it.prominent }.map { service to it } }
+    }
 
     fun openItem(item: MovieItem) =
         context.startActivity(
@@ -204,6 +225,27 @@ fun HomeScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
+            prominentQuickLinks.forEach { (service, quickLink) ->
+                FocusableCard(
+                    shape = RoundedCornerShape(50),
+                    onClick = { openQuickLink(service, quickLink) }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.LiveTv,
+                            contentDescription = null,
+                            tint = CinemaRed,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(quickLink.label, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+            }
             FocusableCard(
                 shape = RoundedCornerShape(50),
                 onClick = {
@@ -378,6 +420,33 @@ fun HomeScreen(
             onOpen = { openCatalogItem(it) }
         )
         Spacer(Modifier.height(16.dp))
+
+        // ---------- Secondary quick links (e.g. YouTube tab) — lower priority, lower down ----------
+        if (secondaryQuickLinks.isNotEmpty()) {
+            SectionRow("بیشتر") {
+                secondaryQuickLinks.forEach { (service, quickLink) ->
+                    FocusableCard(
+                        shape = RoundedCornerShape(16.dp),
+                        onClick = { openQuickLink(service, quickLink) }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.SmartDisplay,
+                                contentDescription = null,
+                                tint = CinemaRed,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(quickLink.label, style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
 
         // ---------- Recently Opened ----------
         if (recents.isNotEmpty()) {

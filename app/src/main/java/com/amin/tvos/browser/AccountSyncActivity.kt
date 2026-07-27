@@ -230,7 +230,7 @@ class AccountSyncActivity : ComponentActivity() {
                 var section = (data.sections || []).find(function(item) {
                   return /ادامه\s*تماشا|continue\s*watching/i.test(item.title || '');
                 });
-                var items = (section ? section.items : []).slice(0, 12).map(
+                var items = (section ? section.items : []).slice(0, 30).map(
                   function(item) {
                     var kind = String(item.type || '').toUpperCase() === 'MOVIE'
                       ? 'movies' : 'series';
@@ -253,15 +253,24 @@ class AccountSyncActivity : ComponentActivity() {
 
     private fun syncFilmRooz() {
         val script = """
-            (function() {
+            (async function() {
               try {
-                var heading = Array.from(
-                  document.querySelectorAll('h1,h2,h3,h4,h5')
-                ).find(function(el) {
-                  return /مشاهدات\s*اخیر|recent/i.test(el.innerText || '');
-                });
-                var box = heading && heading.parentElement
-                  ? heading.parentElement.nextElementSibling : null;
+                function findBox() {
+                  var heading = Array.from(
+                    document.querySelectorAll('h1,h2,h3,h4,h5')
+                  ).find(function(el) {
+                    return /مشاهدات\s*اخیر|recent/i.test(el.innerText || '');
+                  });
+                  return heading && heading.parentElement
+                    ? heading.parentElement.nextElementSibling : null;
+                }
+                // The "Recent" box can arrive via a slower AJAX call than a fixed
+                // delay assumes; poll a few times before treating it as missing.
+                var box = findBox();
+                for (var attempt = 0; !box && attempt < 4; attempt++) {
+                  await new Promise(function(resolve) { setTimeout(resolve, 900); });
+                  box = findBox();
+                }
                 if (!box) {
                   AminAccountSync.failed('filmrooz', 'Login required');
                   return;
@@ -306,7 +315,7 @@ class AccountSyncActivity : ComponentActivity() {
                       resumePosition: isFinite(seconds)
                         ? Math.max(0, Math.round(seconds * 1000)) : 0
                     };
-                  }).filter(Boolean).slice(0, 12);
+                  }).filter(Boolean).slice(0, 30);
                 window.__aminFilmSyncItems = items;
                 AminAccountSync.items('filmrooz', JSON.stringify(items));
               } catch (error) {

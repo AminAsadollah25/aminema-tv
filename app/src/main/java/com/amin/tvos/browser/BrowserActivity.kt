@@ -317,6 +317,7 @@ class BrowserActivity : ComponentActivity() {
                     view.postDelayed({ captureResumeMetadata(changedUrl) }, 900)
                     view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
                     view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
+                    view.postDelayed({ scheduleDirectPlay(view) }, 1_200)
                 }
             }
 
@@ -1158,7 +1159,7 @@ class BrowserActivity : ComponentActivity() {
     private fun scheduleDirectPlay(view: WebView = webView) {
         if (!directPlayRequested || directPlayTriggered) return
         if (serviceAdapter?.directPlay == null) return
-        listOf(300L, 1_200L, 2_500L).forEach { delay ->
+        listOf(300L, 1_200L, 2_500L, 4_500L).forEach { delay ->
             view.postDelayed({ tryOpenBestStream(view) }, delay)
         }
     }

@@ -47,6 +47,21 @@ data class DirectPlayConfig(
     val excludeButtonTextPatterns: List<String> = emptyList()
 )
 
+/**
+ * A named shortcut into one specific page the service's own site already builds and
+ * maintains — Live TV, a YouTube tab, or similar. Opens as a normal page in the browser;
+ * no direct-play or resume logic applies.
+ */
+@Serializable
+data class QuickLink(
+    val id: String,
+    val label: String,
+    /** Appended to the service's own `url`. */
+    val path: String,
+    /** Prominent links surface near the top of Home; others sit lower in the scroll. */
+    val prominent: Boolean = false
+)
+
 /** A streaming service configured via services.json — never hardcoded. */
 @Serializable
 data class StreamingService(
@@ -81,7 +96,9 @@ data class StreamingService(
     /** How Continue Watching should re-enter this service. */
     val resumeStrategy: ResumeStrategy = ResumeStrategy.OPEN_PLAYBACK_PAGE,
     /** Text patterns for the website's own Continue/Resume button. */
-    val resumeButtonTextPatterns: List<String> = emptyList()
+    val resumeButtonTextPatterns: List<String> = emptyList(),
+    /** Named shortcuts into pages the site already builds — Live TV, YouTube tab, etc. */
+    val quickLinks: List<QuickLink> = emptyList()
 )
 
 /**

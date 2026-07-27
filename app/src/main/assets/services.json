@@ -62,6 +62,20 @@
       "ادامه تماشا",
       "Continue Watching",
       "Resume"
+    ],
+    "quickLinks": [
+      {
+        "id": "live",
+        "label": "پخش زنده",
+        "path": "/medias/live/",
+        "prominent": true
+      },
+      {
+        "id": "youtube",
+        "label": "یوتیوب فارسی",
+        "path": "/youtube-persian",
+        "prominent": false
+      }
     ]
   },
   {

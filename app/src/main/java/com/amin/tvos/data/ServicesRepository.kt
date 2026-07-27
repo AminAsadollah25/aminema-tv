@@ -111,7 +111,9 @@ class ServicesRepository(private val context: Context) {
                 resumeStrategy = defaults.resumeStrategy,
                 resumeButtonTextPatterns = (
                     current.resumeButtonTextPatterns + defaults.resumeButtonTextPatterns
-                    ).distinct()
+                    ).distinct(),
+                // Same rule as directPlay above: adapter capability, bundled version wins.
+                quickLinks = defaults.quickLinks.ifEmpty { current.quickLinks }
             )
         }
         if (enriched != saved) file.writeText(json.encodeToString(enriched))
