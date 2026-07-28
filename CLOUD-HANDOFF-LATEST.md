@@ -31,7 +31,10 @@
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - شاخه: `main`
-- Release target: `v0.12.0`
+- Release: **منتشرشده**
+- Tag: `v0.12.0`
+- Release commit: `5163c8f`
+- URL: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.12.0`
 - امضا و Application ID تغییر نکرده‌اند؛ نصب روی نسخه قبلی Update است و
   Cookie/Session/Library حفظ می‌شوند.
 
@@ -156,9 +159,12 @@ background: #000;
 ## Asset نسخه
 
 - `Aminema-v0.12.0-debug.apk`
+- اندازه GitHub Asset: `75,570,599` بایت
 - SHA-256:
   `0d9c0ea28a72b45bfaca5b464b897e1c1635b4a6d8a3e9775f26bf8271fd5329`
+- `Aminema-v0.12.0-debug.apk.sha256`
 - Release notes: `RELEASE_NOTES_0.12.0.md`
+- وضعیت GitHub: Draft=false، Prerelease=false، هر دو Asset با state=uploaded
 
 ## مرز امنیتی
 
