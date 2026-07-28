@@ -1,4 +1,4 @@
-# Aminema v0.12.1 — test report (release candidate)
+# Aminema v0.12.1 — test report
 
 Tested on Android TV 1080p emulator (API 36) with the user's existing,
 authenticated ParsiFlix and FilmRooz WebView sessions. Installed over v0.12.0
@@ -67,7 +67,7 @@ normal website controls and account Continue/Recent metadata. No media URL,
 `video.src/currentSrc`, request/response body, cookie, token, authentication
 header or DRM value was read, stored or logged.
 
-## Physical-box acceptance still requested before public release
+## Physical-box acceptance requested after automatic update
 
 1. Install the RC as an update and cold-launch once; verify the account sync
    result matches the emulator after it returns Home.
@@ -76,6 +76,16 @@ header or DRM value was read, stored or logged.
 4. Press Back while the popcorn loading screen is visible.
 5. Confirm a FilmRooz series falls back to episode selection rather than
    remaining on a black/loading screen.
+
+## Publication verification
+
+- Release commit/tag: `72d6527` / `v0.12.1`
+- GitHub Release is Published + Latest (`draft=false`, `prerelease=false`).
+- APK asset state is `uploaded`, size `75,893,204` bytes, GitHub digest:
+  `sha256:94f4a7d988b2b5005800afe3da280e449f318211e12aacf9552d02ab110200b0`.
+- Checksum asset is uploaded and contains the same APK digest.
+- `/releases/latest` returns `v0.12.1`, both download URLs and
+  `versionCode: 26`; this matches `UpdateRepository` discovery rules.
 
 ---
 

@@ -16,9 +16,11 @@
 - محصول: **Aminema**
 - نسخه کد: **0.12.1**
 - `versionCode`: **26**
-- وضعیت: **Release Candidate محلی؛ هنوز Commit/Tag/Push/GitHub Release نشده**
-- آخرین Release عمومی: `v0.12.0` در commit `5163c8f`
-- شاخه: `main`؛ تغییرات 0.12.1 فعلاً Working Tree هستند.
+- وضعیت: **منتشرشده و Latest**
+- Release commit و Tag: `72d6527` / `v0.12.1`
+- GitHub Release:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.12.1`
+- شاخه: `main`
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
@@ -153,16 +155,17 @@
 
 ## وضعیت انتشار و قدم بعدی
 
-- Commit: هنوز نشده
-- Tag `v0.12.1`: هنوز ساخته نشده
-- GitHub Release: هنوز ساخته نشده
-- RC محلی آماده:
-  - `outputs/Aminema-v0.12.1-RC-debug.apk` (حدود 72MB)
-  - `outputs/Aminema-v0.12.1-RC-debug.apk.sha256`
-  - SHA-256:
-    `94f4a7d988b2b5005800afe3da280e449f318211e12aacf9552d02ab110200b0`
-- Asset عمومی هنوز Upload نشده. بعد از تأیید مالک: Commit/Tag/Push و GitHub
-  Release Latest با نام نهایی بدون `RC` ایجاد شود.
+- Release commit: `72d6527`
+- Tag: `v0.12.1`
+- GitHub Release: Published، Latest، Draft=false، Prerelease=false
+- Assetهای عمومی:
+  - `Aminema-v0.12.1-debug.apk` — `75,893,204` بایت، state=`uploaded`
+  - `Aminema-v0.12.1-debug.apk.sha256` — `92` بایت، state=`uploaded`
+- SHA-256 APK:
+  `94f4a7d988b2b5005800afe3da280e449f318211e12aacf9552d02ab110200b0`
+- GitHub Latest API تأیید شد: `tag_name=v0.12.1`، متن Release شامل
+  `versionCode: 26` و هر دو Download URL است؛ بنابراین updater خود Aminema
+  روی نسخه‌های code 25 و پایین‌تر آن را تشخیص می‌دهد.
 
 **مرحله پیشنهادی بعد از انتشار 0.12.1:** نسخه 0.13.0، بازطراحی کامل کیبورد
 به‌صورت State Machine ثابت برای Username → Password → Caps → Language →
