@@ -127,6 +127,16 @@ single watch button — as the Iranian service does — get that button clicked.
 online version simply stay on their detail page. The behaviour is configured per service by
 a `directPlay` block in services.json, which existing installs adopt automatically.
 
+Version 0.12.0 replaces the old Live shortcut with a native cinematic
+**پخش زنده** rail. Twenty verified channels render as TV-friendly cards with
+their real logos; OK or a mouse click opens that channel's ordinary signed-in
+page and sizes its visible HTML5 video to the full Android TV viewport without
+an intermediate channel grid or second fullscreen click. D-pad navigation
+auto-scrolls the row, and Back returns to Home with the same card focused.
+Channel `id`, `name`, normal page `path`, and `logoUrl` live in the optional
+`liveTv.channels` block of `services.json`; no media URL, token or DRM value is
+read or stored.
+
 ## Next update queue (not implemented in v0.8.2)
 
 - **Keyboard redesign (0.9.1):** explicit
@@ -160,6 +170,9 @@ Services are defined in JSON only. The bundled defaults live at `app/src/main/as
   `playbackUrlPatterns`, `excludedUrlPatterns`, `resumeStrategy`, and
   `resumeButtonTextPatterns`. These isolate site-specific behavior while
   keeping the browser and library shared.
+- Optional Live TV rail: `liveTv.channels[]` with `id`, `name`, `path`, and
+  `logoUrl`. `path` must be a normal page route owned by that service, never a
+  media/stream URL.
 
 The bundled FilmRooz entry currently points to the user-provided subscribed site.
 You can replace any service URL through Settings or JSON without changing code.

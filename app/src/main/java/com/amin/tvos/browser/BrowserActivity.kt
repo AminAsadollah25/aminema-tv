@@ -67,6 +67,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_RESUME_STRATEGY = "resume_strategy"
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
         private const val EXTRA_DIRECT_PLAY = "direct_play"
+        private const val EXTRA_LIVE_THEATER_MODE = "live_theater_mode"
 
         fun intent(
             context: Context,
@@ -80,7 +81,9 @@ class BrowserActivity : ComponentActivity() {
             /** Follow the site's own best Play-online option instead of stopping on detail. */
             directPlay: Boolean = false,
             resumeStrategyOverride: ResumeStrategy? = null,
-            actionButtonTextPatterns: List<String> = emptyList()
+            actionButtonTextPatterns: List<String> = emptyList(),
+            /** Make an ordinary live-channel page fill the TV without a second click. */
+            liveTheaterMode: Boolean = false
         ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
@@ -91,6 +94,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
+                .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
                 .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
                 .putStringArrayListExtra(
                     EXTRA_ACTION_BUTTON_PATTERNS,
@@ -119,6 +123,8 @@ class BrowserActivity : ComponentActivity() {
     private var autoResumeActionTriggered = false
     private var directPlayRequested = false
     private var directPlayTriggered = false
+    private var liveTheaterModeRequested = false
+    private var liveTheaterModeApplied = false
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
     private var keyboardOpenSuppressedUntil = 0L
@@ -161,6 +167,8 @@ class BrowserActivity : ComponentActivity() {
         lastContentPoster = intent.getStringExtra(EXTRA_CONTENT_POSTER).orEmpty()
         autoResumeRequested = intent.getBooleanExtra(EXTRA_AUTO_RESUME, false)
         directPlayRequested = intent.getBooleanExtra(EXTRA_DIRECT_PLAY, false)
+        liveTheaterModeRequested =
+            intent.getBooleanExtra(EXTRA_LIVE_THEATER_MODE, false)
         requestedResumeStrategy = intent.getStringExtra(EXTRA_RESUME_STRATEGY)
             ?.let { name ->
                 ResumeStrategy.entries.firstOrNull { it.name == name }
@@ -288,6 +296,7 @@ class BrowserActivity : ComponentActivity() {
                 currentResumePosition = 0L
                 currentDuration = 0L
                 currentIsPlayable = false
+                liveTheaterModeApplied = false
                 // Remove a scale left by a previous SPA route immediately.
                 view.evaluateJavascript(
                     "document.documentElement.style.zoom='100%';" +
@@ -305,6 +314,7 @@ class BrowserActivity : ComponentActivity() {
                 tryRestoreResumePosition(view)
                 scheduleSiteContinue(view)
                 scheduleDirectPlay(view)
+                scheduleLiveTheaterMode(view)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
@@ -318,6 +328,7 @@ class BrowserActivity : ComponentActivity() {
                     view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
                     view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
                     view.postDelayed({ scheduleDirectPlay(view) }, 1_200)
+                    view.postDelayed({ scheduleLiveTheaterMode(view) }, 1_250)
                 }
             }
 
@@ -1042,7 +1053,13 @@ class BrowserActivity : ComponentActivity() {
             QuickAction.SEARCH -> requestSiteSearch()
             QuickAction.RELOAD -> webView.reload()
             QuickAction.BACK -> {
-                if (webView.canGoBack()) webView.goBack() else finish()
+                if (liveTheaterModeRequested) {
+                    finish()
+                } else if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    finish()
+                }
             }
             QuickAction.HOME -> finish()
         }
@@ -1154,6 +1171,59 @@ class BrowserActivity : ComponentActivity() {
             RegexOption.IGNORE_CASE
         ).containsMatchIn(raw)
         return if (raw.isBlank() || looksLikeAsset) serviceName else raw.take(100)
+    }
+
+    private fun scheduleLiveTheaterMode(view: WebView = webView) {
+        if (!liveTheaterModeRequested || liveTheaterModeApplied) return
+        // The live page is a React SPA and its HTML5 video may mount after the route.
+        // Retrying is cheaper and more reliable than guessing a site-specific DOM wrapper.
+        listOf(250L, 900L, 1_800L, 3_200L, 5_500L).forEach { delay ->
+            view.postDelayed({ applyLiveTheaterMode(view) }, delay)
+        }
+    }
+
+    /**
+     * Turns the service's own visible HTML5 video into a one-tap TV experience.
+     *
+     * Browser fullscreen APIs normally require a second user gesture. A fixed, viewport-size
+     * video avoids that restriction while keeping playback, authentication and the stream
+     * entirely under the website's control. No media URL, token, DRM value or request is read.
+     */
+    private fun applyLiveTheaterMode(view: WebView = webView) {
+        if (!liveTheaterModeRequested || liveTheaterModeApplied) return
+        val script = """
+            (function() {
+              var video = document.querySelector('video');
+              if (!video) return 'no-video';
+
+              document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+              if (document.body) {
+                document.body.style.setProperty('overflow', 'hidden', 'important');
+                document.body.style.setProperty('background', '#000', 'important');
+              }
+              [
+                ['position', 'fixed'], ['inset', '0'], ['width', '100vw'],
+                ['height', '100vh'], ['max-width', 'none'], ['max-height', 'none'],
+                ['margin', '0'], ['padding', '0'], ['z-index', '2147483647'],
+                ['object-fit', 'contain'], ['background', '#000']
+              ].forEach(function(pair) {
+                video.style.setProperty(pair[0], pair[1], 'important');
+              });
+              video.controls = true;
+              try {
+                var play = video.play();
+                if (play && play.catch) play.catch(function() {});
+              } catch (_) {}
+              return 'applied';
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            if (result?.contains("applied") == true) {
+                liveTheaterModeApplied = true
+                view.requestFocus()
+                hideSystemUi()
+            }
+        }
     }
 
     private fun scheduleDirectPlay(view: WebView = webView) {
@@ -1594,6 +1664,10 @@ class BrowserActivity : ComponentActivity() {
                     }
                     mouseKeyboard.isShowing -> mouseKeyboard.dismiss()
                     customView != null -> webView.webChromeClient?.onHideCustomView()
+                    // A channel card is a one-level destination. Back must always
+                    // restore Home and its previous focused card, never reveal the
+                    // service's intermediate channel grid.
+                    liveTheaterModeRequested -> finish()
                     errorView.visibility == View.VISIBLE && webView.canGoBack() -> {
                         errorView.visibility = View.GONE
                         webView.goBack()

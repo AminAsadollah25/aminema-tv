@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SmartDisplay
@@ -33,7 +32,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +46,7 @@ import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.catalogKindFromUrl
+import com.amin.tvos.data.model.LiveChannel
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.QuickLink
@@ -101,8 +100,7 @@ fun HomeScreen(
     fun openService(service: StreamingService) =
         context.startActivity(BrowserActivity.intent(context, service.id, service.url))
 
-    // Opens a named shortcut into a page the site itself already builds — Live TV,
-    // YouTube tab, etc. A normal page open: no direct-play or resume logic applies.
+    // Opens a named secondary page the site itself already builds.
     fun openQuickLink(service: StreamingService, quickLink: QuickLink) =
         context.startActivity(
             BrowserActivity.intent(
@@ -112,12 +110,25 @@ fun HomeScreen(
             )
         )
 
-    val prominentQuickLinks = remember(services) {
-        services.flatMap { service -> service.quickLinks.filter { it.prominent }.map { service to it } }
-    }
     val secondaryQuickLinks = remember(services) {
         services.flatMap { service -> service.quickLinks.filterNot { it.prominent }.map { service to it } }
     }
+    val liveSources = remember(services) {
+        services.flatMap { service ->
+            service.liveTv?.channels.orEmpty().map { channel -> service to channel }
+        }
+    }
+
+    fun openLiveChannel(service: StreamingService, channel: LiveChannel) =
+        context.startActivity(
+            BrowserActivity.intent(
+                context = context,
+                serviceId = service.id,
+                url = service.url.trimEnd('/') + channel.path,
+                contentTitle = channel.name,
+                liveTheaterMode = true
+            )
+        )
 
     fun openItem(item: MovieItem) =
         context.startActivity(
@@ -225,27 +236,6 @@ fun HomeScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-            prominentQuickLinks.forEach { (service, quickLink) ->
-                FocusableCard(
-                    shape = RoundedCornerShape(50),
-                    onClick = { openQuickLink(service, quickLink) }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.LiveTv,
-                            contentDescription = null,
-                            tint = CinemaRed,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(quickLink.label, style = MaterialTheme.typography.labelLarge)
-                    }
-                }
-                Spacer(Modifier.width(12.dp))
-            }
             FocusableCard(
                 shape = RoundedCornerShape(50),
                 onClick = {
@@ -420,6 +410,15 @@ fun HomeScreen(
             onOpen = { openCatalogItem(it) }
         )
         Spacer(Modifier.height(16.dp))
+
+        // ---------- Native Live TV — one click opens the selected channel fullscreen ----------
+        LiveTvSectionRow(
+            sources = liveSources,
+            onOpen = { service, channel -> openLiveChannel(service, channel) }
+        )
+        if (liveSources.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+        }
 
         // ---------- Secondary quick links (e.g. YouTube tab) — lower priority, lower down ----------
         if (secondaryQuickLinks.isNotEmpty()) {

@@ -65,18 +65,136 @@
     ],
     "quickLinks": [
       {
-        "id": "live",
-        "label": "پخش زنده",
-        "path": "/medias/live/",
-        "prominent": true
-      },
-      {
         "id": "youtube",
         "label": "یوتیوب فارسی",
         "path": "/youtube-persian",
         "prominent": false
       }
-    ]
+    ],
+    "liveTv": {
+      "channels": [
+        {
+          "id": "51",
+          "name": "شبکه ۱",
+          "path": "/medias/live/51",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/3009368f-2b92-4450-9eca-6cd7a41353e6.png"
+        },
+        {
+          "id": "52",
+          "name": "شبکه ۲",
+          "path": "/medias/live/52",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/ff1b746e-5737-429d-af10-c6e855b353aa.png"
+        },
+        {
+          "id": "53",
+          "name": "شبکه ۳",
+          "path": "/medias/live/53",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/5a4a1f6a-8fb6-434d-a284-4890491047ab.png"
+        },
+        {
+          "id": "54",
+          "name": "شبکه ۴",
+          "path": "/medias/live/54",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/2f0fb872-6da4-4090-a81b-23f4234026e4.png"
+        },
+        {
+          "id": "55",
+          "name": "شبکه تهران",
+          "path": "/medias/live/55",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/dec3a52a-1940-409e-a63a-43595ca126b6.png"
+        },
+        {
+          "id": "56",
+          "name": "شبکه خبر",
+          "path": "/medias/live/56",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/c47c3e39-15cb-41f1-b5da-610a45251fed.png"
+        },
+        {
+          "id": "57",
+          "name": "شبکه نسیم",
+          "path": "/medias/live/57",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/56eafff6-38d6-4931-8504-e1c46440fb6b.png"
+        },
+        {
+          "id": "58",
+          "name": "آی‌فیلم",
+          "path": "/medias/live/58",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/8c63d2cb-4a7e-41b5-985f-d6490c3c4dc8.png"
+        },
+        {
+          "id": "59",
+          "name": "شبکه ورزش",
+          "path": "/medias/live/59",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/uploads/73c5a1f2-3bb6-459e-a889-a961a384abcc.png"
+        },
+        {
+          "id": "22",
+          "name": "ایران اینترنشنال",
+          "path": "/medias/live/22",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/iranintll.PNG"
+        },
+        {
+          "id": "37",
+          "name": "بی‌بی‌سی فارسی",
+          "path": "/medias/live/37",
+          "logoUrl": "https://upload.wikimedia.org/wikipedia/en/4/44/BBC_News_Persian_Logo.jpg"
+        },
+        {
+          "id": "29",
+          "name": "آوا",
+          "path": "/medias/live/29",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/AvaSeries.JPEG"
+        },
+        {
+          "id": "26",
+          "name": "پرشیانا",
+          "path": "/medias/live/26",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/Persiana.PNG"
+        },
+        {
+          "id": "30",
+          "name": "آونگ",
+          "path": "/medias/live/30",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/Avang.JPEG"
+        },
+        {
+          "id": "33",
+          "name": "طپش",
+          "path": "/medias/live/33",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/Tapesh.png"
+        },
+        {
+          "id": "34",
+          "name": "TMTV",
+          "path": "/medias/live/34",
+          "logoUrl": "https://pub-0e6745d891ed4f1280f06deab9f8b41e.r2.dev/Logos/TMTV.JPEG"
+        },
+        {
+          "id": "69",
+          "name": "ITN",
+          "path": "/medias/live/69",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/channels/1104b01c-0115-4bd6-8684-ac7df4b97a75.png"
+        },
+        {
+          "id": "72",
+          "name": "فراتر",
+          "path": "/medias/live/72",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/channels/73ad1be0-306b-4f95-9bbc-d86abdf747d8.png"
+        },
+        {
+          "id": "67",
+          "name": "رادیو جوان",
+          "path": "/medias/live/67",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/channels/f9f38779-cb8b-4d32-b45c-04215bc72e9a.png"
+        },
+        {
+          "id": "62",
+          "name": "VOA",
+          "path": "/medias/live/62",
+          "logoUrl": "https://cdn.farsifilix-images.legamart.com/channels/a7ed9272-8dcb-4b4b-8704-8b009604125a.png"
+        }
+      ]
+    }
   },
   {
     "id": "filmrooz",

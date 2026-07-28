@@ -113,7 +113,10 @@ class ServicesRepository(private val context: Context) {
                     current.resumeButtonTextPatterns + defaults.resumeButtonTextPatterns
                     ).distinct(),
                 // Same rule as directPlay above: adapter capability, bundled version wins.
-                quickLinks = defaults.quickLinks.ifEmpty { current.quickLinks }
+                quickLinks = defaults.quickLinks.ifEmpty { current.quickLinks },
+                // Live channel routes/logos are shipped adapter metadata. Bundled data
+                // must reach existing installs instead of staying pinned to an old file.
+                liveTv = defaults.liveTv ?: current.liveTv
             )
         }
         if (enriched != saved) file.writeText(json.encodeToString(enriched))

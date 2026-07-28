@@ -1,3 +1,54 @@
+# Aminema v0.12.0 — test report
+
+Tested on the Android TV 1080p emulator (API 36) with the user's existing
+authenticated ParsiFlix session.
+
+Build: `assembleDebug testDebugUnitTest` with JDK 17 — successful. Version
+`0.12.0`, `versionCode 25`, package `com.amin.tvos.debug`; installed with
+`adb install -r`, preserving app data and login sessions.
+
+## Live-channel discovery (verified, not guessed)
+
+A temporary debug-only probe used the site's visible channel cards exactly as
+a user would. It recorded only card label, image URL and the normal page route
+after each click. It did not inspect video/audio sources, requests, responses,
+cookies, storage, tokens or DRM.
+
+All 20 cards were mapped successfully:
+
+`51–59` for channels 1, 2, 3, 4, Tehran, News, Nasim, iFilm and Sport;
+`22` Iran International; `37` BBC Persian; `29` AVA; `26` Persiana;
+`30` Avang; `33` Tapesh; `34` TMTV; `69` ITN; `72` Faratar;
+`67` Radio Javan; `62` VOA.
+
+## Verified
+
+- Existing installs adopted the new bundled `liveTv` configuration and removed
+  the obsolete prominent Live quick link without losing service URLs or login.
+- Home renders a native 20-card Live rail with real logos, LIVE badges and the
+  same red focus/hover language as the rest of Aminema.
+- Mouse click on Channel 1 opened its ordinary `/medias/live/51` page and
+  produced active full-viewport playback with no intermediate channel grid.
+- D-pad reached the Live rail, moved horizontally through off-screen channels
+  with automatic row scrolling, and OK on Channel 2 opened active playback.
+- The CSS theater mode measured exactly `960×540` CSS pixels on a
+  `960×540` viewport (physical 1920×1080); playback reported `readyState=4`
+  and `paused=false`.
+- Back from both mouse- and D-pad-launched playback returned directly to
+  `MainActivity`, preserved the Home scroll position and restored the same
+  focused D-pad card.
+- The final APK contains no project probe Activity/class. The only filename
+  containing “Probe” is the standard Kotlin coroutine resource
+  `DebugProbesKt.bin`, not Aminema discovery code.
+- Final logcat contains no `FATAL EXCEPTION`.
+
+## Security boundary
+
+The feature opens only the service's ordinary signed-in page routes. Fullscreen
+is achieved by sizing the visible HTML5 `<video>` to the already-fullscreen
+Android activity. No media URL, stream request, authentication token, cookie or
+DRM value is read, stored or logged.
+
 # Aminema v0.8.2 — test report
 
 ## v0.8.2 direct play for films

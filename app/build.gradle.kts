@@ -13,8 +13,8 @@ android {
         applicationId = "com.amin.tvos"
         minSdk = 28          // Android 9+
         targetSdk = 35
-        versionCode = 24
-        versionName = "0.11.0"
+        versionCode = 25
+        versionName = "0.12.0"
     }
 
     buildTypes {

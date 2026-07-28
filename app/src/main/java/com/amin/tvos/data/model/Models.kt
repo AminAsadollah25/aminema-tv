@@ -2,10 +2,7 @@ package com.amin.tvos.data.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * Service type. LIVE_TV exists for future expansion — the architecture supports it,
- * but no Live TV implementation ships yet.
- */
+/** Service type. LIVE_TV keeps the service layer open to dedicated sources later. */
 @Serializable
 enum class ServiceType { STREAMING, LIVE_TV }
 
@@ -62,6 +59,30 @@ data class QuickLink(
     val prominent: Boolean = false
 )
 
+/**
+ * One normal, signed-in website page that starts a live channel.
+ *
+ * `path` is a page route, never a media/stream URL. Logos are presentation metadata
+ * discovered from the service's own visible channel cards.
+ */
+@Serializable
+data class LiveChannel(
+    val id: String,
+    val name: String,
+    /** Appended to the owning service's `url`. */
+    val path: String,
+    val logoUrl: String
+)
+
+/**
+ * Optional native Live TV rail backed by the service's ordinary browser pages.
+ * New channels or future sources can be added in services.json without UI changes.
+ */
+@Serializable
+data class LiveTvConfig(
+    val channels: List<LiveChannel> = emptyList()
+)
+
 /** A streaming service configured via services.json — never hardcoded. */
 @Serializable
 data class StreamingService(
@@ -98,7 +119,9 @@ data class StreamingService(
     /** Text patterns for the website's own Continue/Resume button. */
     val resumeButtonTextPatterns: List<String> = emptyList(),
     /** Named shortcuts into pages the site already builds — Live TV, YouTube tab, etc. */
-    val quickLinks: List<QuickLink> = emptyList()
+    val quickLinks: List<QuickLink> = emptyList(),
+    /** Optional native channel rail; every channel still opens a normal website page. */
+    val liveTv: LiveTvConfig? = null
 )
 
 /**
