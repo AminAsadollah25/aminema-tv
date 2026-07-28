@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LiveTv
@@ -40,6 +39,7 @@ import coil.request.ImageRequest
 import com.amin.tvos.data.model.LiveChannel
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.RailNavigationControls
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.SurfaceElevated
 import com.amin.tvos.ui.theme.TextSecondary
@@ -54,6 +54,7 @@ fun LiveTvSectionRow(
     onOpen: (StreamingService, LiveChannel) -> Unit
 ) {
     if (sources.isEmpty()) return
+    val scrollState = rememberScrollState()
 
     Column(Modifier.fillMaxWidth()) {
         Row(
@@ -70,33 +71,14 @@ fun LiveTvSectionRow(
             )
             Spacer(Modifier.width(10.dp))
             Text("پخش زنده", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(14.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(CinemaRed.copy(alpha = 0.15f))
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            ) {
-                Box(
-                    Modifier
-                        .size(7.dp)
-                        .clip(CircleShape)
-                        .background(CinemaRed)
-                )
-                Spacer(Modifier.width(7.dp))
-                Text(
-                    "پخش مستقیم • تمام‌صفحه",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = CinemaRed
-                )
-            }
+            Spacer(Modifier.weight(1f))
+            RailNavigationControls(scrollState)
         }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(18.dp),
             modifier = Modifier
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(scrollState)
                 .padding(horizontal = 48.dp, vertical = 8.dp)
         ) {
             sources.forEach { (service, channel) ->
@@ -169,7 +151,7 @@ private fun LiveChannelCard(
                 Box(
                     Modifier
                         .size(6.dp)
-                        .clip(CircleShape)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(CinemaRed)
                 )
                 Spacer(Modifier.width(5.dp))

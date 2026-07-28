@@ -14,6 +14,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,10 +40,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -57,6 +62,7 @@ import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.SurfaceElevated
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
 
 /**
  * Focus-aware wrapper: scales up + red glow border when focused (DPAD)
@@ -67,6 +73,7 @@ import com.amin.tvos.ui.theme.TextSecondary
 fun FocusableCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(14.dp),
+    enabled: Boolean = true,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     content: @Composable (focused: Boolean) -> Unit
@@ -74,7 +81,7 @@ fun FocusableCard(
     var dpadFocused by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
-    val focused = dpadFocused || hovered
+    val focused = enabled && (dpadFocused || hovered)
     val scale by animateFloatAsState(
         targetValue = if (focused) 1.05f else 1f,
         animationSpec = tween(160),
@@ -91,10 +98,12 @@ fun FocusableCard(
         shape = shape,
         border = BorderStroke(2.5.dp, borderColor),
         modifier = modifier
+            .alpha(if (enabled) 1f else 0.34f)
             .scale(scale)
             .onFocusChanged { dpadFocused = it.isFocused || it.hasFocus }
             .hoverable(interactionSource)
             .combinedClickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
@@ -102,6 +111,67 @@ fun FocusableCard(
             )
     ) {
         content(focused)
+    }
+}
+
+/**
+ * Shared TV rail controls. They remain in the same top-right position on every
+ * horizontal category, so mouse and DPAD users never need to hunt for scrolling.
+ */
+@Composable
+fun RailNavigationControls(
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier
+) {
+    val scope = rememberCoroutineScope()
+    val page = {
+        (scrollState.viewportSize * 0.82f).toInt().coerceAtLeast(360)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        FocusableCard(
+            modifier = Modifier.size(width = 48.dp, height = 42.dp),
+            shape = RoundedCornerShape(50),
+            enabled = scrollState.value > 0,
+            onClick = {
+                scope.launch {
+                    scrollState.animateScrollTo(
+                        (scrollState.value - page()).coerceAtLeast(0)
+                    )
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.KeyboardArrowLeft,
+                    contentDescription = "نمایش موارد قبلی",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+        FocusableCard(
+            modifier = Modifier.size(width = 48.dp, height = 42.dp),
+            shape = RoundedCornerShape(50),
+            enabled = scrollState.value < scrollState.maxValue,
+            onClick = {
+                scope.launch {
+                    scrollState.animateScrollTo(
+                        (scrollState.value + page()).coerceAtMost(scrollState.maxValue)
+                    )
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.KeyboardArrowRight,
+                    contentDescription = "نمایش موارد بعدی",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
     }
 }
 
@@ -328,16 +398,22 @@ fun SectionRow(
     title: String,
     content: @Composable () -> Unit
 ) {
+    val scrollState = rememberScrollState()
     Column(Modifier.fillMaxWidth()) {
-        Text(
-            title,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(horizontal = 48.dp, vertical = 12.dp)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 48.dp, vertical = 12.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.weight(1f))
+            RailNavigationControls(scrollState)
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(scrollState)
                 .padding(horizontal = 48.dp, vertical = 8.dp)
         ) { content() }
     }

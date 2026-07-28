@@ -1,182 +1,170 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
-این فایل خلاصهٔ عملیاتیِ همیشه‌به‌روز پروژه است. قبل از هر تغییر جدید، همراه
-با `ENGINEERING-HANDOFF-FA.md` و `ROADMAP.md` خوانده شود.
+این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. قبل از تغییر بعدی، همراه
+`ENGINEERING-HANDOFF-FA.md`، `ROADMAP.md` و `TEST_REPORT.md` خوانده شود.
 
-## قرارداد همکاری دو برنامه‌نویس
+## قرارداد دائمی همکاری دو برنامه‌نویس
 
-بعد از هر Feature، Fix یا Release، برنامه‌نویسی که کار را انجام داده باید
-این موارد را در اسناد پروژه ثبت کند:
-
-1. نسخه و `versionCode` فعلی
-2. مسئله یا خواستهٔ کاربر و تصمیم UX نهایی
-3. فایل‌ها، مدل‌ها و مسیرهای اجرایی تغییرکرده
-4. داده‌ها/DOM/Endpointهایی که واقعاً Probe و تأیید شده‌اند
-5. تست‌های انجام‌شده با نتیجهٔ قابل‌اندازه‌گیری
-6. مرز امنیتی و چیزهایی که عمداً خوانده یا ذخیره نشده‌اند
-7. محدودیت‌ها، کارهای عمداً عقب‌افتاده و قدم بعدی پیشنهادی
-8. وضعیت Commit، Tag، Release و Assetهای منتشرشده
-
-فقط نوشتن Release Notes کافی نیست. جزئیات فنی ماندگار باید در
-`ENGINEERING-HANDOFF-FA.md`، برنامه‌های آینده در `ROADMAP.md` و شواهد تست
-در `TEST_REPORT.md` هم ثبت شوند.
+بعد از هر Feature/Fix/Release ثبت کن: نسخه و versionCode، تصمیم UX، فایل‌ها
+و مسیرهای تغییرکرده، شواهد Probe واقعی، تست‌ها، مرز امنیتی، محدودیت‌ها، قدم
+بعدی و وضعیت Commit/Tag/Release/Assets. فقط Release Notes کافی نیست.
 
 ---
 
 ## وضعیت جاری
 
 - محصول: **Aminema**
-- نسخه: **0.12.0**
-- `versionCode`: **25**
+- نسخه کد: **0.12.1**
+- `versionCode`: **26**
+- وضعیت: **Release Candidate محلی؛ هنوز Commit/Tag/Push/GitHub Release نشده**
+- آخرین Release عمومی: `v0.12.0` در commit `5163c8f`
+- شاخه: `main`؛ تغییرات 0.12.1 فعلاً Working Tree هستند.
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
-- شاخه: `main`
-- Release: **منتشرشده**
-- Tag: `v0.12.0`
-- Release commit: `5163c8f`
-- URL: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.12.0`
-- امضا و Application ID تغییر نکرده‌اند؛ نصب روی نسخه قبلی Update است و
-  Cookie/Session/Library حفظ می‌شوند.
+- Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
+  نشست‌های لاگین، Cookie، Poster و Library را حفظ کرد.
 
-## خواسته‌ای که در 0.12.0 حل شد
+## مسئله‌های حل‌شده در 0.12.1
 
-پیاده‌سازی Live در 0.11.0 فقط یک دکمه در هدر بود که گرید کانال‌های خود سایت
-را باز می‌کرد. UX نهایی مورد توافق:
+1. Continue گاهی فقط Detail page را باز می‌کرد؛ چون `click()` موفقیت حساب
+   می‌شد حتی اگر React/SPA هنوز آماده نبود و کلیک را نپذیرفته بود.
+2. هنگام Direct Play ابتدا Detail page برای چند ثانیه دیده می‌شد.
+3. Continue تلویزیون و امولاتور فرق داشت؛ Sync فقط دستی بود و Repository
+   موارد قدیمی محلی را کنار نتیجه حساب نگه می‌داشت.
+4. ردیف‌های افقی برای موس دکمه صفحه‌به‌صفحه نداشتند.
+5. زیرعنوان اضافی «پخش مستقیم • تمام‌صفحه» کنار Live لازم نبود.
+6. کاربر خواست Loading شخصیت بامزه Aminema داشته باشد.
 
-- ردیف بومی و سینمایی «پخش زنده» پایین Home
-- کارت مستقل هر شبکه با لوگوی واقعی
-- OK کنترل یا کلیک موس → پخش مستقیم همان شبکه
-- بدون صفحهٔ واسط و بدون کلیک دوم برای Fullscreen
-- Back → همان Scroll و همان کارت فوکوس‌شده در Home
-- قابل‌گسترش از JSON، نه Hardcode در UI
+## تصمیم UX نهایی
 
-## کشف واقعی قبل از پیاده‌سازی
+- موفقیت Continue/Direct Play فقط وقتی تأیید می‌شود که URL مطابق
+  `playbackUrlPatterns` باشد یا رویداد واقعی HTML5 Video/Fullscreen برسد؛
+  نه صرفاً وقتی JavaScript تابع `click()` را صدا زده است.
+- Detail bootstrap پشت یک Loading سینمایی پنهان می‌شود. متن Continue:
+  «پاپ‌کورن یادت نره… 🍿» و «داریم فیلمت رو از همون‌جایی که جا گذاشتی
+  میاریم؛ خوش بگذره!»
+- اگر تا ۱۴ ثانیه Player تأیید نشود، Detail page برای انتخاب دستی آشکار
+  می‌شود؛ صفحه سیاه دائمی نداریم. Back حین Loading مستقیم Activity را می‌بندد.
+- Continue حساب در شروع سرد Process، حداکثر هر ۱۵ دقیقه، خودکار Sync می‌شود.
+  دکمه Sync دستی همچنان باقی است.
+- نتیجه موفق هر سرویس برای عضویت Continue authoritative است؛ Local فقط
+  `playbackUrl/position/duration/poster` همان Content مشترک را غنی می‌کند.
+- همه ردیف‌های افقی فلش ثابت چپ/راست در گوشه راست Header دارند؛ هر کلیک
+  ۸۲٪ Viewport را با `animateScrollTo` جابه‌جا می‌کند.
 
-یک Activity موقت فقط در `app/src/debug/` ساخته شد. Probe فقط نام کارت،
-`img` لوگو و مسیر عادی صفحه را بعد از کلیک واقعی ثبت کرد. هیچ
-`video.src/currentSrc`، Request/Response، Cookie، Local Storage، Token یا DRM
-خوانده نشد.
+## تغییرات فنی و فایل‌ها
 
-نقشهٔ ۲۰ شبکه:
+### Playback reliability
 
-| کانال | مسیر |
-|---|---|
-| شبکه ۱ | `/medias/live/51` |
-| شبکه ۲ | `/medias/live/52` |
-| شبکه ۳ | `/medias/live/53` |
-| شبکه ۴ | `/medias/live/54` |
-| شبکه تهران | `/medias/live/55` |
-| شبکه خبر | `/medias/live/56` |
-| شبکه نسیم | `/medias/live/57` |
-| آی‌فیلم | `/medias/live/58` |
-| شبکه ورزش | `/medias/live/59` |
-| ایران اینترنشنال | `/medias/live/22` |
-| BBC Persian | `/medias/live/37` |
-| AVA | `/medias/live/29` |
-| Persiana | `/medias/live/26` |
-| Avang | `/medias/live/30` |
-| Tapesh | `/medias/live/33` |
-| TMTV | `/medias/live/34` |
-| ITN | `/medias/live/69` |
-| فراتر | `/medias/live/72` |
-| Radio Javan | `/medias/live/67` |
-| VOA | `/medias/live/62` |
+- `browser/BrowserActivity.kt`
+  - retryهای Direct: 250ms تا 12s؛ Continue: 250ms تا 10.8s
+  - Cooldown برابر 850ms و guardهای `probeInFlight`
+  - candidate scoring: Visible/Enabled، Exact text، تگ button/a، جلوگیری از
+    Container/episode-season اشتباه
+  - `observePlaybackNavigation()` و `confirmPlaybackReady()`
+  - Click attempt دیگر فلگ success را Set نمی‌کند.
+  - Login/Error automation را Cancel می‌کند تا Toast/Click دیرهنگام نرسد.
+  - Timeout امن 14s و Back فوری در Loading
+- `browser/PlaybackLoadingView.kt` (جدید)
+  - View سبک Native، بدون Compose/WebView اضافه
+  - تصویر، متن بامزه، Progress و Gradient سینمایی
+- `drawable-nodpi/aminema_loading_popcorn.png` (جدید)
+  - 640×640، 556KB؛ مسکات روی صندلی سینما با پاپ‌کورن و کنترل
+  - مرجع هویت: `aminema_mascot.png`؛ تولید با built-in ImageGen
+- `ui/home/HomeScreen.kt`
+  - Detail URL مساوی Playback URL دیگر مقصد Dedicated تلقی نمی‌شود.
+  - FilmRooz movie فاقد Player page ذخیره‌شده دوباره از Resolver معمول
+    language/quality عبور می‌کند.
+  - ParsiFlix Continue از دکمه دقیق account-aware خود سایت استفاده می‌کند.
 
-بعد از کشف، تمام فایل‌ها و Manifest مربوط به Probe حذف شدند. بررسی Dex نهایی
-هیچ کلاس `LiveTvProbe` یا package پروژه‌ای `probe/debug` پیدا نکرد.
-`DebugProbesKt.bin` که در Zip APK دیده می‌شود Resource استاندارد
-Kotlin Coroutines است و ارتباطی با Probe پروژه ندارد.
+### Cross-device Continue
 
-## تغییرات کد 0.12.0
+- `browser/AccountSyncActivity.kt`
+  - Process-cold auto-sync gate با فاصله 15 دقیقه
+  - سقف Parse از 12 به 20 (هم‌اندازه rail Home)
+  - Sync موفق حتی با لیست خالی authoritative است.
+- `MainActivity.kt`
+  - بعد از پایان/Skip Intro، Sync account خودکار را یک‌بار در Process Launch
+    می‌کند؛ Task restore تلویزیون با savedInstanceState این Gate را خراب نمی‌کند.
+- `data/LibraryRepository.kt`
+  - `syncAccountSessions(serviceId, incoming)` کل همان Provider را reconcile
+    می‌کند؛ سایر Providerها دست‌نخورده می‌مانند.
+  - Local item فقط در صورت حضور همان Content در حساب حفظ و غنی می‌شود.
 
-### مدل و JSON
+### Rail navigation
 
-- `Models.kt`
-  - `LiveChannel(id, name, path, logoUrl)`
-  - `LiveTvConfig(channels)`
-  - فیلد اختیاری `StreamingService.liveTv`
-- `services.json`
-  - QuickLink قدیمی Live حذف شد.
-  - QuickLink یوتیوب فارسی باقی ماند.
-  - بلوک `liveTv.channels` با ۲۰ مسیر و لوگوی تأییدشده اضافه شد.
-- `ServicesRepository.kt`
-  - `defaults.liveTv ?: current.liveTv`
-  - علت: این داده قابلیت Adapter است و باید به نصب‌های موجود مهاجرت کند.
+- `ui/components/TvComponents.kt`
+  - `RailNavigationControls(ScrollState)` مشترک
+  - `FocusableCard(enabled)` با حالت Dim/Disabled
+  - `SectionRow` اکنون ScrollState را با Header controls شریک می‌کند.
+- `CatalogSectionRow.kt`, `LiveTvSectionRow.kt`, `SearchActivity.kt`
+  - استفاده از همان کنترل مشترک و ScrollState
+- `LiveTvSectionRow.kt`
+  - حذف کامل متن «پخش مستقیم • تمام‌صفحه»؛ badgeهای LIVE کارت‌ها باقی است.
 
-### Home
+### Version/docs
 
-- فایل جدید `ui/home/LiveTvSectionRow.kt`
-  - کارت 214×142، لوگو، نشان LIVE، فوکوس/هاور قرمز
-  - ردیف افقی D-pad friendly با Auto-scroll
-  - لوگوها با Coil در اندازه محدود `320×140` Decode می‌شوند تا RAM Box با
-    تصویر بزرگ منبع هدر نرود.
-- `HomeScreen.kt`
-  - دکمه Live از هدر حذف شد.
-  - همهٔ `service.liveTv.channels`ها به یک ردیف بومی تبدیل می‌شوند.
-  - کلیک، URL عادی `service.url + channel.path` را با
-    `liveTheaterMode=true` باز می‌کند.
+- `app/build.gradle.kts`: `0.12.1`, code `26`
+- `RELEASE_NOTES_0.12.1.md`
+- همین فایل + `ENGINEERING-HANDOFF-FA.md`, `ROADMAP.md`, `TEST_REPORT.md`
 
-### Browser
+## شواهد واقعی حساب و تست
 
-- `BrowserActivity.intent` پارامتر `liveTheaterMode` دارد.
-- صفحهٔ Live چند بار در بازهٔ 250ms تا 5.5s برای ظاهرشدن `<video>` بررسی
-  می‌شود، چون صفحه React SPA است.
-- به‌جای `requestFullscreen()` که بدون User Gesture قابل اتکا نیست، ویدئوی
-  قابل‌مشاهده با CSS زیر روی Activity تمام‌صفحهٔ Android قرار می‌گیرد:
+روی AVD `Television_1080p`، API 36، 1920×1080 و نشست واقعی لاگین‌شده:
 
-```css
-position: fixed;
-inset: 0;
-width: 100vw;
-height: 100vh;
-object-fit: contain;
-z-index: 2147483647;
-background: #000;
-```
+- Sync account دستی 15 مورد ساخت: 7 FilmRooz و 8 ParsiFlix.
+- شروع سرد 0.12.1 مقدار `last_attempt_at` را نوشت و `lastPlayed` همه نتایج
+  حساب را تازه کرد؛ Auto Sync بدون پاک‌کردن login انجام شد.
+- دو FilmRooz session محلی که داخل Account Recent هم بودند Player/Position
+  خود را حفظ کردند؛ هیچ Local-only قدیمی خارج از Account باقی نماند.
+- FilmRooz movie **Her Private Hell**: Loading → normal player page؛ Flash
+  Detail دیده نشد. موردی که `playbackUrl == contentUrl` داشت با Resolver
+  اصلاح‌شده باز هم به Player رسید.
+- ParsiFlix movie **دو روز دیرتر**: Detail → دکمه Continue خود سایت → `/play`؛
+  Retryها فقط بعد از Player route متوقف شدند.
+- FilmRooz series فاقد مقصد Account-aware: بعد از Timeout به Detail page
+  امن برگشت (fallback عمدی؛ exact episode از Account Recent ارائه نمی‌شود).
+- Loading جدید با تصویر اختصاصی و متن بامزه در 1920×1080 درست Render شد.
+- فلش‌ها در Services/Continue/Catalog/Live/More/Recent/Favorites/Search
+  Headerها دیده می‌شوند؛ حالت ابتدا/انتها Dim می‌شود.
+- زیرعنوان Live حذف و badge LIVE کارت‌ها حفظ شد.
+- `assembleDebug` و `lintDebug`: موفق؛ Lint error صفر.
+- نصب `adb install -r`: موفق؛ نسخه نصب‌شده 0.12.1 code 26.
+- Continue هر دو Provider به Player واقعی رسید؛ fallback series بدون crash.
 
-- `video.controls = true` و `video.play()` اجرا می‌شوند؛ Source و Request
-  ویدئو هرگز خوانده نمی‌شوند.
-- Back، Mouse Back و QuickMenu Back در Live mode مستقیم Activity را
-  می‌بندند تا گرید واسط سایت دیده نشود.
+## محدودیت واقعی که باید حفظ شود
 
-## تست‌های قطعی
-
-- JSON معتبر و Build موفق: `assembleDebug`
-- Unit task: `testDebugUnitTest` (در حال حاضر `NO-SOURCE`)
-- نصب با `adb install -r`: موفق و بدون پاک‌شدن داده
-- نسخه نصب‌شده: `0.12.0`, code `25`
-- شبکه ۱ با کلیک موس: پخش مستقیم تمام‌صفحه
-- شبکه ۲ با D-pad و OK: پخش مستقیم تمام‌صفحه
-- اندازه Video بعد از Theater mode:
-  - Viewport: `960×540` CSS
-  - Video rect: `960×540` CSS
-  - خروجی فیزیکی: `1920×1080`
-  - `readyState=4`, `paused=false`
-- D-pad میان شبکه‌ها حرکت کرد و Horizontal Row خودکار اسکرول شد.
-- Back همان Scroll و Focus کارت شبکه ۲ را حفظ کرد.
-- Logcat نهایی: بدون `FATAL EXCEPTION`
-
-## Asset نسخه
-
-- `Aminema-v0.12.0-debug.apk`
-- اندازه GitHub Asset: `75,570,599` بایت
-- SHA-256:
-  `0d9c0ea28a72b45bfaca5b464b897e1c1635b4a6d8a3e9775f26bf8271fd5329`
-- `Aminema-v0.12.0-debug.apk.sha256`
-- Release notes: `RELEASE_NOTES_0.12.0.md`
-- وضعیت GitHub: Draft=false، Prerelease=false، هر دو Asset با state=uploaded
+- ParsiFlix Account API واقعاً Continue می‌دهد، پس سریال/قسمت را خود سایت
+  می‌تواند ادامه دهد.
+- FilmRooz `/user/panel/` فقط «مشاهدات اخیر» و Content detail را می‌دهد؛
+  برای فیلم‌ها Resolver عادی Player را پیدا می‌کند، اما برای Series
+  Cross-device exact episode/quality/time همیشه موجود نیست. در این حالت
+  Aminema پس از Timeout Detail را نشان می‌دهد و چیزی را حدس نمی‌زند.
+- Loading زمان شبکه را حذف نمی‌کند؛ فقط Detail flash را به تجربه سینمایی
+  تبدیل می‌کند.
 
 ## مرز امنیتی
 
-- فقط صفحهٔ عادی وبِ سرویس باز می‌شود.
-- هیچ Authentication Bypass وجود ندارد.
-- هیچ Stream/Media URL استخراج یا ذخیره نمی‌شود.
-- هیچ Cookie، Token، DRM یا Header احراز هویت Log/Export نمی‌شود.
-- Login و Session همان WebView قبلی و تحت کنترل سایت باقی می‌ماند.
+- فقط بخش Continue/Recent حساب خود کاربر و Page URLهای عادی خوانده می‌شوند.
+- هیچ Media URL، `video.src/currentSrc`، Stream request، DRM، Cookie، Token
+  یا Auth header خوانده/ذخیره/Log/Export نمی‌شود.
+- هیچ Auth bypass یا endpoint حدسی اضافه نشده است.
+- Asset تصویری فقط Local resource است و در Runtime شبکه مصرف نمی‌کند.
 
-## قدم بعدی پیشنهادی
+## وضعیت انتشار و قدم بعدی
 
-اولویت بعدی طبق ROADMAP، **بازطراحی کامل کیبورد** است. پیشنهاد مکمل بعد از
-آن برای Live: Channel Zapping با چپ/راست در حین پخش و یک Overlay بسیار کوتاه
-نام شبکه، بدون بازکردن صفحه واسط. قبل از افزودن ردیف‌های ژانری، Home باید از
-`Column + verticalScroll` به `LazyColumn/LazyRow` مهاجرت کند.
+- Commit: هنوز نشده
+- Tag `v0.12.1`: هنوز ساخته نشده
+- GitHub Release: هنوز ساخته نشده
+- RC محلی آماده:
+  - `outputs/Aminema-v0.12.1-RC-debug.apk` (حدود 72MB)
+  - `outputs/Aminema-v0.12.1-RC-debug.apk.sha256`
+  - SHA-256:
+    `94f4a7d988b2b5005800afe3da280e449f318211e12aacf9552d02ab110200b0`
+- Asset عمومی هنوز Upload نشده. بعد از تأیید مالک: Commit/Tag/Push و GitHub
+  Release Latest با نام نهایی بدون `RC` ایجاد شود.
+
+**مرحله پیشنهادی بعد از انتشار 0.12.1:** نسخه 0.13.0، بازطراحی کامل کیبورد
+به‌صورت State Machine ثابت برای Username → Password → Caps → Language →
+Show/Hide → Done، سپس مهاجرت Home از `Column+verticalScroll` به Lazy layout
+قبل از افزودن ردیف‌های ژانری بیشتر.

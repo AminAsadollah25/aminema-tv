@@ -26,6 +26,7 @@ import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.ui.components.CatalogCard
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.RailNavigationControls
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
 import java.util.concurrent.TimeUnit
@@ -45,6 +46,7 @@ fun CatalogSectionRow(
     onOpen: (CatalogItem) -> Unit
 ) {
     val items = section?.items(filter).orEmpty()
+    val scrollState = rememberScrollState()
     Column(Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -92,6 +94,8 @@ fun CatalogSectionRow(
                     Text("بروزرسانی", style = MaterialTheme.typography.labelLarge)
                 }
             }
+            Spacer(Modifier.width(12.dp))
+            RailNavigationControls(scrollState)
         }
 
         if (section?.error?.isNotBlank() == true) {
@@ -122,7 +126,7 @@ fun CatalogSectionRow(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
+                    .horizontalScroll(scrollState)
                     .padding(horizontal = 48.dp, vertical = 8.dp)
             ) {
                 items.forEach { item ->

@@ -42,6 +42,7 @@ import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.SearchGroup
 import com.amin.tvos.data.model.SearchResult
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.RailNavigationControls
 import com.amin.tvos.ui.components.CatalogCard
 import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.CinemaRed
@@ -197,8 +198,12 @@ class SearchActivity : ComponentActivity() {
 
     @Composable
     private fun ResultGroup(title: String, group: SearchGroup) {
+        val scrollState = rememberScrollState()
         Column(Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(title, style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.width(16.dp))
                 if (group.loading) {
@@ -207,6 +212,8 @@ class SearchActivity : ComponentActivity() {
                         modifier = Modifier.height(22.dp).width(22.dp)
                     )
                 }
+                Spacer(Modifier.weight(1f))
+                RailNavigationControls(scrollState)
             }
             Spacer(Modifier.height(10.dp))
             when {
@@ -236,7 +243,7 @@ class SearchActivity : ComponentActivity() {
 
                 else -> Row(
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                    modifier = Modifier.horizontalScroll(scrollState)
                 ) {
                     group.results.forEach { result ->
                         CatalogCard(

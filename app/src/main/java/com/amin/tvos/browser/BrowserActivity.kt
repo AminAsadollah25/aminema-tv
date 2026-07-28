@@ -68,6 +68,8 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
         private const val EXTRA_DIRECT_PLAY = "direct_play"
         private const val EXTRA_LIVE_THEATER_MODE = "live_theater_mode"
+        private const val PLAYBACK_PREPARATION_TIMEOUT_MS = 14_000L
+        private const val ACTION_RETRY_COOLDOWN_MS = 850L
 
         fun intent(
             context: Context,
@@ -104,6 +106,7 @@ class BrowserActivity : ComponentActivity() {
 
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
+    private lateinit var playbackLoadingView: PlaybackLoadingView
     private lateinit var errorView: TvErrorView
     private lateinit var mouseKeyboard: MouseKeyboardOverlay
     private lateinit var quickMenu: QuickMenuOverlay
@@ -123,6 +126,11 @@ class BrowserActivity : ComponentActivity() {
     private var autoResumeActionTriggered = false
     private var directPlayRequested = false
     private var directPlayTriggered = false
+    private var directPlayProbeInFlight = false
+    private var continueProbeInFlight = false
+    private var playbackAutomationTimedOut = false
+    private var lastDirectPlayAttemptAt = 0L
+    private var lastContinueAttemptAt = 0L
     private var liveTheaterModeRequested = false
     private var liveTheaterModeApplied = false
     private var requestedResumeStrategy: ResumeStrategy? = null
@@ -142,6 +150,23 @@ class BrowserActivity : ComponentActivity() {
     private var currentIsPlayable = false
 
     private val metadataHandler = Handler(Looper.getMainLooper())
+    private val playbackAutomationHandler = Handler(Looper.getMainLooper())
+    private val playbackAutomationTimeout = Runnable {
+        if (
+            !directPlayTriggered &&
+            !autoResumeActionTriggered &&
+            ::playbackLoadingView.isInitialized
+        ) {
+            playbackAutomationTimedOut = true
+            playbackLoadingView.hide()
+            Toast.makeText(
+                this,
+                "پخش خودکار آماده نشد؛ صفحه فیلم برای انتخاب دستی باز است.",
+                Toast.LENGTH_LONG
+            ).show()
+            webView.requestFocus()
+        }
+    }
     private val metadataRunnable = object : Runnable {
         override fun run() {
             if (::webView.isInitialized && !isFinishing && !isDestroyed) {
@@ -195,6 +220,14 @@ class BrowserActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
+        playbackLoadingView = PlaybackLoadingView(this)
+        root.addView(
+            playbackLoadingView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
         root.addView(
             errorView,
             FrameLayout.LayoutParams(
@@ -229,6 +262,13 @@ class BrowserActivity : ComponentActivity() {
             )
         )
         setContentView(root)
+        if (autoResumeRequested || directPlayRequested) {
+            playbackLoadingView.showPreparing(isContinue = autoResumeRequested)
+            playbackAutomationHandler.postDelayed(
+                playbackAutomationTimeout,
+                PLAYBACK_PREPARATION_TIMEOUT_MS
+            )
+        }
 
         configureWebView()
         setupBackNavigation()
@@ -291,6 +331,7 @@ class BrowserActivity : ComponentActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
                 errorView.visibility = View.GONE
+                observePlaybackNavigation(url)
                 currentTitle = ""
                 currentPoster = ""
                 currentResumePosition = 0L
@@ -307,6 +348,8 @@ class BrowserActivity : ComponentActivity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 CookieManager.getInstance().flush()
+                observePlaybackNavigation(url)
+                if (isLoginRoute(url)) cancelPlaybackAutomation()
                 installAdaptivePageScale(view)
                 installMouseKeyboardBridge(view)
                 installPlaybackBridge(view)
@@ -324,6 +367,7 @@ class BrowserActivity : ComponentActivity() {
                 view.postDelayed({ installMouseKeyboardBridge(view) }, 400)
                 view.postDelayed({ installPlaybackBridge(view) }, 450)
                 url?.let { changedUrl ->
+                    observePlaybackNavigation(changedUrl)
                     view.postDelayed({ captureResumeMetadata(changedUrl) }, 900)
                     view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
                     view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
@@ -338,6 +382,7 @@ class BrowserActivity : ComponentActivity() {
                 error: WebResourceError
             ) {
                 if (request.isForMainFrame) {
+                    cancelPlaybackAutomation()
                     lastFailedUrl = request.url.toString()
                     errorView.show(
                         title = "Can't reach $serviceName",
@@ -352,6 +397,7 @@ class BrowserActivity : ComponentActivity() {
                 error: SslError
             ) {
                 handler.cancel()
+                cancelPlaybackAutomation()
                 lastFailedUrl = webView.url
                 errorView.show(
                     title = "Secure connection failed",
@@ -369,6 +415,7 @@ class BrowserActivity : ComponentActivity() {
 
                 customView = view
                 customViewCallback = callback
+                confirmPlaybackReady()
                 webView.visibility = View.GONE
                 errorView.visibility = View.GONE
                 mouseKeyboard.dismiss()
@@ -661,6 +708,7 @@ class BrowserActivity : ComponentActivity() {
                 val playbackUrl = data.optString("pageUrl").take(2_000)
                 val referrer = data.optString("referrer").take(2_000)
                 val adapter = serviceAdapter ?: return@runOnUiThread
+                confirmPlaybackReady()
                 val contentUrl = lastContentUrl.ifBlank {
                     referrer.takeIf { adapter.isContentUrl(it) }.orEmpty()
                 }.ifBlank {
@@ -1227,12 +1275,43 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun scheduleDirectPlay(view: WebView = webView) {
-        if (!directPlayRequested || directPlayTriggered) return
+        if (!directPlayRequested || directPlayTriggered || playbackAutomationTimedOut) return
         if (serviceAdapter?.directPlay == null) return
-        listOf(300L, 1_200L, 2_500L, 4_500L).forEach { delay ->
+        listOf(
+            250L, 750L, 1_400L, 2_300L, 3_500L, 5_000L, 7_000L, 9_500L, 12_000L
+        ).forEach { delay ->
             view.postDelayed({ tryOpenBestStream(view) }, delay)
         }
     }
+
+    /**
+     * A click attempt is deliberately not considered success. Only a configured
+     * top-level player route (or a real HTML5 playback event) completes automation.
+     */
+    private fun observePlaybackNavigation(url: String) {
+        val adapter = serviceAdapter ?: return
+        if (adapter.isPlaybackUrl(url)) confirmPlaybackReady()
+    }
+
+    private fun confirmPlaybackReady() {
+        if (directPlayRequested) directPlayTriggered = true
+        if (autoResumeRequested) autoResumeActionTriggered = true
+        playbackAutomationTimedOut = false
+        playbackAutomationHandler.removeCallbacks(playbackAutomationTimeout)
+        if (::playbackLoadingView.isInitialized) playbackLoadingView.hide()
+    }
+
+    private fun cancelPlaybackAutomation() {
+        playbackAutomationTimedOut = true
+        playbackAutomationHandler.removeCallbacks(playbackAutomationTimeout)
+        if (::playbackLoadingView.isInitialized) playbackLoadingView.hide()
+    }
+
+    private fun isLoginRoute(url: String): Boolean =
+        Regex(
+            """(?:^|/|#)(?:login|signin|sign-in|auth|device|pair|qr)(?:/|$|[?#])""",
+            RegexOption.IGNORE_CASE
+        ).containsMatchIn(url)
 
     /**
      * Takes the detail page one step further, to the site's own player page.
@@ -1245,11 +1324,18 @@ class BrowserActivity : ComponentActivity() {
      * No media file URL, DRM value or token is read, stored or logged.
      */
     private fun tryOpenBestStream(view: WebView = webView) {
-        if (directPlayTriggered) return
+        if (
+            directPlayTriggered ||
+            playbackAutomationTimedOut ||
+            directPlayProbeInFlight ||
+            SystemClock.uptimeMillis() - lastDirectPlayAttemptAt <
+                ACTION_RETRY_COOLDOWN_MS
+        ) return
         val adapter = serviceAdapter ?: return
         val config = adapter.directPlay ?: return
         val currentUrl = view.url.orEmpty()
         if (!adapter.isContentUrl(currentUrl)) return
+        directPlayProbeInFlight = true
 
         val languages = JSONArray(config.preferredLanguages).toString()
         val heights = JSONArray(config.preferredHeights).toString()
@@ -1311,9 +1397,13 @@ class BrowserActivity : ComponentActivity() {
         """.trimIndent()
 
         view.evaluateJavascript(script) { result ->
+            directPlayProbeInFlight = false
+            if (directPlayTriggered || playbackAutomationTimedOut) {
+                return@evaluateJavascript
+            }
             val path = result?.trim('"')?.replace("\\/", "/").orEmpty()
             if (path.startsWith("/")) {
-                directPlayTriggered = true
+                lastDirectPlayAttemptAt = SystemClock.uptimeMillis()
                 val target = runCatching {
                     val base = Uri.parse(currentUrl)
                     "${base.scheme}://${base.host}$path"
@@ -1336,26 +1426,51 @@ class BrowserActivity : ComponentActivity() {
         textPatterns: List<String>,
         excludePatterns: List<String>
     ) {
-        if (directPlayTriggered || textPatterns.isEmpty()) return
+        if (
+            directPlayTriggered ||
+            playbackAutomationTimedOut ||
+            directPlayProbeInFlight ||
+            textPatterns.isEmpty()
+        ) return
         val pattern = JSONObject.quote(textPatterns.joinToString("|") { "(?:$it)" })
+        val patternList = JSONArray(textPatterns).toString()
         val exclude = JSONObject.quote(
             excludePatterns.ifEmpty { listOf("\\u0000") }.joinToString("|") { "(?:$it)" }
         )
+        directPlayProbeInFlight = true
         val script = """
             (function() {
               try {
                 var matcher = new RegExp($pattern, 'i');
                 var blocked = new RegExp($exclude, 'i');
+                var patterns = $patternList;
+                function visible(el) {
+                  var box = el.getBoundingClientRect();
+                  var style = window.getComputedStyle(el);
+                  return box.width > 30 && box.height > 20 &&
+                    style.display !== 'none' && style.visibility !== 'hidden' &&
+                    style.pointerEvents !== 'none' && !el.disabled;
+                }
+                function score(el) {
+                  var text = (el.innerText || el.textContent || '').trim();
+                  var exact = patterns.some(function(value) {
+                    try { return new RegExp('^(?:' + value + ')$', 'i').test(text); }
+                    catch (_) { return false; }
+                  });
+                  var tag = (el.tagName || '').toLowerCase();
+                  return (exact ? 10000 : 0) +
+                    (tag === 'button' || tag === 'a' ? 500 : 0) -
+                    text.length * 3;
+                }
                 var candidates = Array.from(document.querySelectorAll(
                   'button,[role="button"],a'
                 )).filter(function(el) {
                   var text = (el.innerText || el.textContent || '').trim();
-                  var box = el.getBoundingClientRect();
                   return text && text.length < 40 && matcher.test(text) &&
-                    !blocked.test(text) &&
-                    box.width > 30 && box.height > 20;
+                    !blocked.test(text) && visible(el);
                 });
                 if (!candidates.length) return 'none';
+                candidates.sort(function(a, b) { return score(b) - score(a); });
                 candidates[0].click();
                 return 'clicked';
               } catch (error) {
@@ -1364,7 +1479,12 @@ class BrowserActivity : ComponentActivity() {
             })();
         """.trimIndent()
         view.evaluateJavascript(script) { result ->
-            if (result?.contains("clicked") == true) directPlayTriggered = true
+            directPlayProbeInFlight = false
+            if (result?.contains("clicked") == true) {
+                // A DOM click is only an attempt. SPA handlers can ignore a click
+                // while hydrating, so retries stop only after a real player route.
+                lastDirectPlayAttemptAt = SystemClock.uptimeMillis()
+            }
         }
     }
 
@@ -1373,10 +1493,16 @@ class BrowserActivity : ComponentActivity() {
         if (
             !autoResumeRequested ||
             autoResumeActionTriggered ||
+            playbackAutomationTimedOut ||
             (requestedResumeStrategy ?: adapter.resumeStrategy) !=
                 ResumeStrategy.CLICK_SITE_CONTINUE
         ) return
-        listOf(250L, 800L, 1_600L, 3_000L).forEach { delay ->
+        // A movie direct-play resolver is more precise (language + quality).
+        // Do not race it with a second generic site action.
+        if (directPlayRequested && adapter.directPlay != null) return
+        listOf(
+            250L, 700L, 1_300L, 2_100L, 3_200L, 4_600L, 6_300L, 8_300L, 10_800L
+        ).forEach { delay ->
             view.postDelayed({ tryClickSiteContinue(view) }, delay)
         }
     }
@@ -1388,7 +1514,14 @@ class BrowserActivity : ComponentActivity() {
      */
     private fun tryClickSiteContinue(view: WebView = webView) {
         // Direct play already moved the page on; a second click would navigate twice.
-        if (autoResumeActionTriggered || directPlayTriggered) return
+        if (
+            autoResumeActionTriggered ||
+            directPlayTriggered ||
+            playbackAutomationTimedOut ||
+            continueProbeInFlight ||
+            SystemClock.uptimeMillis() - lastContinueAttemptAt <
+                ACTION_RETRY_COOLDOWN_MS
+        ) return
         val adapter = serviceAdapter ?: return
         if (!adapter.isContentUrl(view.url.orEmpty())) return
         val textPatterns = requestedActionButtonPatterns.ifEmpty {
@@ -1398,25 +1531,40 @@ class BrowserActivity : ComponentActivity() {
         val pattern = JSONObject.quote(
             textPatterns.joinToString("|") { "(?:$it)" }
         )
+        val patternList = JSONArray(textPatterns).toString()
+        continueProbeInFlight = true
         val script = """
             (function() {
               try {
                 var matcher = new RegExp($pattern, 'i');
+                var patterns = $patternList;
+                function visible(el) {
+                  var r = el.getBoundingClientRect();
+                  var style = window.getComputedStyle(el);
+                  return r.width > 30 && r.height > 20 &&
+                    style.display !== 'none' && style.visibility !== 'hidden' &&
+                    style.pointerEvents !== 'none' && !el.disabled;
+                }
                 var candidates = Array.from(document.querySelectorAll(
                   'button,[role="button"],a'
                 )).filter(function(el) {
                   var text = (el.innerText || el.textContent || '').trim();
-                  var r = el.getBoundingClientRect();
-                  return text && matcher.test(text) &&
-                         r.width > 30 && r.height > 20;
+                  return text && text.length < 80 && matcher.test(text) && visible(el);
                 });
                 if (!candidates.length) return 'none';
                 candidates.sort(function(a, b) {
                   function score(el) {
-                    var text = (el.innerText || '').trim();
-                    var r = el.getBoundingClientRect();
-                    return r.width + text.length * 4 +
-                      (/فصل|قسمت|episode|season/i.test(text) ? 1000 : 0);
+                    var text = (el.innerText || el.textContent || '').trim();
+                    var exact = patterns.some(function(value) {
+                      try {
+                        return new RegExp('^(?:' + value + ')$', 'i').test(text);
+                      } catch (_) { return false; }
+                    });
+                    var tag = (el.tagName || '').toLowerCase();
+                    return (exact ? 10000 : 0) +
+                      (tag === 'button' || tag === 'a' ? 500 : 0) -
+                      (/فصل|قسمت|episode|season/i.test(text) ? 1000 : 0) -
+                      text.length * 3;
                   }
                   return score(b) - score(a);
                 });
@@ -1428,8 +1576,11 @@ class BrowserActivity : ComponentActivity() {
             })();
         """.trimIndent()
         view.evaluateJavascript(script) { result ->
+            continueProbeInFlight = false
             if (!result.isNullOrBlank() && result != "\"none\"" && result != "null") {
-                autoResumeActionTriggered = true
+                // Keep retrying until navigation reaches a configured player URL.
+                // "click()" alone is not proof that a hydrating SPA accepted it.
+                lastContinueAttemptAt = SystemClock.uptimeMillis()
                 view.postDelayed({ tryRestoreResumePosition(view) }, 1_000L)
             }
         }
@@ -1664,6 +1815,10 @@ class BrowserActivity : ComponentActivity() {
                     }
                     mouseKeyboard.isShowing -> mouseKeyboard.dismiss()
                     customView != null -> webView.webChromeClient?.onHideCustomView()
+                    playbackLoadingView.isShowing -> {
+                        playbackAutomationHandler.removeCallbacks(playbackAutomationTimeout)
+                        finish()
+                    }
                     // A channel card is a one-level destination. Back must always
                     // restore Home and its previous focused card, never reveal the
                     // service's intermediate channel grid.
@@ -1706,6 +1861,7 @@ class BrowserActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (
             isKeyboardDismissKey(event.keyCode) &&
@@ -1797,6 +1953,7 @@ class BrowserActivity : ComponentActivity() {
 
     override fun onDestroy() {
         metadataHandler.removeCallbacks(metadataRunnable)
+        playbackAutomationHandler.removeCallbacksAndMessages(null)
         customView?.let { root.removeView(it) }
         customView = null
         webView.apply {

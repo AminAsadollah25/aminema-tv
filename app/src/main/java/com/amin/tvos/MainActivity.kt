@@ -1,5 +1,6 @@
 package com.amin.tvos
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,17 +27,20 @@ import androidx.navigation.compose.rememberNavController
 import com.amin.tvos.intro.IntroGate
 import com.amin.tvos.intro.IntroOverlay
 import com.amin.tvos.intro.IntroPreferences
+import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
 import com.amin.tvos.ui.settings.SettingsScreen
 import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.TextPrimary
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
     /** True only while the cold-start intro is on screen. */
     private var introVisible by mutableStateOf(false)
+    private var autoAccountSyncLaunched = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +89,26 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
+                        // Refresh the website-account Continue rows once per cold start
+                        // (at most every 15 minutes). This makes emulator and TV converge
+                        // without requiring the user to remember the Sync button.
+                        LaunchedEffect(introVisible) {
+                            if (
+                                !introVisible &&
+                                !autoAccountSyncLaunched &&
+                                AccountSyncActivity.acquireAutoSync(this@MainActivity)
+                            ) {
+                                autoAccountSyncLaunched = true
+                                delay(900L)
+                                startActivity(
+                                    android.content.Intent(
+                                        this@MainActivity,
+                                        AccountSyncActivity::class.java
+                                    )
+                                )
+                            }
+                        }
+
                         // Home is built underneath, so it is ready the moment the intro ends.
                         if (introVisible) {
                             IntroOverlay(
@@ -101,6 +126,7 @@ class MainActivity : ComponentActivity() {
      * The intro is modal: while it plays no key may reach Home, so the DPAD_CENTER that skipped
      * the intro cannot also open a service card. Volume keys still pass through.
      */
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (!introVisible) return super.dispatchKeyEvent(event)
         if (event.keyCode in VOLUME_KEYS) return super.dispatchKeyEvent(event)

@@ -137,6 +137,18 @@ Channel `id`, `name`, normal page `path`, and `logoUrl` live in the optional
 `liveTv.channels` block of `services.json`; no media URL, token or DRM value is
 read or stored.
 
+Version 0.12.1 makes Continue Watching reliable and consistent across Aminema
+devices. A cold process launch periodically reconciles each signed-in
+website's own Continue/Recent account row; the account decides membership,
+while a matching local session can still retain its exact normal player page
+and HTML5 position. Continue and Direct Play no longer treat a JavaScript
+`click()` as success: retries stop only after a configured player route, a
+real HTML5 playback event, or native fullscreen is observed. The unavoidable
+detail-page bootstrap is covered by a lightweight cinematic popcorn loading
+screen and falls back safely to manual selection after 14 seconds. Every
+horizontal Home/Search rail also has shared mouse- and DPAD-friendly page
+arrows, and the redundant Live subtitle was removed.
+
 ## Next update queue (not implemented in v0.8.2)
 
 - **Keyboard redesign (0.9.1):** explicit

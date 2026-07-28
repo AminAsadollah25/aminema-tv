@@ -1,3 +1,84 @@
+# Aminema v0.12.1 — test report (release candidate)
+
+Tested on Android TV 1080p emulator (API 36) with the user's existing,
+authenticated ParsiFlix and FilmRooz WebView sessions. Installed over v0.12.0
+with `adb install -r`; package data, cookies, cached posters and sessions stayed
+intact. Installed metadata reports `0.12.1`, `versionCode 26`, package
+`com.amin.tvos.debug`.
+
+## Build quality
+
+- `assembleDebug`: successful.
+- `lintDebug`: successful, zero errors.
+- `git diff --check`: clean.
+- Loading art is 640×640 / 556KB; it is a local drawable and adds no runtime
+  request. The bundled intro remains 10MB, so this asset is not a meaningful
+  startup or APK-size regression.
+
+## Cross-device account reconciliation
+
+- Manual signed-in sync returned 15 account rows: 7 FilmRooz and 8 ParsiFlix.
+- A process-cold launch wrote `account_continue_sync.last_attempt_at` and
+  refreshed every imported `lastPlayed`, proving automatic sync executed.
+- The repository result contained no service-local item that was absent from
+  the successful account result.
+- Two FilmRooz items that existed both locally and remotely retained their
+  exact local player/position/duration while taking current account ordering.
+- Providers reconcile independently; a provider is not cleared when its sync
+  fails before returning an authoritative result.
+
+## Continue and Direct Play
+
+- **FilmRooz / Her Private Hell:** a stored player URL equal to its detail URL
+  was rejected as a reusable destination. The normal configured Resolver
+  selected the website's player page; the cinematic overlay remained above the
+  WebView until the player page was confirmed.
+- **ParsiFlix / دو روز دیرتر:** the website's visible Continue action reached
+  the configured `/play` route. Calling `click()` alone did not stop retries;
+  retries stopped only when playback navigation was observed.
+- Real HTML5 play/fullscreen events also dismiss the overlay and count as
+  confirmed playback.
+- A FilmRooz series whose account Recent row exposes no exact episode/player
+  destination reached the 14-second deadline, dismissed the overlay and
+  safely revealed the detail page for manual episode selection.
+- Back while the overlay is visible closes BrowserActivity immediately rather
+  than revealing an intermediate detail page.
+- Login redirects and main-frame errors cancel pending automation, preventing
+  a delayed click or timeout toast while the user is logging in.
+
+## UI and interaction
+
+- The new 1920×1080 loading screen renders the generated seated mascot,
+  popcorn, remote, Persian copy and spinner inside the TV safe area.
+- Shared left/right controls appear at the top-right of Services, Continue,
+  both Catalog rows, Live, More, Recently Opened, Favorites and both Search
+  result groups.
+- Controls share the exact `ScrollState` of their rail, move 82% of the visible
+  viewport per action and dim/disable at their ends.
+- Mouse horizontal swipes and poster clicks remain functional.
+- Live title now shows only «پخش زنده»; per-card LIVE badges remain.
+- No `FATAL EXCEPTION` was observed during account sync, both successful
+  playback transitions, fallback, rail navigation or Back.
+
+## Security boundary
+
+The test and implementation inspected only normal top-level page URLs, visible
+normal website controls and account Continue/Recent metadata. No media URL,
+`video.src/currentSrc`, request/response body, cookie, token, authentication
+header or DRM value was read, stored or logged.
+
+## Physical-box acceptance still requested before public release
+
+1. Install the RC as an update and cold-launch once; verify the account sync
+   result matches the emulator after it returns Home.
+2. Open one ParsiFlix and one FilmRooz movie from Continue three times each.
+3. Test both rail arrows with the real USB mouse and DPAD/OK.
+4. Press Back while the popcorn loading screen is visible.
+5. Confirm a FilmRooz series falls back to episode selection rather than
+   remaining on a black/loading screen.
+
+---
+
 # Aminema v0.12.0 — test report
 
 Tested on the Android TV 1080p emulator (API 36) with the user's existing

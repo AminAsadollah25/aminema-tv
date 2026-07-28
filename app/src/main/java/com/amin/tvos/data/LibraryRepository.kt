@@ -239,45 +239,58 @@ class LibraryRepository(private val context: Context) {
     }
 
     /**
-     * Imports only the user's own account Continue/Recent rows. Local playback
-     * always wins for position and stable player URL. No media URL is accepted.
+     * Reconciles one provider against its signed-in account Continue/Recent row.
+     *
+     * The account list is authoritative for membership, so a successful sync
+     * produces the same rail on every Aminema device. A matching local session
+     * still enriches that remote item with its stable player page and position.
+     * Sessions from other services are untouched. No media URL is accepted.
      */
     suspend fun syncAccountSessions(
+        serviceId: String,
         incoming: List<PlaybackSession>
     ) = withContext(Dispatchers.IO) {
-        if (incoming.isEmpty()) return@withContext
-        val current = _playbackSessions.value.toMutableList()
-        incoming.take(30).forEach { remote ->
-            if (remote.contentUrl.isBlank()) return@forEach
-            val id = sha1(remote.contentUrl)
-            val existing = current.firstOrNull { it.id == id }
-            val merged = if (existing != null && !existing.syncedFromAccount) {
-                existing.copy(
-                    title = remote.title.ifBlank { existing.title },
-                    posterUrl = existing.posterUrl.ifBlank { remote.posterUrl },
-                    lastPlayed = remote.lastPlayed
-                )
-            } else {
-                remote.copy(
-                    id = id,
-                    title = remote.title.ifBlank { existing?.title ?: remote.serviceName },
-                    posterUrl = remote.posterUrl.ifBlank {
-                        existing?.posterUrl.orEmpty()
-                    },
-                    resumePosition = remote.resumePosition.takeIf { it > 0L }
-                        ?: existing?.resumePosition
-                        ?: 0L,
-                    duration = remote.duration.takeIf { it > 0L }
-                        ?: existing?.duration
-                        ?: 0L,
-                    syncedFromAccount = true
-                )
+        if (serviceId.isBlank()) return@withContext
+        val previous = _playbackSessions.value
+        val reconciled = incoming
+            .asSequence()
+            .filter { it.serviceId == serviceId && it.contentUrl.isNotBlank() }
+            .take(30)
+            .map { remote ->
+                val id = sha1(remote.contentUrl)
+                val existing = previous.firstOrNull { it.id == id }
+                if (existing != null && !existing.syncedFromAccount) {
+                    existing.copy(
+                        title = remote.title.ifBlank { existing.title },
+                        posterUrl = existing.posterUrl.ifBlank { remote.posterUrl },
+                        lastPlayed = remote.lastPlayed
+                    )
+                } else {
+                    remote.copy(
+                        id = id,
+                        title = remote.title.ifBlank {
+                            existing?.title ?: remote.serviceName
+                        },
+                        posterUrl = remote.posterUrl.ifBlank {
+                            existing?.posterUrl.orEmpty()
+                        },
+                        resumePosition = remote.resumePosition.takeIf { it > 0L }
+                            ?: existing?.resumePosition
+                            ?: 0L,
+                        duration = remote.duration.takeIf { it > 0L }
+                            ?: existing?.duration
+                            ?: 0L,
+                        syncedFromAccount = true
+                    )
+                }
             }
-            current.removeAll { it.id == id }
-            current.add(merged)
-        }
+            .toList()
         persistPlayback(
-            current.sortedByDescending { it.lastPlayed }.take(40)
+            (
+                previous.filterNot { it.serviceId == serviceId } + reconciled
+            )
+                .sortedByDescending { it.lastPlayed }
+                .take(40)
         )
     }
 

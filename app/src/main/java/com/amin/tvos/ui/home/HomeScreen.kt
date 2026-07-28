@@ -147,11 +147,26 @@ fun HomeScreen(
         )
 
     fun openPlayback(session: PlaybackSession) {
+        // Some inline website players report the detail URL as their page URL.
+        // It is not a reusable player destination unless it differs from content.
+        val hasDedicatedPlaybackPage =
+            session.playbackUrl.isNotBlank() &&
+                session.playbackUrl.trimEnd('/') != session.contentUrl.trimEnd('/')
         val startUrl = when (session.resumeStrategy) {
             ResumeStrategy.OPEN_PLAYBACK_PAGE ->
-                session.playbackUrl.ifBlank { session.contentUrl }
+                session.playbackUrl.takeIf { hasDedicatedPlaybackPage }
+                    ?: session.contentUrl
             ResumeStrategy.CLICK_SITE_CONTINUE -> session.contentUrl
         }
+        val useDirectResolver =
+            !hasDedicatedPlaybackPage &&
+                catalogKindFromUrl(session.contentUrl) == CatalogKind.MOVIE &&
+                services.firstOrNull { it.id == session.serviceId }?.directPlay != null &&
+                (
+                    session.resumeStrategy == ResumeStrategy.OPEN_PLAYBACK_PAGE ||
+                        // Account imports with Play-online labels need the same resolver.
+                        session.actionButtonTextPatterns.isNotEmpty()
+                    )
         context.startActivity(
             BrowserActivity.intent(
                 context = context,
@@ -162,9 +177,9 @@ fun HomeScreen(
                 contentTitle = session.title,
                 contentPoster = session.posterUrl,
                 autoResume = true,
-                // Account-synced rows carry no stored player page, so they would land on
-                // the detail page. Let the direct-play resolver take them the last step.
-                directPlay = session.playbackUrl.isBlank(),
+                // Only account-synced movies with normal quality choices need the resolver.
+                // ParsiFlix Continue remains the source of truth for episode/progress state.
+                directPlay = useDirectResolver,
                 resumeStrategyOverride = session.resumeStrategy,
                 actionButtonTextPatterns = session.actionButtonTextPatterns
             )

@@ -108,6 +108,7 @@ app/src/main/java/com/amin/tvos/
 | 0.10.1 | اصلاح ظاهری بنر بروزرسانی |
 | **0.11.0** | فیکس race شرطی Direct Play در SPA، سقف Sync از ۱۲ به ۳۰، `quickLinks[]` برای یوتیوب فارسی؛ Live آن نسخه فقط لینک واسط و اشتباه بود |
 | **0.12.0** | ردیف بومی ۲۰ شبکه با لوگوی واقعی، پخش مستقیم CSS تمام‌صفحه، D-pad/موس و Back به همان کارت |
+| **0.12.1** | Continue/Direct Play تأییدمحور، Sync حساب خودکار و یکسان بین دستگاه‌ها، Loading سینمایی و فلش مشترک ردیف‌ها |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
@@ -412,3 +413,94 @@ DataStore Async است و باعث Flash صفحه اصلی قبل از اینت�
 
 هدف: کسی که این سند را می‌خواند نباید مجبور شود دوباره حدس بزند یا از نو
 Probe کند چیزی که یک بار قطعی کشف شده.
+
+---
+
+## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)
+
+### ۹.۱ ریشه باگ Continue گاه‌به‌گاه
+
+در نسخه‌های قبلی، `tryClickSiteContinue()` و `tryClickWatchButton()` به محض
+اینکه نتیجه JavaScript برابر `clicked` می‌شد فلگ success را Set می‌کردند.
+در SPA، `element.click()` فقط یعنی Event dispatch شد؛ اگر React هنوز Hydrate
+نشده باشد Handler می‌تواند هیچ Navigationی انجام ندهد. چون فلگ Set شده بود،
+تمام retryهای بعدی متوقف می‌شدند و کاربر روی Detail می‌ماند.
+
+قانون جدید: **Click فقط Attempt است.** موفقیت فقط از یکی از این شواهد می‌آید:
+
+1. URL جدید با `ServiceAdapter.isPlaybackUrl()` منطبق باشد؛
+2. Bridge یک رویداد واقعی HTML5 Video (`play/timeupdate/pause`) بگیرد؛
+3. `WebChromeClient.onShowCustomView()` یک Fullscreen player واقعی نشان دهد.
+
+Retryهای Direct در `250, 750, 1400, 2300, 3500, 5000, 7000, 9500,
+12000ms` و Continue در `250…10800ms` اجرا می‌شوند. `probeInFlight` جلوی
+evaluate هم‌زمان و Cooldown 850ms جلوی Double click را می‌گیرد. کاندید باید
+Visible، Enabled و Pointer-enabled باشد؛ Exact text و تگ واقعی button/a
+امتیاز بالاتر دارند و episode/season container امتیاز منفی می‌گیرد.
+
+### ۹.۲ Detail URL مساوی Player URL
+
+بعضی Inline playerها `location.href` را همان Detail URL گزارش می‌کنند.
+`recordPlayback` آن را به‌عنوان `playbackUrl` ذخیره کرده بود و اجرای بعدی
+فکر می‌کرد مقصد پایدار Player دارد. Home اکنون فقط URL متفاوت از
+`contentUrl` را Dedicated player می‌داند. برای Movie دارای DirectPlay config:
+
+- FilmRooz local `OPEN_PLAYBACK_PAGE` بدون URL جدا → Resolver عادی
+- FilmRooz account movie با Play-online labels → Resolver عادی
+- ParsiFlix `CLICK_SITE_CONTINUE` → دکمه دقیق Continue خود سایت، نه Resolver
+  generic که ممکن است «تماشا» را بزند
+
+### ۹.۳ Loading سینمایی و Deadline
+
+`PlaybackLoadingView` یک Native View سبک بالای WebView است. Detail باید در
+پس‌زمینه Load شود تا سایت کنترل عادی Player را بسازد؛ این زمان شبکه قابل حذف
+نیست، اما Flash صفحه با لایه سینمایی پوشانده می‌شود. Deadline برابر 14s است.
+پس از آن Detail آشکار و Toast fallback نمایش داده می‌شود. Back حین Loading
+Activity را می‌بندد. Login redirect، SSL/Main-frame error و Fullscreen Player
+callbackهای pending را Cancel/Confirm می‌کنند تا Click یا Toast دیرهنگام
+نرسد.
+
+Asset `aminema_loading_popcorn.png` با ImageGen از هویت مسکات موجود ساخته،
+به 640×640 کوچک و به‌صورت drawable محلی 556KB ذخیره شد؛ Runtime network یا
+Decode تصویر بزرگ ندارد.
+
+### ۹.۴ Account-authoritative Continue
+
+مشکل تفاوت TV و Emulator دو علت داشت:
+
+1. `AccountSyncActivity` فقط با دکمه دستی اجرا می‌شد.
+2. `syncAccountSessions()` incoming را Merge می‌کرد ولی Local-onlyهای قدیمی
+   همان Provider را حذف نمی‌کرد.
+
+در 0.12.1، `MainActivity` بعد از Intro از Gate یک‌بارمصرف سطح Process استفاده
+می‌کند. Sync حداکثر هر 15 دقیقه در Cold process اجرا می‌شود؛ Gate به
+`savedInstanceState` وابسته نیست، چون TV Launcher می‌تواند Task قبلی را پس
+از Process stop Restore کند. زمان Attempt در SharedPreferences
+`account_continue_sync` نوشته می‌شود.
+
+امضای Repository اکنون:
+
+```kotlin
+syncAccountSessions(serviceId: String, incoming: List<PlaybackSession>)
+```
+
+نتیجه موفق هر Provider برای **عضویت** authoritative است: همه sessionهای همان
+Provider ابتدا کنار گذاشته و incoming معتبر جایگزین می‌شود. اگر Content ID
+در Local و Account مشترک باشد، Local player/position/duration حفظ و metadata
+حساب روی آن Merge می‌شود. Providerهای دیگر تغییر نمی‌کنند. اگر Sync قبل از
+دریافت نتیجه Fail شود، تابع فراخوانی نمی‌شود و Cache قبلی می‌ماند.
+
+محدودیت مهم: ParsiFlix واقعاً Continue account دارد. FilmRooz پنل
+«مشاهدات اخیر» فقط Detail link می‌دهد. Movie با Resolver به Player می‌رسد،
+اما Cross-device Series ممکن است Exact episode/quality/time نداشته باشد؛ در
+این حالت Aminema بعد از Deadline Detail را برای انتخاب دستی نشان می‌دهد و
+هیچ episode یا endpointی را حدس نمی‌زند.
+
+### ۹.۵ فلش مشترک Rail
+
+`RailNavigationControls(scrollState)` در `TvComponents.kt` تنها منبع رفتار
+فلش‌هاست. Header و Row همان `ScrollState` را Share می‌کنند. هر عمل 82٪
+`viewportSize` (حداقل 360px) را با `animateScrollTo` جابه‌جا می‌کند؛ در ابتدا
+و انتها `FocusableCard(enabled=false)` Dim می‌شود. این کامپوننت در
+`SectionRow`, `CatalogSectionRow`, `LiveTvSectionRow` و Search `ResultGroup`
+استفاده می‌شود، بنابراین رفتار موس/DPAD همه ردیف‌ها یکسان می‌ماند.
