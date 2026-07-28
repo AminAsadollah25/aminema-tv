@@ -143,10 +143,22 @@ Verified on Android TV AVD 1920×1080:
    resolution returned `No activity found` for the deleted harness.
 10. Final `clean assembleDebug` and `lintDebug`: successful, zero lint errors.
 
-### Remaining acceptance before release
+### Post-release physical acceptance
 
 - Do not log out the user's real service sessions merely to reproduce login.
 - Physical Android Box check is still required when a real login is naturally
   available: USB mouse, DPAD, Caps, language, Show, Next, Done and Back.
-- The release candidate is 0.13.0/code 27. Physical-box feedback can be handled
-  as a focused 0.13.x hotfix without logging out existing service sessions.
+- 0.13.0/code 27 is published as GitHub Latest. Physical-box feedback can be
+  handled as a focused 0.13.x hotfix without logging out existing sessions.
+
+## Publication
+
+- Release commit: `fd3ac33`
+- Tag: `v0.13.0`
+- Release:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.13.0`
+- APK: `Aminema-v0.13.0-debug.apk`, 75,958,740 bytes
+- SHA-256:
+  `acd6ed8d43df33f2c4813e603efe4e1f474622305129f05ea320c5da136e3b91`
+- GitHub Latest API returned v0.13.0 and `versionCode: 27`; both assets are in
+  `uploaded` state.

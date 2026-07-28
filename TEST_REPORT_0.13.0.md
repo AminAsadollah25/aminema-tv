@@ -92,3 +92,15 @@ After GitHub updater installation:
 4. Confirm Back and `بستن` each close the deck with one action.
 5. Confirm existing ParsiFlix/FilmRooz sessions remain signed in.
 
+## Publication verification
+
+- GitHub tag: `v0.13.0`
+- Release is Published, Latest, `draft=false`, `prerelease=false`.
+- Release body contains `versionCode: 27`.
+- APK asset state: `uploaded`, size `75,958,740`.
+- GitHub asset digest matches the local APK SHA-256.
+- Checksum asset state: `uploaded`, size `92`.
+- Direct APK URL:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/download/v0.13.0/Aminema-v0.13.0-debug.apk`
+- These fields match `UpdateRepository` expectations for automatic detection
+  by installed builds with version code 26 or lower.

@@ -20,8 +20,10 @@
 - محصول: **Aminema**
 - نسخه کد: **0.13.0**
 - `versionCode`: **27**
-- وضعیت: **Release candidate؛ انتشار GitHub در حال انجام**
-- آخرین نسخه عمومی فعلی هنگام آماده‌سازی: `v0.12.1`
+- وضعیت: **منتشرشده و GitHub Latest**
+- Release commit و Tag: `fd3ac33` / `v0.13.0`
+- GitHub Release:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.13.0`
 - شاخه: `main`
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
@@ -178,19 +180,23 @@
 
 ## وضعیت انتشار و قدم بعدی
 
-- Release commit: `72d6527`
-- Tag: `v0.12.1`
+- Release commit: `fd3ac33`
+- Tag: `v0.13.0`
 - GitHub Release: Published، Latest، Draft=false، Prerelease=false
 - Assetهای عمومی:
-  - `Aminema-v0.12.1-debug.apk` — `75,893,204` بایت، state=`uploaded`
-  - `Aminema-v0.12.1-debug.apk.sha256` — `92` بایت، state=`uploaded`
+  - `Aminema-v0.13.0-debug.apk` — `75,958,740` بایت، state=`uploaded`
+  - `Aminema-v0.13.0-debug.apk.sha256` — `92` بایت، state=`uploaded`
 - SHA-256 APK:
-  `94f4a7d988b2b5005800afe3da280e449f318211e12aacf9552d02ab110200b0`
-- GitHub Latest API تأیید شد: `tag_name=v0.12.1`، متن Release شامل
-  `versionCode: 26` و هر دو Download URL است؛ بنابراین updater خود Aminema
-  روی نسخه‌های code 25 و پایین‌تر آن را تشخیص می‌دهد.
+  `acd6ed8d43df33f2c4813e603efe4e1f474622305129f05ea320c5da136e3b91`
+- امضای APK با 0.12.1 یکسان است:
+  `ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3`
+- GitHub Latest API تأیید شد: `tag_name=v0.13.0`، متن Release شامل
+  `versionCode: 27` و هر دو Download URL است؛ بنابراین updater خود Aminema
+  روی code 26 و پایین‌تر نسخه جدید را تشخیص می‌دهد.
+- README عمومی هم‌زمان به `Current release 0.13.0` و صف واقعی بعدی به‌روز شد.
 
-**مرحله پیشنهادی بعد از انتشار 0.12.1:** نسخه 0.13.0، بازطراحی کامل کیبورد
-به‌صورت State Machine ثابت برای Username → Password → Caps → Language →
-Show/Hide → Done، سپس مهاجرت Home از `Column+verticalScroll` به Lazy layout
-قبل از افزودن ردیف‌های ژانری بیشتر.
+**مرحله بعد از انتشار 0.13.0:** ابتدا Acceptance کوتاه روی Android Box؛ سپس
+0.14.0 با عنوان **Smart Series Continuity**. قبل از افزودن ردیف سنگین جدید،
+Home به Lazy layout مهاجرت کند. Season/Episode فقط وقتی نمایش یا Next Episode
+ارائه شود که از عنوان/صفحه عادی و Stable page link به‌صورت بدون ابهام قابل
+تشخیص باشد؛ در غیر این صورت Detail page برای انتخاب دستی باز شود.
