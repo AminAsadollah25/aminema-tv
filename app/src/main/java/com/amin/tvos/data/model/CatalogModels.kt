@@ -42,15 +42,23 @@ data class CatalogItem(
     val kind: CatalogKind,
     val contentUrl: String,
     val posterUrl: String = "",
-    val serviceId: String
+    val serviceId: String,
+    /**
+     * Ordinary, spoiler-safe release metadata such as `قسمت ۰۴ فصل سوم`.
+     *
+     * This describes what the provider has published. It deliberately does not claim that
+     * the user has or has not watched the episode.
+     */
+    val episodeLabel: String = ""
 )
 
 /**
  * The cached "latest" catalog of a single service.
  *
- * The three lists are kept separately because each one is the service's own ordering:
+ * The lists are kept separately because each one is the service's own ordering:
  * ParsiFlix has a real combined «جدیدترین‌ها» section plus per-type catalog pages, and
- * FilmRooz has separate new-films / new-tv-show pages whose union forms [all].
+ * FilmRooz has new-film, episode-release-ordered series and curated-series pages whose
+ * interleaved latest movie/series result forms [all].
  */
 @Serializable
 data class CatalogSection(
@@ -58,6 +66,8 @@ data class CatalogSection(
     val all: List<CatalogItem> = emptyList(),
     val movies: List<CatalogItem> = emptyList(),
     val series: List<CatalogItem> = emptyList(),
+    /** Provider-curated series; kept separate from release-ordered [series]. */
+    val popularSeries: List<CatalogItem> = emptyList(),
     val syncedAt: Long = 0L,
     /** Adapter failure text for this service only; the other row stays usable. */
     val error: String = ""

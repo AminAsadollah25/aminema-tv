@@ -7,4 +7,5 @@ local.properties
 *.jks
 *.keystore
 captures/
+work/
 .DS_Store

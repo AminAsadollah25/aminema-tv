@@ -1,7 +1,6 @@
 package com.amin.tvos.browser
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -41,36 +40,6 @@ import org.json.JSONArray
  */
 class AccountSyncActivity : ComponentActivity() {
 
-    companion object {
-        private const val SYNC_PREFS = "account_continue_sync"
-        private const val LAST_ATTEMPT_AT = "last_attempt_at"
-        private const val AUTO_SYNC_INTERVAL_MS = 15 * 60 * 1000L
-        private var autoSyncGateConsumed = false
-
-        /**
-         * Process-cold gate. Unlike savedInstanceState, this still works when the
-         * TV launcher restores MainActivity's previous task after a real process stop.
-         */
-        @Synchronized
-        fun acquireAutoSync(context: Context): Boolean {
-            if (autoSyncGateConsumed) return false
-            autoSyncGateConsumed = true
-            val lastAttempt = context.getSharedPreferences(
-                SYNC_PREFS,
-                Context.MODE_PRIVATE
-            )
-                .getLong(LAST_ATTEMPT_AT, 0L)
-            return System.currentTimeMillis() - lastAttempt >= AUTO_SYNC_INTERVAL_MS
-        }
-
-        private fun markSyncAttempt(context: Context) {
-            context.getSharedPreferences(SYNC_PREFS, Context.MODE_PRIVATE)
-                .edit()
-                .putLong(LAST_ATTEMPT_AT, System.currentTimeMillis())
-                .apply()
-        }
-    }
-
     private enum class Stage { PARSI, FILMROOZ, DONE }
 
     private lateinit var root: FrameLayout
@@ -107,7 +76,6 @@ class AccountSyncActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        markSyncAttempt(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         hideSystemUi()
 

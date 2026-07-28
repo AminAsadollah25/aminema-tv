@@ -15,7 +15,7 @@ import java.io.File
  * Cache of each service's "latest" row.
  *
  * Same lightweight JSON-in-app-storage approach as [LibraryRepository]: Home renders from
- * the cache instantly at startup and only a user-triggered sync goes to the network.
+ * the cache instantly at startup while cold-start/manual provider jobs refresh behind Home.
  * Each service is stored independently, so a broken adapter can never empty the other row.
  */
 class CatalogRepository(private val context: Context) {
@@ -25,6 +25,8 @@ class CatalogRepository(private val context: Context) {
 
     private val _sections = MutableStateFlow<List<CatalogSection>>(emptyList())
     val sections: StateFlow<List<CatalogSection>> = _sections.asStateFlow()
+    private val _refreshingServices = MutableStateFlow<Set<String>>(emptySet())
+    val refreshingServices: StateFlow<Set<String>> = _refreshingServices.asStateFlow()
 
     suspend fun load() = withContext(Dispatchers.IO) {
         _sections.value = runCatching {
@@ -34,6 +36,15 @@ class CatalogRepository(private val context: Context) {
 
     fun section(serviceId: String): CatalogSection? =
         _sections.value.firstOrNull { it.serviceId == serviceId }
+
+    /** Ephemeral UI state; catalog data itself remains available throughout a refresh. */
+    fun setRefreshing(serviceId: String, refreshing: Boolean) {
+        _refreshingServices.value = if (refreshing) {
+            _refreshingServices.value + serviceId
+        } else {
+            _refreshingServices.value - serviceId
+        }
+    }
 
     /** Replaces one service's cached row, leaving every other service untouched. */
     suspend fun save(section: CatalogSection) = withContext(Dispatchers.IO) {

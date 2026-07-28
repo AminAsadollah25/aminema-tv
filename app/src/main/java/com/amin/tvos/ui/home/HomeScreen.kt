@@ -41,7 +41,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
-import com.amin.tvos.browser.CatalogSyncActivity
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -53,6 +52,7 @@ import com.amin.tvos.data.model.QuickLink
 import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.CatalogCard
 import com.amin.tvos.ui.components.PosterCard
 import com.amin.tvos.ui.components.SectionRow
 import com.amin.tvos.ui.components.ServiceCard
@@ -67,6 +67,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(
     onOpenSettings: () -> Unit,
+    onRefreshCatalog: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -74,13 +75,11 @@ fun HomeScreen(
     val continueWatching by viewModel.continueWatching.collectAsState()
     val recents by viewModel.recentlyOpened.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
+    val mySeries by viewModel.mySeries.collectAsState()
     val catalogSections by viewModel.catalogSections.collectAsState()
+    val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val iranianFilter by viewModel.iranianFilter.collectAsState()
     val internationalFilter by viewModel.internationalFilter.collectAsState()
-
-    fun refreshCatalog() = context.startActivity(
-        android.content.Intent(context, CatalogSyncActivity::class.java)
-    )
 
     fun openCatalogItem(item: CatalogItem) =
         context.startActivity(
@@ -397,6 +396,47 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
         }
 
+        // ---------- My Series ----------
+        if (mySeries.isNotEmpty()) {
+            val catalogItems = catalogSections.flatMap { section ->
+                section.all + section.series + section.popularSeries
+            }
+            SectionRow("سریال‌های من") {
+                mySeries.forEach { session ->
+                    val release = catalogItems.firstOrNull {
+                        it.contentUrl.trimEnd('/') == session.contentUrl.trimEnd('/')
+                    }
+                    CatalogCard(
+                        item = CatalogItem(
+                            title = session.title,
+                            kind = CatalogKind.SERIES,
+                            contentUrl = session.contentUrl,
+                            posterUrl = session.posterUrl.ifBlank {
+                                release?.posterUrl.orEmpty()
+                            },
+                            serviceId = session.serviceId,
+                            // Publication status only — never claim "unwatched" without
+                            // exact episode evidence from this Aminema device.
+                            episodeLabel = release?.episodeLabel.orEmpty()
+                        ),
+                        onClick = {
+                            openCatalogItem(
+                                CatalogItem(
+                                    title = session.title,
+                                    kind = CatalogKind.SERIES,
+                                    contentUrl = session.contentUrl,
+                                    posterUrl = session.posterUrl,
+                                    serviceId = session.serviceId,
+                                    episodeLabel = release?.episodeLabel.orEmpty()
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
         // ---------- Latest Iranian / International ----------
         CatalogSectionRow(
             title = "تازه‌های ایرانی",
@@ -407,8 +447,9 @@ fun HomeScreen(
             onFilterChange = {
                 viewModel.setCatalogFilter(HomeViewModel.IRANIAN_SERVICE_ID, it)
             },
-            onRefresh = { refreshCatalog() },
-            onOpen = { openCatalogItem(it) }
+            onRefresh = { onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID) },
+            onOpen = { openCatalogItem(it) },
+            isRefreshing = HomeViewModel.IRANIAN_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
 
@@ -421,8 +462,27 @@ fun HomeScreen(
             onFilterChange = {
                 viewModel.setCatalogFilter(HomeViewModel.INTERNATIONAL_SERVICE_ID, it)
             },
-            onRefresh = { refreshCatalog() },
-            onOpen = { openCatalogItem(it) }
+            onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
+            onOpen = { openCatalogItem(it) },
+            isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
+        )
+        Spacer(Modifier.height(16.dp))
+
+        // Kept separate from episode-release ordering: these are provider-curated titles,
+        // not necessarily recently updated shows.
+        val internationalSection = catalogSections.firstOrNull {
+            it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
+        }
+        CatalogSectionRow(
+            title = "سریال‌های برگزیده جهان",
+            section = internationalSection,
+            filter = CatalogFilter.SERIES,
+            onFilterChange = {},
+            onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
+            onOpen = { openCatalogItem(it) },
+            itemsOverride = internationalSection?.popularSeries.orEmpty(),
+            showFilters = false,
+            isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
 

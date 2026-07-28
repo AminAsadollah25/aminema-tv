@@ -8,7 +8,9 @@ import com.amin.tvos.AminTvApp
 import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
+import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.CatalogSection
+import com.amin.tvos.data.model.catalogKindFromUrl
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.StreamingService
@@ -40,6 +42,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     val catalogSections: StateFlow<List<CatalogSection>> = catalogRepo.sections
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val refreshingCatalogServices: StateFlow<Set<String>> =
+        catalogRepo.refreshingServices
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     fun section(serviceId: String): CatalogSection? =
         catalogSections.value.firstOrNull { it.serviceId == serviceId }
@@ -75,6 +80,32 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                         }?.name ?: session.serviceName
                     )
                 }
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * Title-level membership comes from the signed-in account Recent row plus local Aminema
+     * sessions. Episode progress is intentionally not invented when the provider only knows the
+     * title: Home shows release metadata until exact local playback is available.
+     */
+    val mySeries: StateFlow<List<PlaybackSession>> =
+        libraryRepo.playbackSessions
+            .combine(servicesRepo.services) { sessions, configuredServices ->
+                sessions.asSequence()
+                    .filter { session ->
+                        catalogKindFromUrl(session.contentUrl) == CatalogKind.SERIES
+                    }
+                    .distinctBy { it.contentUrl.trimEnd('/') }
+                    .sortedByDescending { it.lastPlayed }
+                    .map { session ->
+                        session.copy(
+                            serviceName = configuredServices.firstOrNull {
+                                it.id == session.serviceId
+                            }?.name ?: session.serviceName
+                        )
+                    }
+                    .take(20)
+                    .toList()
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 

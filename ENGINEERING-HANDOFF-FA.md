@@ -64,7 +64,7 @@ app/src/main/java/com/amin/tvos/
 ├── browser/
 │   ├── BrowserActivity.kt          مرورگر اصلی؛ Resume/DirectPlay/Keyboard/QuickMenu همه اینجا
 │   ├── ServiceAdapter.kt           منطق تشخیص صفحه بر اساس services.json (per-service, no hardcode)
-│   ├── CatalogSyncActivity.kt      Sync «تازه‌ها» (0.8.0) — اسکریپت‌های JS استخراج کاتالوگ
+│   ├── CatalogBackgroundSync.kt    Sync مستقل کاتالوگ+حساب پشت Home (0.14.0)
 │   ├── AccountSyncActivity.kt      Sync حساب برای Continue Watching (0.7)
 │   ├── SiteSearchEngine.kt         جستجوی یکپارچه (0.9.0)
 │   ├── KeyboardSafeWebView.kt      WebView بدون IME سیستمی
@@ -109,6 +109,8 @@ app/src/main/java/com/amin/tvos/
 | **0.11.0** | فیکس race شرطی Direct Play در SPA، سقف Sync از ۱۲ به ۳۰، `quickLinks[]` برای یوتیوب فارسی؛ Live آن نسخه فقط لینک واسط و اشتباه بود |
 | **0.12.0** | ردیف بومی ۲۰ شبکه با لوگوی واقعی، پخش مستقیم CSS تمام‌صفحه، D-pad/موس و Back به همان کارت |
 | **0.12.1** | Continue/Direct Play تأییدمحور، Sync حساب خودکار و یکسان بین دستگاه‌ها، Loading سینمایی و فلش مشترک ردیف‌ها |
+| **0.13.0** | Search Deck و Login Input Deck با QWERTY فارسی/انگلیسی و State Machine پایدار |
+| **0.14.0 Candidate** | Series Pulse: قسمت/فصل، سریال‌های من، برگزیده‌ها، Sync مستقل و پس‌زمینه‌ای |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
@@ -199,8 +201,9 @@ Opened، Favorites. تشخیص فیلم/سریال برای دو مورد آخر
 - فیلم برگزیده (منبع دوم پیشنهادی، هنوز اضافه نشده):
   `/archive/category/featured-films/` — هم‌پوشانی جزئی با new-films دارد
   ولی فیلتر جداگانه.
-- سریال محبوب/ترند (اولویت پایین): `/archive/playlist/show/most-popular-tv-shows/`
-  — این Trend است، نه Fresh؛ نباید با «تازه‌ها» قاطی شود.
+- سریال محبوب/ترند:
+  `/archive/playlist/show/most-popular-tv-shows/` — در 0.14.0 به ردیف مستقل
+  `سریال‌های برگزیده جهان` اضافه شد؛ با Fresh قاطی نمی‌شود.
 - جستجو: `GET /?s=<query>` — هم انگلیسی هم فارسی جواب می‌دهد.
 - استخراج عنوان از کارت: باید لینک‌داخل‌کارتی انتخاب شود که **دقیقاً به
   همان مسیر** اشاره کند و با `/^قسمت/` شروع نشود (وگرنه متن وضعیت قسمت
@@ -379,13 +382,16 @@ DataStore Async است و باعث Flash صفحه اصلی قبل از اینت�
   Bridge، Coil (Reflection)، kotlinx.serialization (Reflection) را
   بشکند، (۳) فقط با امولاتور قابل تأیید کامل نیست. نیاز به نسخه جدا با
   تست دقیق‌تر (فعلاً بدون شماره).
-- **انتخاب خودکار قسمت سریال:** چون سایت خارجی وضعیت دیده‌شدن را فقط
-  برای **کل عنوان** نگه می‌دارد نه هر قسمت؛ باید از داده Continue خود
-  Aminema استنتاج شود (آخرین قسمت دیده‌شده → قسمت بعدی؛ سریال تازه →
-  قسمت ۱).
+- **انتخاب خودکار قسمت سریال:** تیک‌های قسمت FilmRooz روی لپ‌تاپ و امولاتور
+  با یک حساب یکسان نبودند و browser-local ثابت شدند. 0.14 فقط آخرین قسمت
+  منتشرشده را نشان می‌دهد. Next/Unwatched نیازمند `SeriesProgress` محلی یا
+  تأیید «تا این قسمت دیدم» است؛ هیچ قسمت حدس زده نمی‌شود.
 - **Home هنوز `Column`+`verticalScroll` است، نه `LazyColumn`.** با ۵
-  ردیف فعلی مشکلی نیست، ولی **قبل از افزودن ردیف‌های ژانری باید
+  ردیف اولیه و دو ردیف سبک 0.14 در امولاتور مشکل نداشت، ولی **قبل از افزودن
+  ردیف‌های ژانری/سنگین باید
   LazyColumn شود** وگرنه روی Box ضعیف کند می‌شود.
+- **Cinematic Hover Preview:** هدف 0.15؛ خلاصه بدون اسپویل، سال/ژانر/امتیاز/
+  مدت، آخرین قسمت و Backdrop محو با Dwell حدود 600ms و کش سبک.
 
 ---
 
@@ -473,10 +479,10 @@ Decode تصویر بزرگ ندارد.
    همان Provider را حذف نمی‌کرد.
 
 در 0.12.1، `MainActivity` بعد از Intro از Gate یک‌بارمصرف سطح Process استفاده
-می‌کند. Sync حداکثر هر 15 دقیقه در Cold process اجرا می‌شود؛ Gate به
-`savedInstanceState` وابسته نیست، چون TV Launcher می‌تواند Task قبلی را پس
-از Process stop Restore کند. زمان Attempt در SharedPreferences
-`account_continue_sync` نوشته می‌شود.
+می‌کرد. **این مسیر در Candidate 0.14.0 supersede شد:** اکنون
+`CatalogBackgroundSync` حساب و کاتالوگ هر Provider را در یک Pass پشت Home
+می‌خواند؛ Auto `AccountSyncActivity` و SharedPreferences gate حذف شده‌اند.
+`AccountSyncActivity` فقط برای دکمه دستی/تشخیصی باقی است.
 
 امضای Repository اکنون:
 

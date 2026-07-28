@@ -27,7 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.amin.tvos.intro.IntroGate
 import com.amin.tvos.intro.IntroOverlay
 import com.amin.tvos.intro.IntroPreferences
-import com.amin.tvos.browser.AccountSyncActivity
+import com.amin.tvos.browser.CatalogBackgroundSync
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
 import com.amin.tvos.ui.settings.SettingsScreen
@@ -40,10 +40,13 @@ class MainActivity : ComponentActivity() {
 
     /** True only while the cold-start intro is on screen. */
     private var introVisible by mutableStateOf(false)
-    private var autoAccountSyncLaunched = false
+    private var autoCatalogSyncLaunched = false
+    private lateinit var catalogSync: CatalogBackgroundSync
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A configuration recreation is not a new app opening.
+        autoCatalogSyncLaunched = savedInstanceState != null
 
         val introPrefs = IntroPreferences(this)
         // Cold start only. A recreated activity — configuration change, or process death while
@@ -53,6 +56,8 @@ class MainActivity : ComponentActivity() {
             IntroGate.consumeColdStart()
         val introMuted = introPrefs.muteIntro
         hideSystemBars()
+        val app = application as AminTvApp
+        catalogSync = CatalogBackgroundSync(this, app)
 
         setContent {
             AminTvTheme {
@@ -81,6 +86,9 @@ class MainActivity : ComponentActivity() {
                                 }
                                 HomeScreen(
                                     onOpenSettings = { navController.navigate("settings") },
+                                    onRefreshCatalog = { serviceId ->
+                                        catalogSync.refresh(serviceId)
+                                    },
                                     viewModel = vm
                                 )
                             }
@@ -89,23 +97,27 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Refresh the website-account Continue rows once per cold start
-                        // (at most every 15 minutes). This makes emulator and TV converge
-                        // without requiring the user to remember the Sync button.
+                        // Refresh provider caches once per real cold start. The tiny browser
+                        // jobs live behind Home, run one provider at a time and never replace
+                        // the screen or steal remote/mouse focus.
                         LaunchedEffect(introVisible) {
-                            if (
-                                !introVisible &&
-                                !autoAccountSyncLaunched &&
-                                AccountSyncActivity.acquireAutoSync(this@MainActivity)
-                            ) {
-                                autoAccountSyncLaunched = true
-                                delay(900L)
-                                startActivity(
-                                    android.content.Intent(
-                                        this@MainActivity,
-                                        AccountSyncActivity::class.java
-                                    )
-                                )
+                            if (!introVisible && !autoCatalogSyncLaunched) {
+                                autoCatalogSyncLaunched = true
+                                delay(450L)
+                                app.servicesRepository.load()
+                                app.libraryRepository.load()
+                                app.catalogRepository.load()
+
+                                // First cold-start refresh is automatic but still independent:
+                                // one provider finishes (or times out) before the next begins.
+                                catalogSync.refresh(HomeViewModel.IRANIAN_SERVICE_ID)
+                                while (
+                                    HomeViewModel.IRANIAN_SERVICE_ID in
+                                    app.catalogRepository.refreshingServices.value
+                                ) {
+                                    delay(250L)
+                                }
+                                catalogSync.refresh(HomeViewModel.INTERNATIONAL_SERVICE_ID)
                             }
                         }
 
@@ -120,6 +132,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (::catalogSync.isInitialized) catalogSync.destroy()
+        super.onDestroy()
     }
 
     /**

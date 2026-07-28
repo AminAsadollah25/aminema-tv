@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,9 +44,12 @@ fun CatalogSectionRow(
     filter: CatalogFilter,
     onFilterChange: (CatalogFilter) -> Unit,
     onRefresh: () -> Unit,
-    onOpen: (CatalogItem) -> Unit
+    onOpen: (CatalogItem) -> Unit,
+    itemsOverride: List<CatalogItem>? = null,
+    showFilters: Boolean = true,
+    isRefreshing: Boolean = false
 ) {
-    val items = section?.items(filter).orEmpty()
+    val items = itemsOverride ?: section?.items(filter).orEmpty()
     val scrollState = rememberScrollState()
     Column(Modifier.fillMaxWidth()) {
         Row(
@@ -55,19 +59,21 @@ fun CatalogSectionRow(
                 .padding(horizontal = 48.dp, vertical = 12.dp)
         ) {
             Text(title, style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(24.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CatalogFilter.entries.forEach { entry ->
-                    FocusableCard(
-                        shape = RoundedCornerShape(50),
-                        onClick = { onFilterChange(entry) }
-                    ) {
-                        Text(
-                            entry.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (entry == filter) CinemaRed else TextSecondary,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+            if (showFilters) {
+                Spacer(Modifier.width(24.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CatalogFilter.entries.forEach { entry ->
+                        FocusableCard(
+                            shape = RoundedCornerShape(50),
+                            onClick = { onFilterChange(entry) }
+                        ) {
+                            Text(
+                                entry.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (entry == filter) CinemaRed else TextSecondary,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -80,18 +86,33 @@ fun CatalogSectionRow(
                 )
                 Spacer(Modifier.width(12.dp))
             }
-            FocusableCard(shape = RoundedCornerShape(50), onClick = onRefresh) {
+            FocusableCard(
+                shape = RoundedCornerShape(50),
+                enabled = !isRefreshing,
+                onClick = onRefresh
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    if (isRefreshing) {
+                        CircularProgressIndicator(
+                            color = CinemaRed,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Spacer(Modifier.width(6.dp))
-                    Text("بروزرسانی", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        if (isRefreshing) "در حال بروزرسانی" else "بروزرسانی",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
             Spacer(Modifier.width(12.dp))
@@ -113,7 +134,9 @@ fun CatalogSectionRow(
                 contentAlignment = Alignment.CenterStart
             ) {
                 Text(
-                    if (section == null || section.syncedAt == 0L) {
+                    if (isRefreshing && (section == null || section.syncedAt == 0L)) {
+                        "اولین بروزرسانی در پس‌زمینه انجام می‌شود…"
+                    } else if (section == null || section.syncedAt == 0L) {
                         "هنوز بروزرسانی نشده است. دکمه بروزرسانی را بزنید."
                     } else {
                         "موردی در این بخش پیدا نشد."

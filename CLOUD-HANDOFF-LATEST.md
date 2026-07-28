@@ -18,9 +18,9 @@
 ## وضعیت جاری
 
 - محصول: **Aminema**
-- نسخه کد: **0.13.0**
-- `versionCode`: **27**
-- وضعیت: **منتشرشده و GitHub Latest**
+- نسخه عمومی: **0.13.0 / code 27**
+- Candidate نصب‌شده: **0.14.0 / code 28**
+- وضعیت: 0.13.0 **منتشرشده و GitHub Latest**؛ 0.14.0 **هنوز Push/Tag/Release نشده**
 - Release commit و Tag: `fd3ac33` / `v0.13.0`
 - GitHub Release:
   `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.13.0`
@@ -30,26 +30,31 @@
 - Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
   نشست‌های لاگین، Cookie، Poster و Library را حفظ کرد.
 
-## کار در حال انجام برای 0.13.0
+## Candidate در حال انجام: 0.14.0 — Series Pulse
 
-- مرجع جزئیات زنده: `DEVELOPMENT_LOG_0.13.0.md`
-- گزارش پذیرش Candidate: `TEST_REPORT_0.13.0.md`
-- Track A، بازطراحی Search Deck داخل خود اپ: پیاده‌سازی و Build شده، هنوز
-  Release نشده است.
-- چیدمان فارسی پس از بازخورد کاربر از ردیف‌های ده‌تایی اشتباه به QWERTY
-  استاندارد و پلکانی اصلاح شد؛ `ژ` و `آ` کلید مستقل دارند.
-- روی AVD واقعی 1920×1080 کل پنل بدون Scroll/Clipping دیده شد و ورود دو حرف
-  با Mouse، Counter و فعال‌شدن CTA جستجو تأیید شد.
-- Track B، State Machine و Input Deck کیبورد Login داخل WebView: پیاده‌سازی
-  و روی صفحه Login محلی داخل BrowserActivity تست شد.
-- `Username → Next → Password` حتی با تعویض هم‌زمان DOM موفق بود؛
-  `Caps → A → فارسی → ض → Show` مقدار `Aض` را فقط در Password نگه داشت.
-- Submit و Back موفق، System IME بسته، Crash صفر؛ Harness موقت قبل از Build
-  نهایی حذف شد. جزئیات و فایل‌ها در `DEVELOPMENT_LOG_0.13.0.md`.
-- تنها Acceptance باقی‌مانده، تست همین مسیر روی Android Box واقعی در اولین
-  فرصت Login طبیعی است؛ برای تست حساب‌های فعلی عمداً Logout نشوند.
-- هر دو Track تکمیل شده‌اند و Candidate به 0.13.0/code 27 ارتقا یافته است؛
-  تا تأیید GitHub Release وضعیت Published اعلام نشود.
+- مرجع کامل تغییرات: `DEVELOPMENT_LOG_0.14.0.md`
+- گزارش پذیرش: `TEST_REPORT_0.14.0.md`
+- Release draft: `RELEASE_NOTES_0.14.0.md`
+- FilmRooz Series از `/archive/series/` می‌آید؛ این فید با انتشار قسمت تازه
+  مرتب می‌شود، نه صرفاً سال ساخت سریال.
+- زیر کارت سریال، فقط بخش مفید وضعیت ذخیره/نمایش می‌شود:
+  `قسمت ۰۴ فصل سوم`. عبارت‌های «در حال پخش» و «پایان فصل» حذف می‌شوند.
+- ردیف `سریال‌های من` از عضویت Account Recent/Continue و Session محلی ساخته
+  شد. ردیف `سریال‌های برگزیده جهان` از Popular feed جداست و با Fresh مخلوط
+  نمی‌شود.
+- Refresh ایرانی و خارجی مستقل است، در Cold Start پشت Home و به‌ترتیب انجام
+  می‌شود، Cache را نگه می‌دارد و فقط Spinner کوچک همان Provider را نشان
+  می‌دهد. `CatalogSyncActivity` قدیمی حذف شد.
+- Account Continue/Recent نیز در همان Provider pass همگام می‌شود؛ شروع برنامه
+  دیگر `AccountSyncActivity` تمام‌صفحه باز نمی‌کند. دکمه Sync دستی باقی است.
+- تیک‌های Episode FilmRooz با یک حساب روی لپ‌تاپ و امولاتور متفاوت بودند؛
+  پس browser-local هستند و منبع `دیده‌نشده` نیستند. 0.14 فقط Latest Published
+  را می‌گوید و Unwatched را حدس نمی‌زند.
+- ParsiFlix list API فصل/قسمت ندارد؛ خط Metadata خالی می‌ماند و Detail request
+  اضافی برای این کار زده نمی‌شود.
+- Build/Lint موفق؛ نصب `adb install -r` موفق؛ نسخه نصب‌شده
+  `0.14.0 code 28`؛ MainActivity حین Sync Top/Resumed و Crash صفر.
+- هنوز Commit/Push/Tag/GitHub Release انجام نشده است.
 
 ## مسئله‌های حل‌شده در 0.12.1
 
@@ -72,7 +77,8 @@
   میاریم؛ خوش بگذره!»
 - اگر تا ۱۴ ثانیه Player تأیید نشود، Detail page برای انتخاب دستی آشکار
   می‌شود؛ صفحه سیاه دائمی نداریم. Back حین Loading مستقیم Activity را می‌بندد.
-- Continue حساب در شروع سرد Process، حداکثر هر ۱۵ دقیقه، خودکار Sync می‌شود.
+- از Candidate 0.14.0، Continue حساب در همان Refresh پس‌زمینه‌ای و مستقل
+  Providerها Sync می‌شود؛ Activity تمام‌صفحه در شروع برنامه حذف شده است.
   دکمه Sync دستی همچنان باقی است.
 - نتیجه موفق هر سرویس برای عضویت Continue authoritative است؛ Local فقط
   `playbackUrl/position/duration/poster` همان Content مشترک را غنی می‌کند.
@@ -107,12 +113,15 @@
 ### Cross-device Continue
 
 - `browser/AccountSyncActivity.kt`
-  - Process-cold auto-sync gate با فاصله 15 دقیقه
+  - از 0.14 فقط مسیر دستی/تشخیصی است؛ Auto gate حذف شده.
   - سقف Parse از 12 به 20 (هم‌اندازه rail Home)
   - Sync موفق حتی با لیست خالی authoritative است.
+- `browser/CatalogBackgroundSync.kt`
+  - از 0.14 Account Recent/Continue و Catalog هر Provider را در یک Pass
+    غیرقابل‌فوکوس پشت Home reconcile می‌کند.
 - `MainActivity.kt`
-  - بعد از پایان/Skip Intro، Sync account خودکار را یک‌بار در Process Launch
-    می‌کند؛ Task restore تلویزیون با savedInstanceState این Gate را خراب نمی‌کند.
+  - بعد از پایان/Skip Intro، Providerها را ترتیبی و بدون بازکردن Activity
+    تازه می‌کند؛ Configuration recreation کار را دوباره شروع نمی‌کند.
 - `data/LibraryRepository.kt`
   - `syncAccountSessions(serviceId, incoming)` کل همان Provider را reconcile
     می‌کند؛ سایر Providerها دست‌نخورده می‌مانند.
@@ -195,8 +204,11 @@
   روی code 26 و پایین‌تر نسخه جدید را تشخیص می‌دهد.
 - README عمومی هم‌زمان به `Current release 0.13.0` و صف واقعی بعدی به‌روز شد.
 
-**مرحله بعد از انتشار 0.13.0:** ابتدا Acceptance کوتاه روی Android Box؛ سپس
-0.14.0 با عنوان **Smart Series Continuity**. قبل از افزودن ردیف سنگین جدید،
-Home به Lazy layout مهاجرت کند. Season/Episode فقط وقتی نمایش یا Next Episode
-ارائه شود که از عنوان/صفحه عادی و Stable page link به‌صورت بدون ابهام قابل
-تشخیص باشد؛ در غیر این صورت Detail page برای انتخاب دستی باز شود.
+**مرحله فعلی:** Acceptance کوتاه 0.14.0 روی Android Box و سپس Commit/Push/
+Tag/Release با Asset و SHA. تا قبل از تأیید GitHub Latest، 0.14 منتشرشده
+اعلام نشود.
+
+**مرحله بعدی طراحی:** 0.15.0 با عنوان **Cinematic Hover Preview** برای
+فیلم/سریال خارجی: Synopsis بدون اسپویل، سال/ژانر/امتیاز/مدت، آخرین قسمت،
+Backdrop محو، Dwell حدود 600ms و کش سبک. قبل از ردیف‌های محتوایی سنگین‌تر،
+Home به Lazy layout مهاجرت کند.

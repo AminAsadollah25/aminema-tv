@@ -109,7 +109,7 @@ decision has to be made synchronously before the first frame.
 Version 0.8.0 adds the two **latest rows** to Home — «تازه‌های ایرانی» and
 «تازه‌های خارجی» — each with a remembered `همه | فیلم | سریال` selector, a
 refresh button and a last-sync label. Every source is the service's own view
-of its own catalog, read inside the signed-in WebView by `CatalogSyncActivity`:
+of its own catalog, read inside the signed-in WebView adapter:
 the Iranian row uses the account home's `جدیدترین‌ها` section plus the
 `/medias?type=…` call the website itself makes for its movie and series pages,
 and the international row uses the signed-in menu's own `فیلم های جدید` and
@@ -174,26 +174,43 @@ rebuild cannot redirect password typing back into Username. Caps and language
 no longer delete focused key rows, Android's system IME stays out of the flow,
 and mouse hover plus DPAD focus share the same clear visual state.
 
-## Next update queue — after v0.13.0
+The 0.14.0 candidate, **Series Pulse**, replaces the old modal catalog sync
+with independent background provider jobs. Home stays interactive, cached
+cards remain visible, and only the active provider's refresh button shows a
+small spinner. FilmRooz series now use `/archive/series/`, which is ordered by
+new episode releases, and cards show concise provider metadata such as
+`قسمت ۰۴ فصل سوم`. A native `سریال‌های من` rail reconciles title-level
+account Recent/Continue membership with local Aminema sessions, while a
+separate `سریال‌های برگزیده جهان` rail keeps curated shows out of “latest”.
+Startup account reconciliation is bundled into the same invisible passes, so
+the full-screen Sync activity no longer interrupts cold start.
 
-### 0.14.0 — Smart Series Continuity
+FilmRooz watched checkmarks were tested across a laptop and the Android
+emulator and proved browser/device-local rather than authoritative account
+history. Aminema therefore shows the latest **published** episode but never
+invents an “unwatched” count. ParsiFlix's catalog-list response contains no
+season/episode field, so those cards stay honest and leave the line blank.
 
-- Show **season / episode** on Continue cards whenever Aminema has an
-  unambiguous normal page title or local playback record.
-- Add **Next episode** only when the next ordinary episode-page link can be
-  determined safely from the visible signed-in page. Never guess an episode.
-- Prefer the website's own Continue action for cross-device history; preserve
-  Aminema's exact local episode/player page when it is known.
-- If a provider exposes only title-level Recent history, open the series detail
-  page for manual episode choice instead of claiming an exact cross-device episode.
-- Prepare an optional `سریال‌های من` experience without adding another heavy
-  Home rail until the lazy-layout performance migration is complete.
+## Next update queue — after v0.14.0
 
-Foundation work for that milestone: migrate Home from eager
-`Column + horizontalScroll` rendering to lazy TV lists before adding more
-content rails. The episode assistant will inspect only ordinary page metadata,
-episode labels and stable page links; it will not inspect or store protected
-media/stream URLs, cookies, tokens or DRM data.
+### 0.15.0 — Cinematic Hover Preview
+
+- After a short 600 ms hover/DPAD dwell, expand an international movie/series
+  into a spoiler-safe cinematic information panel.
+- Show short synopsis, year, genre, rating, runtime and latest published
+  episode where the existing provider card exposes them.
+- Use a blurred backdrop and a lightweight local metadata cache; never perform
+  a network request on every focus move.
+- Keep pointer movement and D-pad navigation instant on low-RAM Android boxes.
+
+### Later — Honest Episode Progress
+
+- Add local `SeriesProgress` plus an optional one-click
+  `تا این قسمت دیدم` baseline for viewing done on another device.
+- Use `قسمت تازه` / `فصل جدید` for release deltas.
+- Say `دیده‌نشده` only when exact watched evidence exists.
+- Never guess the next episode or inspect/store protected media/stream URLs,
+  cookies, tokens or DRM data.
 
 ## Requirements
 
@@ -233,8 +250,10 @@ com.amin.tvos
 ├── MainActivity.kt         Compose NavHost (home / settings)
 ├── data/
 │   ├── model/Models.kt     StreamingService, MovieItem, PlaybackSession, ResumeStrategy
+│   ├── model/CatalogModels CatalogItem (including episode label) + provider sections
 │   ├── ServicesRepository  JSON-file-backed service list (StateFlow)
 │   ├── LibraryRepository   Smart Resume / recents / favorites store
+│   ├── CatalogRepository   Per-provider cached rails + background refresh state
 │   └── SettingsRepository  DataStore preferences (User-Agent)
 ├── ui/
 │   ├── theme/              Dark cinematic Material 3 theme
@@ -243,6 +262,7 @@ com.amin.tvos
 │   └── settings/           SettingsScreen + SettingsViewModel
 └── browser/
     ├── BrowserActivity     Playback bridge, poster cache, resume, native fullscreen
+    ├── CatalogBackgroundSync Non-modal, independent catalog/account provider jobs
     ├── AccountSyncActivity Visible, user-triggered signed-in account history sync
     ├── ServiceAdapter      JSON-driven page/player/search rules per service
     ├── QuickMenuOverlay    Hidden MENU/INFO/right-click browser controls
