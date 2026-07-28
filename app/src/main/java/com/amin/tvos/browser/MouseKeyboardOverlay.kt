@@ -4,7 +4,10 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.text.TextUtils
+import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -12,60 +15,96 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 
+enum class KeyboardInputKind {
+    TEXT,
+    PASSWORD,
+    SEARCH;
+
+    companion object {
+        fun fromHtmlType(type: String): KeyboardInputKind = when {
+            type.equals("password", ignoreCase = true) -> PASSWORD
+            type.equals("search", ignoreCase = true) -> SEARCH
+            else -> TEXT
+        }
+    }
+}
+
+enum class KeyboardAction {
+    NEXT,
+    SUBMIT
+}
+
+private enum class KeyboardLanguage { ENGLISH, PERSIAN }
+
+private data class KeyboardDeckState(
+    val sessionId: Long = 0L,
+    val kind: KeyboardInputKind = KeyboardInputKind.TEXT,
+    val buffer: String = "",
+    val language: KeyboardLanguage = KeyboardLanguage.ENGLISH,
+    val capsLock: Boolean = false,
+    val revealPassword: Boolean = false
+)
+
 /**
- * A mouse-clickable keyboard owned by Aminema.
+ * Aminema's mouse/DPAD Input Deck for ordinary website fields.
  *
- * Android TV IMEs are commonly DPAD-only. This overlay keeps login/search usable
- * on boxes where a USB mouse is the primary input device.
+ * All key rows are created exactly once. Caps, language and password reveal only
+ * render a new immutable [KeyboardDeckState]; they never remove the focused row.
+ * Every callback carries a session id, so a delayed click cannot write into a
+ * newer DOM field after Username → Password.
  */
 class MouseKeyboardOverlay(
     context: Context,
-    private val onValueChanged: (String) -> Unit,
-    private val onAction: (String, Boolean) -> Unit,
-    private val onDismissed: () -> Unit,
-    private val onModeChanged: () -> Unit
+    private val onValueChanged: (sessionId: Long, value: String) -> Unit,
+    private val onAction: (sessionId: Long, value: String, action: KeyboardAction) -> Unit,
+    private val onDismissed: (sessionId: Long) -> Unit,
+    private val onInteraction: (sessionId: Long) -> Unit
 ) : FrameLayout(context) {
 
     private val panel = LinearLayout(context)
+    private val fieldBadge = TextView(context)
     private val preview = TextView(context)
-    private val keysContainer = LinearLayout(context)
-    private val actionButton = Button(context)
-    private val revealButton = Button(context)
+    private val revealButton: Button
+    private val closeButton: Button
+    private val englishKeys = LinearLayout(context)
+    private val persianKeys = LinearLayout(context)
+    private val actionButton: Button
+    private val capsButton: Button
+    private val languageButton: Button
+    private val persianSpecialButtons = mutableListOf<Button>()
     private val alphabetButtons = mutableListOf<Button>()
-    private lateinit var capsButton: Button
-    private lateinit var languageButton: Button
+    private var englishFocusAnchor: Button? = null
+    private var persianFocusAnchor: Button? = null
 
-    private var buffer = ""
-    private var passwordMode = false
-    private var searchMode = false
-    private var persian = false
-    private var capsLock = false
-    private var showPassword = false
+    private var state = KeyboardDeckState()
 
     val isShowing: Boolean get() = visibility == View.VISIBLE
-    val isPasswordMode: Boolean get() = passwordMode
+    val isPasswordMode: Boolean get() = state.kind == KeyboardInputKind.PASSWORD
+    val currentSessionId: Long get() = state.sessionId
 
     init {
         visibility = View.GONE
         isClickable = true
         isFocusable = true
         isFocusableInTouchMode = true
-        setBackgroundColor(Color.parseColor("#99000000"))
+        setBackgroundColor(Color.parseColor("#B0000000"))
         setOnClickListener { dismiss() }
 
         panel.apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(28), dp(18), dp(28), dp(20))
+            setPadding(dp(24), dp(14), dp(24), dp(16))
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#F21A1A22"))
+                setColor(Color.parseColor("#FA15151D"))
                 cornerRadii = floatArrayOf(
-                    dp(22).toFloat(), dp(22).toFloat(),
-                    dp(22).toFloat(), dp(22).toFloat(),
+                    dp(24).toFloat(), dp(24).toFloat(),
+                    dp(24).toFloat(), dp(24).toFloat(),
                     0f, 0f, 0f, 0f
                 )
+                setStroke(dp(1), Color.parseColor("#30303B"))
             }
-            setOnClickListener { /* Keep clicks inside the panel. */ }
+            elevation = dp(18).toFloat()
+            setOnClickListener { /* Keep panel clicks away from the dimmed scrim. */ }
         }
         addView(
             panel,
@@ -80,43 +119,58 @@ class MouseKeyboardOverlay(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
+        fieldBadge.apply {
+            setTextColor(Color.parseColor("#F5F5F7"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            background = rounded("#3A1218", 50, "#74222A")
+        }
+        header.addView(
+            fieldBadge,
+            LinearLayout.LayoutParams(dp(112), dp(50)).apply {
+                marginEnd = dp(9)
+            }
+        )
+
         preview.apply {
             setTextColor(Color.WHITE)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
             typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(18), 0, dp(18), 0)
-            background = rounded("#262632", 14)
+            gravity = Gravity.CENTER_VERTICAL or Gravity.END
+            textDirection = View.TEXT_DIRECTION_LTR
+            setPadding(dp(16), 0, dp(16), 0)
+            background = rounded("#20202A", 14, "#363642")
             maxLines = 1
+            ellipsize = TextUtils.TruncateAt.START
         }
         header.addView(
             preview,
-            LinearLayout.LayoutParams(0, dp(48), 1f).apply {
-                marginEnd = dp(10)
-                }
-        )
-        revealButton.apply {
-            visibility = View.GONE
-            text = "Show"
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
-            background = rounded("#30303C", 12)
-            setOnClickListener {
-                showPassword = !showPassword
-                text = if (showPassword) "Hide" else "Show"
-                updatePreview()
-                onModeChanged()
+            LinearLayout.LayoutParams(0, dp(50), 1f).apply {
+                marginEnd = dp(9)
             }
-        }
+        )
+
+        revealButton = makeButton("نمایش", tone = ButtonTone.SECONDARY) {
+            reduce(state.copy(revealPassword = !state.revealPassword))
+            onInteraction(state.sessionId)
+        }.apply { visibility = View.INVISIBLE }
         header.addView(
             revealButton,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                dp(48)
-            ).apply { marginEnd = dp(10) }
+            LinearLayout.LayoutParams(dp(88), dp(50)).apply {
+                marginEnd = dp(9)
+            }
         )
-        header.addView(makeControlButton("Cancel") { dismiss() })
+
+        closeButton = makeButton("بستن", tone = ButtonTone.SECONDARY) {
+            dismiss()
+        }
+        header.addView(
+            closeButton,
+            LinearLayout.LayoutParams(dp(82), dp(50))
+        )
         panel.addView(
             header,
             LinearLayout.LayoutParams(
@@ -125,253 +179,372 @@ class MouseKeyboardOverlay(
             )
         )
 
-        keysContainer.orientation = LinearLayout.VERTICAL
+        val keyArea = FrameLayout(context)
+        englishKeys.apply { orientation = LinearLayout.VERTICAL }
+        persianKeys.apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+        }
+        keyArea.addView(
+            englishKeys,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+        keyArea.addView(
+            persianKeys,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
         panel.addView(
-            keysContainer,
+            keyArea,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(12) }
+            ).apply { topMargin = dp(8) }
         )
 
-        actionButton.apply {
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17f)
-            typeface = Typeface.DEFAULT_BOLD
-            background = rounded("#E50914", 12)
-            setOnClickListener {
-                // BrowserActivity dismisses after the website confirms whether
-                // this action submitted or moved focus to the password field.
-                onAction(buffer, searchMode || passwordMode)
-            }
-        }
+        addNumberRow(englishKeys)
+        addAlphabetRow(
+            englishKeys,
+            listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p")
+        )
+        englishFocusAnchor =
+            (englishKeys.getChildAt(1) as? ViewGroup)?.getChildAt(0) as? Button
+        addAlphabetRow(
+            englishKeys,
+            listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
+            edgeInset = 0.5f
+        )
+        addAlphabetRow(
+            englishKeys,
+            listOf("z", "x", "c", "v", "b", "n", "m"),
+            edgeInset = 1.5f
+        )
 
-        rebuildKeys()
-    }
-
-    fun open(initialValue: String, inputType: String) {
-        passwordMode = inputType.equals("password", ignoreCase = true)
-        searchMode = inputType.equals("search", ignoreCase = true)
-        showPassword = false
-        revealButton.text = "Show"
-        revealButton.visibility = if (passwordMode) View.VISIBLE else View.GONE
-        // Never pull an existing password out of the website into Android UI.
-        buffer = if (passwordMode) "" else initialValue.take(160)
-        actionButton.text = when {
-            searchMode -> "Search"
-            passwordMode -> "Done"
-            else -> "Next"
-        }
-        updatePreview()
-        visibility = View.VISIBLE
-        bringToFront()
-        requestFocus()
-    }
-
-    fun dismiss() {
-        if (!isShowing) return
-        visibility = View.GONE
-        onDismissed()
-    }
-
-    private fun rebuildKeys() {
-        // Move Android focus to a stable view before removing key rows. On
-        // several physical TV boxes, removing the currently focused Caps/فا
-        // button hands focus back to WebView and reactivates Username.
-        val focusedLabel = (findFocus() as? Button)?.text?.toString()
-        requestFocus()
-        keysContainer.removeAllViews()
-        alphabetButtons.clear()
-
-        addKeyRow(listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"))
-        if (persian) {
-            addKeyRow(listOf("ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "چ"))
-            addKeyRow(listOf("ش", "س", "ی", "ب", "ل", "ا", "ت", "ن", "م", "ک", "گ"))
-            addKeyRow(listOf("ظ", "ط", "ز", "ر", "ذ", "د", "پ", "و"))
-        } else {
-            val rows = listOf(
-                listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
-                listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
-                listOf("z", "x", "c", "v", "b", "n", "m")
-            )
-            rows.forEach { row ->
-                addAlphabetRow(row)
-            }
-        }
+        addNumberRow(persianKeys)
+        addLiteralRow(
+            persianKeys,
+            listOf("ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "چ")
+        )
+        persianFocusAnchor =
+            (persianKeys.getChildAt(1) as? ViewGroup)?.getChildAt(0) as? Button
+        addLiteralRow(
+            persianKeys,
+            listOf("ش", "س", "ی", "ب", "ل", "ا", "ت", "ن", "م", "ک", "گ"),
+            edgeInset = 0.5f
+        )
+        addLiteralRow(
+            persianKeys,
+            listOf("ظ", "ط", "ز", "ر", "ذ", "د", "پ", "و", ".", "؟"),
+            edgeInset = 1f
+        )
 
         val controls = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        capsButton = makeWeightedButton(if (capsLock) "CAPS ●" else "Caps") {
-            capsLock = !capsLock
-            updateCapsLabels()
+        capsButton = makeWeightedButton("Caps") {
+            reduce(state.copy(capsLock = !state.capsLock))
+            capsButton.requestFocus()
+            onInteraction(state.sessionId)
         }
         controls.addView(capsButton)
-        languageButton = makeWeightedButton(if (persian) "EN" else "فا") {
-            persian = !persian
-            rebuildKeys()
-            post { onModeChanged() }
+
+        languageButton = makeWeightedButton("فا") {
+            val next = if (state.language == KeyboardLanguage.ENGLISH) {
+                KeyboardLanguage.PERSIAN
+            } else {
+                KeyboardLanguage.ENGLISH
+            }
+            reduce(
+                state.copy(
+                    language = next,
+                    capsLock = if (next == KeyboardLanguage.PERSIAN) false else state.capsLock
+                )
+            )
+            languageButton.requestFocus()
+            onInteraction(state.sessionId)
         }
         controls.addView(languageButton)
+
+        listOf("ژ", "آ").forEach { letter ->
+            val button = makeWeightedButton(letter, weight = 0.72f) { append(letter) }
+                .apply { visibility = View.GONE }
+            persianSpecialButtons += button
+            controls.addView(button)
+        }
         controls.addView(makeWeightedButton("@") { append("@") })
         controls.addView(makeWeightedButton(".") { append(".") })
         controls.addView(makeWeightedButton("_") { append("_") })
         controls.addView(makeWeightedButton("-") { append("-") })
         controls.addView(
-            makeWeightedButton("Space", weight = 2f) { append(" ") }
+            makeWeightedButton("فاصله", weight = 2.1f) { append(" ") }
         )
         controls.addView(makeWeightedButton("⌫") {
-            if (buffer.isNotEmpty()) {
-                buffer = buffer.dropLast(1)
-                valueChanged()
+            if (state.buffer.isNotEmpty()) {
+                changeBuffer(state.buffer.dropLast(1))
             }
         })
-        // The action button is reused between keyboard rebuilds (Caps/language).
-        // Detach it from the old controls row before attaching it to the new row.
-        (actionButton.parent as? ViewGroup)?.removeView(actionButton)
+
+        actionButton = makeButton("بعدی", tone = ButtonTone.PRIMARY) {
+            val action = if (state.kind == KeyboardInputKind.TEXT) {
+                KeyboardAction.NEXT
+            } else {
+                KeyboardAction.SUBMIT
+            }
+            onAction(state.sessionId, state.buffer, action)
+        }
         controls.addView(
             actionButton,
-            LinearLayout.LayoutParams(0, dp(46), 1.5f).apply {
-                setMargins(dp(4), dp(4), dp(4), dp(4))
+            LinearLayout.LayoutParams(0, dp(44), 1.55f).apply {
+                setMargins(dp(3), dp(3), dp(3), dp(3))
             }
         )
-        keysContainer.addView(
+        panel.addView(
             controls,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            ).apply { topMargin = dp(3) }
         )
-        when {
-            focusedLabel == "Caps" || focusedLabel == "CAPS ●" ->
-                capsButton.requestFocus()
-            focusedLabel == "فا" || focusedLabel == "EN" ->
-                languageButton.requestFocus()
-            else -> requestFocus()
+
+        reduce(state)
+    }
+
+    fun open(
+        sessionId: Long,
+        initialValue: String,
+        inputType: String
+    ) {
+        val kind = KeyboardInputKind.fromHtmlType(inputType)
+        state = state.copy(
+            sessionId = sessionId,
+            kind = kind,
+            // Existing passwords never cross the WebView bridge.
+            buffer = if (kind == KeyboardInputKind.PASSWORD) "" else initialValue.take(160),
+            capsLock = false,
+            revealPassword = false
+        )
+        reduce(state)
+        visibility = View.VISIBLE
+        bringToFront()
+        post {
+            val anchor = if (state.language == KeyboardLanguage.PERSIAN) {
+                persianFocusAnchor
+            } else {
+                englishFocusAnchor
+            }
+            if (isShowing && anchor?.requestFocus() != true) requestFocus()
         }
     }
 
-    /**
-     * Caps only changes labels in place. Rebuilding the whole native keyboard
-     * here used to remove the focused Caps button and could return DOM focus to
-     * FilmRooz's username input on older Android TV boxes.
-     */
-    private fun updateCapsLabels() {
-        capsButton.text = if (capsLock) "CAPS ●" else "Caps"
+    fun dismiss() {
+        if (!isShowing) return
+        val dismissedSession = state.sessionId
+        visibility = View.GONE
+        onDismissed(dismissedSession)
+    }
+
+    private fun reduce(next: KeyboardDeckState) {
+        state = next
+        val persian = state.language == KeyboardLanguage.PERSIAN
+        englishKeys.visibility = if (persian) View.GONE else View.VISIBLE
+        persianKeys.visibility = if (persian) View.VISIBLE else View.GONE
+        persianSpecialButtons.forEach {
+            it.visibility = if (persian) View.VISIBLE else View.GONE
+        }
+        languageButton.text = if (persian) "EN" else "فا"
+        capsButton.text = if (state.capsLock) "CAPS ●" else "Caps"
+        capsButton.isEnabled = !persian
+        capsButton.alpha = if (persian) 0.36f else 1f
         alphabetButtons.forEach { button ->
             val base = button.tag as? String ?: return@forEach
-            button.text = if (capsLock) base.uppercase() else base
+            button.text = if (state.capsLock) base.uppercase() else base
         }
-        capsButton.requestFocus()
-        post { onModeChanged() }
-    }
 
-    private fun addAlphabetRow(keys: List<String>) {
-        val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
+        fieldBadge.text = when (state.kind) {
+            KeyboardInputKind.TEXT -> "نام کاربری"
+            KeyboardInputKind.PASSWORD -> "رمز عبور"
+            KeyboardInputKind.SEARCH -> "جستجو"
         }
-        keys.forEach { base ->
-            val button = makeWeightedButton(
-                if (capsLock) base.uppercase() else base
-            ) {
-                append(if (capsLock) base.uppercase() else base)
-            }.apply { tag = base }
-            alphabetButtons += button
-            row.addView(button)
+        actionButton.text = when (state.kind) {
+            KeyboardInputKind.TEXT -> "بعدی"
+            KeyboardInputKind.PASSWORD -> "ورود"
+            KeyboardInputKind.SEARCH -> "جستجو"
         }
-        keysContainer.addView(
-            row,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        )
-    }
-
-    private fun addKeyRow(keys: List<String>) {
-        val row = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
+        revealButton.visibility = View.VISIBLE
+        revealButton.isEnabled = state.kind == KeyboardInputKind.PASSWORD
+        revealButton.alpha = if (state.kind == KeyboardInputKind.PASSWORD) 1f else 0.72f
+        revealButton.text = when (state.kind) {
+            KeyboardInputKind.TEXT -> "بعدی: رمز"
+            KeyboardInputKind.SEARCH -> "جستجو"
+            KeyboardInputKind.PASSWORD ->
+                if (state.revealPassword) "پنهان" else "نمایش"
         }
-        keys.forEach { key ->
-            row.addView(makeWeightedButton(key) { append(key) })
-        }
-        keysContainer.addView(
-            row,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        )
-    }
-
-    private fun append(value: String) {
-        if (buffer.length >= 160) return
-        buffer += when {
-            persian -> value
-            capsLock -> value.uppercase()
-            else -> value.lowercase()
-        }
-        valueChanged()
-    }
-
-    private fun valueChanged() {
         updatePreview()
-        onValueChanged(buffer)
+    }
+
+    private fun append(raw: String) {
+        if (state.buffer.length >= 160) return
+        val value = when {
+            state.language == KeyboardLanguage.PERSIAN -> raw
+            state.capsLock -> raw.uppercase()
+            else -> raw.lowercase()
+        }
+        changeBuffer((state.buffer + value).take(160))
+    }
+
+    private fun changeBuffer(value: String) {
+        reduce(state.copy(buffer = value))
+        onValueChanged(state.sessionId, state.buffer)
     }
 
     private fun updatePreview() {
         preview.text = when {
-            buffer.isEmpty() -> if (passwordMode) "Password" else "Type with mouse…"
-            passwordMode && !showPassword -> "•".repeat(buffer.length)
-            else -> buffer
+            state.buffer.isEmpty() -> when (state.kind) {
+                KeyboardInputKind.TEXT -> "نام کاربری را وارد کنید"
+                KeyboardInputKind.PASSWORD -> "رمز عبور را وارد کنید"
+                KeyboardInputKind.SEARCH -> "عبارت جستجو را وارد کنید"
+            }
+            state.kind == KeyboardInputKind.PASSWORD && !state.revealPassword ->
+                "•".repeat(state.buffer.length)
+            else -> state.buffer
         }
+        preview.setTextColor(
+            if (state.buffer.isEmpty()) Color.parseColor("#9E9EA8") else Color.WHITE
+        )
+    }
+
+    private fun addNumberRow(container: LinearLayout) {
+        addLiteralRow(container, listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"))
+    }
+
+    private fun addAlphabetRow(
+        container: LinearLayout,
+        keys: List<String>,
+        edgeInset: Float = 0f
+    ) {
+        addRow(container, keys, edgeInset) { base ->
+            makeWeightedButton(base) {
+                append(if (state.capsLock) base.uppercase() else base)
+            }.apply {
+                tag = base
+                alphabetButtons += this
+            }
+        }
+    }
+
+    private fun addLiteralRow(
+        container: LinearLayout,
+        keys: List<String>,
+        edgeInset: Float = 0f
+    ) {
+        addRow(container, keys, edgeInset) { key ->
+            makeWeightedButton(key) { append(key) }
+        }
+    }
+
+    private fun addRow(
+        container: LinearLayout,
+        keys: List<String>,
+        edgeInset: Float,
+        button: (String) -> Button
+    ) {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        if (edgeInset > 0f) {
+            row.addView(View(context), LinearLayout.LayoutParams(0, dp(44), edgeInset))
+        }
+        keys.forEach { row.addView(button(it)) }
+        if (edgeInset > 0f) {
+            row.addView(View(context), LinearLayout.LayoutParams(0, dp(44), edgeInset))
+        }
+        container.addView(
+            row,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
     }
 
     private fun makeWeightedButton(
         label: String,
         weight: Float = 1f,
         action: () -> Unit
-    ): Button = makeButton(label, action).apply {
-        layoutParams = LinearLayout.LayoutParams(0, dp(46), weight).apply {
-            setMargins(dp(4), dp(4), dp(4), dp(4))
+    ): Button = makeButton(label, action = action).apply {
+        layoutParams = LinearLayout.LayoutParams(0, dp(44), weight).apply {
+            setMargins(dp(3), dp(3), dp(3), dp(3))
         }
     }
 
-    private fun makeControlButton(label: String, action: () -> Unit): Button =
-        makeButton(label, action).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                dp(48)
-            )
-        }
+    private enum class ButtonTone { NORMAL, SECONDARY, PRIMARY }
 
-    private fun makeButton(label: String, action: () -> Unit): Button =
-        Button(context).apply {
-            text = label
-            isAllCaps = false
-            minWidth = 0
-            minimumWidth = 0
-            minHeight = 0
-            minimumHeight = 0
-            setPadding(dp(4), 0, dp(4), 0)
-            setTextColor(Color.WHITE)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
-            background = rounded("#30303C", 10)
-            setOnFocusChangeListener { view, focused ->
-                view.background = rounded(if (focused) "#E50914" else "#30303C", 10)
+    private fun makeButton(
+        label: String,
+        tone: ButtonTone = ButtonTone.NORMAL,
+        action: () -> Unit
+    ): Button = Button(context).apply {
+        text = label
+        isAllCaps = false
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        isFocusable = true
+        isFocusableInTouchMode = true
+        setPadding(dp(4), 0, dp(4), 0)
+        setTextColor(Color.WHITE)
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
+        typeface = if (tone == ButtonTone.PRIMARY) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+
+        var focused = false
+        var hovered = false
+        fun render() {
+            val active = focused || hovered
+            val color = when {
+                tone == ButtonTone.PRIMARY && active -> "#FF2731"
+                tone == ButtonTone.PRIMARY -> "#E50914"
+                active -> "#3B3B48"
+                tone == ButtonTone.SECONDARY -> "#292933"
+                else -> "#24242E"
             }
-            setOnClickListener { action() }
+            val stroke = if (active) "#F5F5F7" else "#353541"
+            background = rounded(color, 11, stroke, if (active) 2 else 1)
+            scaleX = if (active) 1.035f else 1f
+            scaleY = if (active) 1.035f else 1f
         }
+        setOnFocusChangeListener { _, hasFocus ->
+            focused = hasFocus
+            render()
+        }
+        setOnHoverListener { _, event ->
+            hovered = event.actionMasked != MotionEvent.ACTION_HOVER_EXIT
+            render()
+            false
+        }
+        setOnClickListener { action() }
+        render()
+    }
 
-    private fun rounded(color: String, radiusDp: Int) =
-        GradientDrawable().apply {
-            setColor(Color.parseColor(color))
-            cornerRadius = dp(radiusDp).toFloat()
+    private fun rounded(
+        color: String,
+        radiusDp: Int,
+        strokeColor: String? = null,
+        strokeWidthDp: Int = 1
+    ) = GradientDrawable().apply {
+        setColor(Color.parseColor(color))
+        cornerRadius = dp(radiusDp).toFloat()
+        if (strokeColor != null) {
+            setStroke(dp(strokeWidthDp), Color.parseColor(strokeColor))
         }
+    }
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()

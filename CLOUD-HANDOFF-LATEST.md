@@ -9,22 +9,45 @@
 و مسیرهای تغییرکرده، شواهد Probe واقعی، تست‌ها، مرز امنیتی، محدودیت‌ها، قدم
 بعدی و وضعیت Commit/Tag/Release/Assets. فقط Release Notes کافی نیست.
 
+**الزام تازه از 0.13.0:** در هر Release، بخش‌های `Current release` و
+`Next update queue` در `README.md` هم باید همان لحظه به نسخه واقعی به‌روز
+شوند. README عمومی GitHub نباید از Handoff یا Latest Release عقب بماند.
+
 ---
 
 ## وضعیت جاری
 
 - محصول: **Aminema**
-- نسخه کد: **0.12.1**
-- `versionCode`: **26**
-- وضعیت: **منتشرشده و Latest**
-- Release commit و Tag: `72d6527` / `v0.12.1`
-- GitHub Release:
-  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.12.1`
+- نسخه کد: **0.13.0**
+- `versionCode`: **27**
+- وضعیت: **Release candidate؛ انتشار GitHub در حال انجام**
+- آخرین نسخه عمومی فعلی هنگام آماده‌سازی: `v0.12.1`
 - شاخه: `main`
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
   نشست‌های لاگین، Cookie، Poster و Library را حفظ کرد.
+
+## کار در حال انجام برای 0.13.0
+
+- مرجع جزئیات زنده: `DEVELOPMENT_LOG_0.13.0.md`
+- گزارش پذیرش Candidate: `TEST_REPORT_0.13.0.md`
+- Track A، بازطراحی Search Deck داخل خود اپ: پیاده‌سازی و Build شده، هنوز
+  Release نشده است.
+- چیدمان فارسی پس از بازخورد کاربر از ردیف‌های ده‌تایی اشتباه به QWERTY
+  استاندارد و پلکانی اصلاح شد؛ `ژ` و `آ` کلید مستقل دارند.
+- روی AVD واقعی 1920×1080 کل پنل بدون Scroll/Clipping دیده شد و ورود دو حرف
+  با Mouse، Counter و فعال‌شدن CTA جستجو تأیید شد.
+- Track B، State Machine و Input Deck کیبورد Login داخل WebView: پیاده‌سازی
+  و روی صفحه Login محلی داخل BrowserActivity تست شد.
+- `Username → Next → Password` حتی با تعویض هم‌زمان DOM موفق بود؛
+  `Caps → A → فارسی → ض → Show` مقدار `Aض` را فقط در Password نگه داشت.
+- Submit و Back موفق، System IME بسته، Crash صفر؛ Harness موقت قبل از Build
+  نهایی حذف شد. جزئیات و فایل‌ها در `DEVELOPMENT_LOG_0.13.0.md`.
+- تنها Acceptance باقی‌مانده، تست همین مسیر روی Android Box واقعی در اولین
+  فرصت Login طبیعی است؛ برای تست حساب‌های فعلی عمداً Logout نشوند.
+- هر دو Track تکمیل شده‌اند و Candidate به 0.13.0/code 27 ارتقا یافته است؛
+  تا تأیید GitHub Release وضعیت Published اعلام نشود.
 
 ## مسئله‌های حل‌شده در 0.12.1
 

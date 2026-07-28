@@ -2,6 +2,20 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
+## Current release
+
+**Aminema 0.13.0 — Keyboard Edition** (`versionCode 27`)
+
+- Cinematic native Search Deck with real staggered Persian/English QWERTY
+- Stable WebView Input Deck for Username → Password → Caps/Language → Done
+- Mouse-hover and DPAD-focus polish, explicit Close and password Show/Hide
+- Session/token state machine that prevents password typing from returning to Username
+
+[Download the latest APK from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/latest)
+
+The release status and next milestone below are updated as part of every
+version's release checklist, together with `CLOUD-HANDOFF-LATEST.md`.
+
 ## Features
 
 Netflix-style dark home screen with Continue Watching, My Services, Recently Opened, and Favorites rows. JSON-configurable services (no hardcoded websites). Persistent login sessions (cookies, DOM storage, local storage). Smart Resume that remembers the exact page, title, and poster (og:image) per service. Native HTML5 fullscreen through `WebChromeClient` with hidden system UI and hardware acceleration. Full DPAD, remote OK/Back, air-mouse, and USB-mouse support with real mouse hover, click, wheel scrolling, and side-button navigation. Switchable User-Agent (Android TV / Desktop Chrome / Mobile Chrome), remembered across launches. TV-friendly error screens with retry. Settings for managing services, QR/login scale, clearing cookies (logout), cache, and history.
@@ -149,15 +163,37 @@ screen and falls back safely to manual selection after 14 seconds. Every
 horizontal Home/Search rail also has shared mouse- and DPAD-friendly page
 arrows, and the redundant Live subtitle was removed.
 
-## Next update queue (not implemented in v0.8.2)
+Version 0.13.0 replaces both keyboard experiences. The native app Search Deck
+now keeps the query, language and character count in one cinematic panel, uses
+real staggered Persian/English QWERTY, provides direct `ژ` and `آ`, and folds
+into a compact query bar when results appear. The WebView login Input Deck now
+shows an explicit field badge, fixed-width preview, `بعدی: رمز`, password
+Show/Hide and a permanent Close action. A DOM-token/native-session state
+machine owns Username → Password → Submit, so stale focus or a framework form
+rebuild cannot redirect password typing back into Username. Caps and language
+no longer delete focused key rows, Android's system IME stays out of the flow,
+and mouse hover plus DPAD focus share the same clear visual state.
 
-- **Keyboard redesign (0.9.1):** explicit
-  `Username → Password → Caps → Language → Show/Hide → Done` state machine.
-- **Episode selection for series:** open the first episode the user has not watched,
-  inferred from Aminema's own Continue data since the site tracks watched state per title.
-- **Unified search (0.9.0):** one Home search bar with `ایرانی | خارجی` result groups,
-  reusing the 0.8.0 catalog adapters.
-- Neither will inspect or store protected media/stream URLs.
+## Next update queue — after v0.13.0
+
+### 0.14.0 — Smart Series Continuity
+
+- Show **season / episode** on Continue cards whenever Aminema has an
+  unambiguous normal page title or local playback record.
+- Add **Next episode** only when the next ordinary episode-page link can be
+  determined safely from the visible signed-in page. Never guess an episode.
+- Prefer the website's own Continue action for cross-device history; preserve
+  Aminema's exact local episode/player page when it is known.
+- If a provider exposes only title-level Recent history, open the series detail
+  page for manual episode choice instead of claiming an exact cross-device episode.
+- Prepare an optional `سریال‌های من` experience without adding another heavy
+  Home rail until the lazy-layout performance migration is complete.
+
+Foundation work for that milestone: migrate Home from eager
+`Column + horizontalScroll` rendering to lazy TV lists before adding more
+content rails. The episode assistant will inspect only ordinary page metadata,
+episode labels and stable page links; it will not inspect or store protected
+media/stream URLs, cookies, tokens or DRM data.
 
 ## Requirements
 

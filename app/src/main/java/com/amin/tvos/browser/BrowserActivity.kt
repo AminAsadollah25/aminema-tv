@@ -56,6 +56,20 @@ import org.json.JSONTokener
  */
 class BrowserActivity : ComponentActivity() {
 
+    private enum class KeyboardPhase {
+        CLOSED,
+        EDITING,
+        MOVING_NEXT,
+        SUBMITTING
+    }
+
+    private data class BrowserKeyboardSession(
+        val phase: KeyboardPhase = KeyboardPhase.CLOSED,
+        val sessionId: Long = 0L,
+        val targetToken: String = "",
+        val inputKind: KeyboardInputKind = KeyboardInputKind.TEXT
+    )
+
     companion object {
         private const val EXTRA_SERVICE_ID = "service_id"
         private const val EXTRA_URL = "url"
@@ -136,8 +150,8 @@ class BrowserActivity : ComponentActivity() {
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
     private var keyboardOpenSuppressedUntil = 0L
-    private var keyboardTransitionInProgress = false
-    private var keyboardTransitionGeneration = 0
+    private var keyboardSessionSequence = 0L
+    private var keyboardSession = BrowserKeyboardSession()
 
     private var lastContentUrl = ""
     private var lastContentTitle = ""
@@ -237,14 +251,22 @@ class BrowserActivity : ComponentActivity() {
         )
         mouseKeyboard = MouseKeyboardOverlay(
             this,
-            onValueChanged = {
-                updateFocusedWebInput(it, submit = false, finalize = false)
+            onValueChanged = { sessionId, value ->
+                updateFocusedWebInput(
+                    sessionId = sessionId,
+                    value = value,
+                    action = null
+                )
             },
-            onAction = { value, submit ->
-                updateFocusedWebInput(value, submit, finalize = true)
+            onAction = { sessionId, value, action ->
+                updateFocusedWebInput(
+                    sessionId = sessionId,
+                    value = value,
+                    action = action
+                )
             },
-            onDismissed = { releaseFocusedWebInput() },
-            onModeChanged = { reinforceKeyboardTarget() }
+            onDismissed = { sessionId -> releaseFocusedWebInput(sessionId) },
+            onInteraction = { sessionId -> reinforceKeyboardTarget(sessionId) }
         )
         root.addView(
             mouseKeyboard,
@@ -536,6 +558,8 @@ class BrowserActivity : ComponentActivity() {
             (function() {
               if (window.__aminKeyboardInstalled) return;
               window.__aminKeyboardInstalled = true;
+              window.__aminKeyboardTokens = new WeakMap();
+              window.__aminKeyboardTokenSequence = 0;
 
               function editable(el) {
                 if (!el) return false;
@@ -545,6 +569,17 @@ class BrowserActivity : ComponentActivity() {
                         el.isContentEditable) &&
                        !/button|submit|checkbox|radio|file|range|color/.test(type);
               }
+
+              function targetToken(el) {
+                if (!el) return '';
+                var token = window.__aminKeyboardTokens.get(el);
+                if (!token) {
+                  token = String(++window.__aminKeyboardTokenSequence);
+                  window.__aminKeyboardTokens.set(el, token);
+                }
+                return token;
+              }
+              window.__aminKeyboardTargetToken = targetToken;
 
               function markExplicitTarget(event) {
                 var el = event.target;
@@ -592,7 +627,8 @@ class BrowserActivity : ComponentActivity() {
                   window.AminKeyboard.open(
                     type,
                     String(value).slice(0, 160),
-                    explicit
+                    explicit,
+                    targetToken(el)
                   );
                 }
               }, true);
@@ -673,28 +709,40 @@ class BrowserActivity : ComponentActivity() {
         fun open(
             inputType: String?,
             initialValue: String?,
-            explicitUserTarget: Boolean
+            explicitUserTarget: Boolean,
+            targetToken: String?
         ) {
             runOnUiThread {
-                if (
-                    keyboardTransitionInProgress ||
-                    SystemClock.uptimeMillis() < keyboardOpenSuppressedUntil
-                ) return@runOnUiThread
+                if (SystemClock.uptimeMillis() < keyboardOpenSuppressedUntil) {
+                    return@runOnUiThread
+                }
                 val requestedType = inputType.orEmpty().take(24)
-                if (
-                    mouseKeyboard.isShowing &&
-                    mouseKeyboard.isPasswordMode &&
-                    !requestedType.equals("password", ignoreCase = true) &&
-                    !explicitUserTarget
-                ) return@runOnUiThread
-                keyboardOpenSuppressedUntil = 0L
-                hideSystemKeyboard()
-                mouseKeyboard.open(
-                    initialValue = initialValue.orEmpty().take(160),
-                    inputType = requestedType
+                val requestedToken = targetToken.orEmpty().take(40)
+                if (requestedToken.isBlank()) return@runOnUiThread
+
+                when (keyboardSession.phase) {
+                    KeyboardPhase.MOVING_NEXT,
+                    KeyboardPhase.SUBMITTING -> return@runOnUiThread
+
+                    KeyboardPhase.EDITING -> {
+                        // Refocus/recomposition of the same DOM node must not
+                        // reset the native password buffer. A different field
+                        // may only take ownership after a real pointer/touch.
+                        if (keyboardSession.targetToken == requestedToken) {
+                            reinforceKeyboardTarget(keyboardSession.sessionId)
+                            return@runOnUiThread
+                        }
+                        if (!explicitUserTarget) return@runOnUiThread
+                    }
+
+                    KeyboardPhase.CLOSED -> Unit
+                }
+
+                openKeyboardSession(
+                    targetToken = requestedToken,
+                    inputType = requestedType,
+                    initialValue = initialValue.orEmpty().take(160)
                 )
-                root.postDelayed({ hideSystemKeyboard() }, 120)
-                root.postDelayed({ hideSystemKeyboard() }, 400)
             }
         }
     }
@@ -782,49 +830,91 @@ class BrowserActivity : ComponentActivity() {
         }
     }
 
+    private fun openKeyboardSession(
+        targetToken: String,
+        inputType: String,
+        initialValue: String
+    ) {
+        val sessionId = ++keyboardSessionSequence
+        keyboardSession = BrowserKeyboardSession(
+            phase = KeyboardPhase.EDITING,
+            sessionId = sessionId,
+            targetToken = targetToken,
+            inputKind = KeyboardInputKind.fromHtmlType(inputType)
+        )
+        keyboardOpenSuppressedUntil = 0L
+        hideSystemKeyboard()
+        mouseKeyboard.open(
+            sessionId = sessionId,
+            initialValue = initialValue,
+            inputType = inputType
+        )
+        root.postDelayed({ hideSystemKeyboard() }, 120L)
+        root.postDelayed({ hideSystemKeyboard() }, 400L)
+    }
+
     private fun updateFocusedWebInput(
+        sessionId: Long,
         value: String,
-        submit: Boolean,
-        finalize: Boolean,
+        action: KeyboardAction?,
         retryCount: Int = 0
     ) {
-        val transitionGeneration = if (finalize && !submit) {
-            keyboardTransitionInProgress = true
-            ++keyboardTransitionGeneration
-        } else {
-            keyboardTransitionGeneration
-        }
-        if (finalize && !submit) {
-            // A few old WebView builds fail to deliver evaluateJavascript's
-            // callback if the page replaces the focused form mid-event. Never
-            // leave the keyboard controller locked in that transition.
+        val active = keyboardSession
+        if (active.sessionId != sessionId || active.targetToken.isBlank()) return
+
+        val finalizing = action != null
+        val submit = action == KeyboardAction.SUBMIT
+        if (!finalizing && active.phase != KeyboardPhase.EDITING) return
+        if (
+            finalizing &&
+            active.phase != KeyboardPhase.EDITING &&
+            !(active.phase == KeyboardPhase.MOVING_NEXT && retryCount > 0)
+        ) return
+
+        if (finalizing) {
+            keyboardSession = active.copy(
+                phase = if (submit) KeyboardPhase.SUBMITTING else KeyboardPhase.MOVING_NEXT
+            )
+            val expectedPhase = keyboardSession.phase
             root.postDelayed(
                 {
+                    val pending = keyboardSession
                     if (
-                        keyboardTransitionInProgress &&
-                        keyboardTransitionGeneration == transitionGeneration
-                    ) {
-                        keyboardTransitionInProgress = false
-                        if (retryCount == 0 && mouseKeyboard.isShowing) {
-                            updateFocusedWebInput(
-                                value = value,
-                                submit = false,
-                                finalize = true,
-                                retryCount = 1
-                            )
-                        }
+                        pending.sessionId != sessionId ||
+                        pending.phase != expectedPhase
+                    ) return@postDelayed
+
+                    if (!submit && retryCount == 0 && mouseKeyboard.isShowing) {
+                        updateFocusedWebInput(
+                            sessionId = sessionId,
+                            value = value,
+                            action = KeyboardAction.NEXT,
+                            retryCount = 1
+                        )
+                    } else {
+                        mouseKeyboard.dismiss()
                     }
                 },
-                900L
+                if (submit) 1_200L else 900L
             )
         }
-        val quoted = org.json.JSONObject.quote(value)
+
+        val quoted = JSONObject.quote(value)
+        val expectedToken = JSONObject.quote(active.targetToken)
         val script = """
             (function() {
               var el = window.__aminKeyboardTarget ||
                        window.__aminActiveInput ||
                        document.activeElement;
               if (!el) return JSON.stringify({action:'missing'});
+
+              function tokenFor(field) {
+                return window.__aminKeyboardTargetToken
+                  ? String(window.__aminKeyboardTargetToken(field) || '') : '';
+              }
+              if (tokenFor(el) !== $expectedToken) {
+                return JSON.stringify({action:'stale'});
+              }
 
               function editableFields(scope) {
                 return Array.from((scope || document).querySelectorAll(
@@ -861,7 +951,7 @@ class BrowserActivity : ComponentActivity() {
                 el.textContent = $quoted;
               }
               el.dispatchEvent(new Event('input', {bubbles:true}));
-              if (!$finalize) {
+              if (!$finalizing) {
                 return JSON.stringify({action:'updated'});
               }
               el.dispatchEvent(new Event('change', {bubbles:true}));
@@ -886,18 +976,13 @@ class BrowserActivity : ComponentActivity() {
                 return JSON.stringify({action:'submitted'});
               }
 
-              // A framework may replace the username node after its input/change
-              // events. Re-find it, then prefer a visible password in the same
-              // form instead of relying only on object identity.
+              // Frameworks may replace Username after change. Re-find it before
+              // resolving Password, then lock Password before focusin fires.
               var fields = editableFields(document);
               var live = document.contains(el) ? el : fields.find(function(field) {
                 return (currentId && field.id === currentId) ||
                        (currentName && field.name === currentName);
               });
-              if (live) {
-                window.__aminActiveInput = live;
-                window.__aminKeyboardTarget = live;
-              }
               var scope = live && live.form ? live.form : document;
               var scopedFields = editableFields(scope);
               var next = scopedFields.find(function(field) {
@@ -912,46 +997,52 @@ class BrowserActivity : ComponentActivity() {
                 next = fields[currentIndex + 1] || null;
               }
               if (next) {
-                try { next.scrollIntoView(false); } catch (_) {}
-                try {
-                  next.focus({preventScroll:true});
-                } catch (_) {
-                  next.focus();
-                }
+                var nextToken = tokenFor(next);
                 window.__aminActiveInput = next;
                 window.__aminKeyboardTarget = next;
+                try { next.scrollIntoView(false); } catch (_) {}
+                try { next.focus({preventScroll:true}); }
+                catch (_) { try { next.focus(); } catch (_) {} }
                 return JSON.stringify({
                   action:'next',
-                  type:(next.type || 'text').toLowerCase()
+                  type:(next.type || 'text').toLowerCase(),
+                  token:nextToken
                 });
               }
-              el.blur();
+              if (el.blur) el.blur();
               window.__aminActiveInput = null;
+              window.__aminKeyboardTarget = null;
               return JSON.stringify({action:'done'});
             })();
         """.trimIndent()
         webView.evaluateJavascript(script) { raw ->
             val result = decodeJavascriptJson(raw)
-            if (keyboardTransitionGeneration == transitionGeneration) {
-                keyboardTransitionInProgress = false
-            }
-            if (!finalize) {
+            val current = keyboardSession
+            if (current.sessionId != sessionId) return@evaluateJavascript
+
+            if (!finalizing) {
                 hideSystemKeyboard()
-            } else if (result?.optString("action") == "next") {
-                keyboardOpenSuppressedUntil = 0L
-                mouseKeyboard.open(
-                    initialValue = "",
-                    inputType = result.optString("type").ifBlank { "text" }
-                )
+                return@evaluateJavascript
+            }
+
+            if (result?.optString("action") == "next") {
+                val nextToken = result.optString("token").take(40)
+                if (nextToken.isNotBlank()) {
+                    openKeyboardSession(
+                        targetToken = nextToken,
+                        inputType = result.optString("type").ifBlank { "text" },
+                        initialValue = ""
+                    )
+                } else {
+                    mouseKeyboard.dismiss()
+                }
             } else if (!submit && retryCount == 0) {
-                // If the website replaced its form during input/change, retry
-                // once against the newly mounted username/password nodes.
                 webView.postDelayed(
                     {
                         updateFocusedWebInput(
+                            sessionId = sessionId,
                             value = value,
-                            submit = false,
-                            finalize = true,
+                            action = KeyboardAction.NEXT,
                             retryCount = 1
                         )
                     },
@@ -964,10 +1055,13 @@ class BrowserActivity : ComponentActivity() {
         }
     }
 
-    private fun releaseFocusedWebInput() {
+    private fun releaseFocusedWebInput(sessionId: Long) {
         if (!::webView.isInitialized) return
-        keyboardTransitionInProgress = false
-        keyboardTransitionGeneration++
+        if (
+            keyboardSession.sessionId != sessionId &&
+            keyboardSession.phase != KeyboardPhase.CLOSED
+        ) return
+        keyboardSession = BrowserKeyboardSession()
         keyboardOpenSuppressedUntil = SystemClock.uptimeMillis() + 1_200L
         webView.evaluateJavascript(
             """
@@ -993,16 +1087,24 @@ class BrowserActivity : ComponentActivity() {
     }
 
     /**
-     * Native keyboard controls (especially Caps on older boxes) can cause
-     * WebView to restore its first HTML input. Reassert the locked DOM target
-     * after the native click settles, without changing or reading its value.
+     * Reassert the target belonging to this exact keyboard session. Mode controls
+     * can never revive a target from a previous Username/Password transition.
      */
-    private fun reinforceKeyboardTarget() {
-        if (!mouseKeyboard.isShowing) return
+    private fun reinforceKeyboardTarget(sessionId: Long) {
+        val active = keyboardSession
+        if (
+            !mouseKeyboard.isShowing ||
+            active.phase != KeyboardPhase.EDITING ||
+            active.sessionId != sessionId
+        ) return
+        val expectedToken = JSONObject.quote(active.targetToken)
         val script = """
             (function() {
               var target = window.__aminKeyboardTarget;
               if (!target || !document.contains(target)) return false;
+              var token = window.__aminKeyboardTargetToken
+                ? String(window.__aminKeyboardTargetToken(target) || '') : '';
+              if (token !== $expectedToken) return false;
               window.__aminActiveInput = target;
               try { target.focus({preventScroll:true}); }
               catch (_) { try { target.focus(); } catch (_) {} }
@@ -1012,7 +1114,12 @@ class BrowserActivity : ComponentActivity() {
         webView.evaluateJavascript(script, null)
         root.postDelayed(
             {
-                if (mouseKeyboard.isShowing) {
+                val current = keyboardSession
+                if (
+                    mouseKeyboard.isShowing &&
+                    current.phase == KeyboardPhase.EDITING &&
+                    current.sessionId == sessionId
+                ) {
                     webView.evaluateJavascript(script, null)
                 }
             },

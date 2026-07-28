@@ -102,6 +102,20 @@ Focus patchها:
 - میکروپولیش پیشنهادی: key press نرم، صدای اختیاری بسیار کوتاه و Hint واضح
   «Next: Password» بدون شلوغی.
 
+**وضعیت Track Login Input Deck:** پیاده‌سازی و پذیرش امولاتور انجام شد.
+State Machine، DOM token و session id جای Focus patchهای پراکنده را گرفتند.
+مسیر Username → Password با Form replacement، Caps، زبان، Show، Submit و
+Back تست شد. فقط Acceptance روی Android Box واقعی باقی مانده است.
+
+**Track جداگانه Search Deck خود اپ — پیاده‌سازی اولیه انجام شد:**
+
+- پنل یکپارچه Query + Keyboard با ظاهر سینمایی و CTA قرمز واضح
+- QWERTY واقعی و پلکانی فارسی/انگلیسی؛ نه Wrap الفبایی ده‌ستونی
+- کلید مستقل `ژ` و `آ` برای جستجوی تلویزیونی بدون Shift/Long press
+- فوکوس/هاور روشن‌تر، اندازه‌های ثابت و نمایش کامل بدون Clipping در 1080p
+- جمع‌شدن به Query bar بعد از Submit و مخفی‌بودن Resultهای خالی قبل از Search
+- وضعیت و شواهد دقیق در `DEVELOPMENT_LOG_0.13.0.md`
+
 ### پیش‌نیاز Featureهای محتوایی بعدی
 
 پیش از Genre rails/YouTube latest، Home از `Column + verticalScroll` به

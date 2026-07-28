@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +51,7 @@ import com.amin.tvos.ui.components.CatalogCard
 import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.Ink
+import com.amin.tvos.ui.theme.SurfaceDark
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
@@ -153,21 +158,21 @@ class SearchActivity : ComponentActivity() {
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 48.dp, vertical = 28.dp)
+                .padding(horizontal = 48.dp, vertical = 20.dp)
         ) {
             Text("جستجو", style = MaterialTheme.typography.displayMedium)
-            Spacer(Modifier.height(8.dp))
             Text(
-                query.ifBlank { "عبارت را با کیبورد پایین بنویسید" },
-                style = MaterialTheme.typography.headlineMedium,
-                color = if (query.isBlank()) TextSecondary else CinemaRed
+                "یک جستجو، هر دو آرشیو",
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextSecondary
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             // The keyboard owns the screen until there is something to show, then folds
             // away so the results get the full 1080p height.
             if (keyboardVisible) {
                 SearchKeyboard(
+                    query = query,
                     persian = persianLayout,
                     onKey = { key -> if (query.length < 60) query += key },
                     onBackspace = { query = query.dropLast(1) },
@@ -176,23 +181,54 @@ class SearchActivity : ComponentActivity() {
                     onSubmit = { runSearch() }
                 )
             } else {
-                FocusableCard(
-                    shape = RoundedCornerShape(50),
-                    onClick = { keyboardVisible = true }
-                ) {
-                    Text(
-                        "ویرایش عبارت",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
-                    )
-                }
+                CollapsedSearchBar(query = query) { keyboardVisible = true }
             }
 
-            Spacer(Modifier.height(24.dp))
-            ResultGroup("نتایج ایرانی", iranian)
-            Spacer(Modifier.height(20.dp))
-            ResultGroup("نتایج خارجی", international)
+            if (iranian.searched || international.searched) {
+                Spacer(Modifier.height(24.dp))
+                ResultGroup("نتایج ایرانی", iranian)
+                Spacer(Modifier.height(20.dp))
+                ResultGroup("نتایج خارجی", international)
+            }
             Spacer(Modifier.height(32.dp))
+        }
+    }
+
+    @Composable
+    private fun CollapsedSearchBar(query: String, onEdit: () -> Unit) {
+        FocusableCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            onClick = onEdit
+        ) { focused ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (focused) CinemaRed.copy(alpha = 0.10f) else SurfaceDark,
+                        RoundedCornerShape(18.dp)
+                    )
+                    .padding(horizontal = 20.dp, vertical = 15.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.Search,
+                    contentDescription = null,
+                    tint = CinemaRed
+                )
+                Spacer(Modifier.width(14.dp))
+                Text(
+                    query,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1
+                )
+                Text(
+                    "ویرایش جستجو",
+                    color = if (focused) TextPrimary else TextSecondary,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
     }
 
