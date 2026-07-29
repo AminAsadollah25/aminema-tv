@@ -12,6 +12,12 @@
 وضعیت Commit/Tag/GitHub Release/Assets. README عمومی نیز باید هم‌زمان Current
 release و Next queue واقعی را نشان دهد.
 
+برای هر ایده قبل از اجرا فقط به دستور خام اکتفا نشود. چهار خروجی ارائه شود:
+مسئله واقعی، راه سریع و مقاوم، راه کامل و بلندمدت، و یک پیشنهاد مکمل UI/UX
+برای رساندن کاربر به تماشا با کلیک کمتر. اگر راه دقیق قابل‌اعتماد نبود،
+Fallback صادقانه طراحی شود؛ داده حدس زده نشود و نبود API بهانه توقف ایده
+نباشد. این قرارداد دائمی Creative Co-Creator پروژه است.
+
 ## وضعیت فعلی
 
 - محصول: **Aminema**
@@ -253,17 +259,31 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 
 ## صف قطعی نسخه‌های بعد
 
-1. **0.15.0 — Aminema Spotlight:** Hero/Detail سینمایی Native برای فیلم و
-   سریال، خلاصه بدون اسپویل، Watch/Continue، My List و More؛ بدون Download و
-   بدون Trailer در مسیر اصلی.
-2. **0.15.1 — Episode Navigator:** انتخاب فصل/قسمت پس از Provider Probe،
-   «آخرین قسمت منتشرشده» مستقل و «ادامه قسمت بعد» فقط با شاهد معتبر.
-3. **0.15.2 — Cinema Library:** View All grid برای Latest/Continue/Recent/
-   Favorites با Filter سرویس، نوع، ژانر و سال و حفظ Focus هنگام برگشت.
-4. **0.16.0 — Cinematic Home:** Hero پویا، Continue اولویت‌دار، Backdrop نرم
-   و ردیف‌های کمتر و هدفمندتر.
-5. **0.16.1 — Reliability & Provider Health:** وضعیت Login سرویس‌ها، تفکیک
-   Internet/DNS/Login/Unavailable، Cache آفلاین و Back بهتر FilmRooz.
+تحلیل کامل MyMoviz، Dedupe، Series Progress، Promo Banner و Geek Mode در
+`MYMOVIZ_PRODUCT_ANALYSIS.md` و نسخه اولویت‌بندی‌شده در `ROADMAP.md` ثبت شد.
+
+1. **0.15.1 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
+   `آخرین قسمت منتشرشده` و Progress صادقانه.
+2. **0.15.2 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
+   چند SourceVariant؛ پذیرش اولیه با `لیسانسه`؛ Query variant برای
+   `spiderman`، `spider man` و `spider-man`.
+3. **0.15.3 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
+   Account progress در Providerهایی که شاهد قابل‌اعتماد دارند.
+4. **0.15.4 — Cinematic Promo Banners:** Hero مشترک، توقف روی Focus و
+   Title→Spotlight / Live→Direct.
+5. **Coverage Lab:** گزارش حداقل 100 عنوان پیش از ادعای درصد هم‌پوشانی.
+6. **0.16.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
+7. **0.16.1 — Best Source Resolver:** Dub-first/original-first/ask.
+8. **0.16.2 — People & Alerts**
+9. **0.17.0 — Cinema Library & Personal Home**
+10. **0.17.1 — Reliability, Keyboard & Provider Health**
+11. **0.18.0 — Geek Mode**
+
+یافته عملی MyMoviz: صفحه عادی سریال فصل‌ها، تعداد قسمت، آخرین انتشار،
+Progress، `قسمت بعدی شما` و علامت‌گذاری قسمت/فصل را دارد؛ صفحه `من` نیز
+Continue، قسمت بعدی و تقویم پخش دارد. Search واقعی `spiderman` صفر،
+`spider man` شانزده و `spider-man` سیزده نتیجه داد. صفحه عنوان IMDb ID
+صریح دارد، پس برای Canonical matching بسیار مناسب است.
 
 قانون Progress همچنان «صادقانه» است: Baseline دستی `تا این قسمت دیدم` و
 Release delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق. برای Back در FilmRooz نیز
@@ -272,13 +292,13 @@ Back/Menu = Home طراحی خواهد شد.
 
 ## وضعیت Release
 
-- Commit: `b08f7c1`
-- Tag و Latest API: `v0.14.6`
-- Release عمومی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6`
-- APK: `Aminema-v0.14.6-debug.apk` — `22,232,968` بایت — state `uploaded`
-- SHA asset: `Aminema-v0.14.6-debug.apk.sha256` — state `uploaded`
+- Commit کد: `dc39cbc`
+- Commit انتشار مستندات 0.15.0: `7a54238`
+- Tag و Latest API: `v0.15.0`
+- Release عمومی:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0`
+- APK: `Aminema-v0.15.0-debug.apk` — `22,462,380` بایت — state `uploaded`
 - SHA-256:
-  `08889d3e65ac170a35c1806668bdcdec5b0154237749f49415ef968301fe011e`
+  `0cc3742aa1b3de12e0681ed61a61a781f0f9c49a6e647c660a50102dec2ae6ee`
 - Release عمومی، `draft=false` و `prerelease=false` است و
-  `/releases/latest` همین Tag و هر دو Asset را برگرداند.
-- Release body شامل `versionCode: 30` است تا Updater داخلی نسخه را تشخیص دهد.
+  `/releases/latest` همین Tag را برمی‌گرداند.

@@ -42,57 +42,139 @@
 - سال کنار عنوان است و چیدمان 720p/1080p اطلاعات و دکمه‌ها را داخل Safe Area
   نگه می‌دارد.
 
-## صف نسخه‌های قطعی بعدی
+## صف نسخه‌های قطعی بعدی — اولویت بازطراحی‌شده پس از بررسی منبع سوم
 
-### 0.15.1 — Spotlight Series & People
+جزئیات Probe و تصمیم معماری MyMoviz در
+`MYMOVIZ_PRODUCT_ANALYSIS.md` ثبت شده است.
 
-- انتخاب فصل و قسمت پس از Probe دقیق کنترل‌های عادی هر Provider.
-- دکمه مستقل آخرین قسمت منتشرشده.
-- Continue هوشمند فقط از پخش واقعی، تیک معتبر یا Baseline دستی.
-- ترجیح هر سریال بین «ادامه داستان» و «همیشه آخرین انتشار».
-- کلیک روی کارگردان/بازیگر و نمایش Filmography معمول خود Provider.
-- Follow محلی بازیگر یا کارگردان بدون ساخت سرور جدید.
+### 0.15.1 — Episode Navigator
 
-### 0.15.2 — Cinema Library & Alerts
+- نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
+- انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
+- سه Action جدا: `ادامه قسمت بعد`، `آخرین قسمت منتشرشده` و
+  `انتخاب فصل و قسمت`.
+- Continue فقط از Playback واقعی، Checkmark معتبر یا Baseline دستی.
+- ترجیح هر سریال بین `ادامه داستان` و `همیشه آخرین انتشار`.
+- واژه `دیده‌نشده` فقط با Evidence دقیق؛ در غیر این صورت
+  `قسمت جدید از آخرین وضعیت ثبت‌شده`.
 
-- View All برای Latest/Continue/Recent/Favorites.
-- Grid و فیلتر فیلم/سریال، سینما، ژانر و سال.
-- حفظ Focus/Scroll و Performance روی Box کم‌قدرت.
-- اعلان داخل Aminema هنگام پیدا شدن اثر جدید از فرد دنبال‌شده در Sync کاتالوگ.
+### 0.15.2 — Canonical Library, Dedupe & Smart Search
 
-### 0.16.0 — Cinematic Home
+- مدل `CanonicalMedia + SourceVariant`؛ یک عنوان، یک کارت، چند نسخه.
+- حذف تکراری ParsiFlix/FilmRooz با پذیرش اولیه Query فارسی `لیسانسه`.
+- Match قطعی IMDb، سپس عنوان Normalizeشده + سال + نوع؛ Match مبهم Merge نشود.
+- Query normalization برای فاصله، خط تیره، Apostrophe، نیم‌فاصله و `ي/ی`،
+  `ك/ک`.
+- Variantهای `spiderman`، `spider man` و `spider-man` برای Provider مناسب.
+- انتقال Continue/Favorite/Recent از Provider card به CanonicalMedia.
+- بخش کم‌حجم `نسخه‌های موجود` در Spotlight بدون شلوغ‌کردن Home.
 
-- Hero پویا، Continue اولویت‌دار، Backdrop نرم و ردیف‌های کمتر.
+### 0.15.3 — My Series
 
-### 0.16.1 — Reliability & Provider Health
+- Follow دستی سریال و Baseline `تا فصل/قسمت دیدم` به‌عنوان مسیر سریع.
+- Rail/صفحه `سریال‌های من`: `قسمت بعدی`، `۲ قسمت جدید`، `فصل جدید`،
+  `به‌روز هستی`.
+- Probe دقیق Checkmarkهای FilmRooz و مدل Progress حساب Provider.
+- ترکیب Playback محلی، Checkmark معتبر و Baseline دستی با Evidence level.
+- بررسی مسیر ایرانی پس از تثبیت سریال خارجی.
+- اعلان داخل اپ فقط برای Episode/Season واقعاً جدید؛ بدون Spam.
 
-- وضعیت Login هر سرویس، خطای متمایز Internet/DNS/Login/Unavailable،
-  Cache آفلاین و Back بهتر FilmRooz.
+### 0.15.4 — Cinematic Promo Banners
 
-## تصمیم طراحی پیشنهادی
+- یک Hero واحد از Promo/Carousel عادی ParsiFlix و FilmRooz.
+- چرخش آرام، توقف روی Focus/Hover و بدون دزدیدن Focus.
+- Banner عنوان → Spotlight؛ Banner Live TV → اجرای مستقیم یک‌کلیکی.
+- حذف Banner تکراری با Canonical ID.
+- Action دستی Refresh برای هر Provider و Sync پس‌زمینه بدون قفل‌کردن اپ.
 
-به‌جای نمایش چهار ردیف دائمی و شلوغ، صفحه اصلی دو ردیف «جدیدترین‌ها» خواهد
-داشت و هر ردیف یک انتخاب‌گر فیلم/سریال دارد:
+### دروازه تحقیق قبل از 0.16.0 — Third Source Coverage Lab
 
-1. **جدیدترین‌های ParsiFlix** — `همه | فیلم | سریال`
-2. **جدیدترین‌های FilmRooz** — `همه | فیلم | سریال`
+- نمونه حداقل 100 عنوان برای اندازه‌گیری هم‌پوشانی واقعی.
+- گزارش Match قطعی IMDb، Match عنوان/سال، عنوان فقط MyMoviz و مزیت دوبله.
+- تست Login/session، سرعت Catalog/Detail و Normal Watch route.
+- هیچ درصدی بدون گزارش نمونه اعلام نمی‌شود.
 
-انتخاب آخر هر ردیف ذخیره می‌شود. گزینه «مشاهده همه» یک صفحه Grid کامل با
-فیلترهای سرویس و نوع محتوا باز می‌کند.
+### 0.16.0 — MyMoviz Provider
+
+- Adapter مستقل برای Catalog، Search، Detail metadata و Normal Watch.
+- ورود فقط Coverage Gap و نسخه دوبله بهتر؛ نه ساخت Rail تکراری سوم.
+- استفاده از شناسه IMDb برای Dedupe دقیق.
+- پشتیبانی از آخرین فصل/قسمت، Progress عادی حساب و `قسمت بعدی شما`.
+- حفظ کامل مرز امنیتی: فقط صفحه عادی سایت، بدون Media URL/Token/DRM.
+
+### 0.16.1 — Best Source Resolver
+
+- تنظیم `دوبله اول | زبان اصلی اول | هر بار بپرس`.
+- انتخاب نسخه با اولویت زبان، سلامت Provider و موجودبودن.
+- یک کارت در Home و انتخاب Source فقط در Spotlight/Quick menu.
+- ممنوعیت تعویض خودکار Source وسط پخش.
+- زیرساخت آماده برای منبع ایرانی چهارم با همان Adapter contract.
+
+### 0.16.2 — People, Filmography & Alerts
+
+- کلیک روی بازیگر/کارگردان و Filmography ادغام‌شده.
+- Follow محلی Person.
+- اعلان کم‌تعداد هنگام پیدا شدن اثر جدید در Catalog Sync.
+- `افزودن فیلم‌های این شخص به Home` به‌صورت Rail قابل‌حذف.
+
+### 0.17.0 — Cinema Library & Personal Home
+
+- View All برای Latest/Continue/Recent/Favorites/My Series.
+- Grid و Filter فیلم/سریال، دوبله، ژانر، سال و وضعیت پخش.
+- مقصد `برای من`: Continue، قسمت بعدی، سریال‌های من، لیست من و اعلان‌ها.
+- `سنجاق به Home` برای Search، Person، Genre و Collection.
+- ترتیب و مخفی‌کردن Railها با محدودیت مناسب TV.
+
+### 0.17.1 — Reliability, Keyboard & Provider Health
+
+- وضعیت Login هر سرویس و تفکیک Internet/DNS/Login/Unavailable.
+- Cache آفلاین، Health check سبک و حفظ داده آخرین Sync.
+- بازطراحی نهایی Keyboard سایت و Search Deck.
+- Back بهتر FilmRooz بر اساس KeyCode واقعی Android Box.
+- مهاجرت Home عمودی به LazyColumn اگر تعداد Railها از بودجه Performance عبور کرد.
+
+### 0.18.0 — Geek Mode
+
+- Collectionهای نسخه‌بندی‌شده: MCU، Star Wars، Lord of the Rings و Harry Potter.
+- ترتیب اکران، ترتیب زمانی، `از اول ببین` و `خفن‌ها را ببین`.
+- افزودن Collection به Home و مخفی/تیک‌شدن موارد دیده‌شده.
+- Resolve خودکار بهترین SourceVariant موجود.
+- توسعه بعدی برای لیست بازیگر و کارگردان.
+
+### Backlog باز و قابل‌افزودن بدون بازطراحی
+
+- Provider ایرانی چهارم پس از دریافت URL و Probe.
+- کانال‌های Live TV جدید از JSON و Settings همراه با Health check.
+- فیدهای Promo جدید؛ فقط Normal page URL و هرگز Media/Stream URL.
+
+## تصمیم طراحی Home
+
+Home نباید با اضافه‌شدن هر Provider یک Rail تازه و تکراری بگیرد. منبع‌ها در
+لایه داده ادغام می‌شوند و صفحه فقط زبان محصولی نشان می‌دهد:
+
+1. **تازه‌های ایرانی** — `همه | فیلم | سریال`
+2. **تازه‌های خارجی** — `همه | فیلم | سریال`
+
+اگر یک عنوان در چند Provider باشد، فقط یک کارت نمایش داده می‌شود. نسخه دوبله
+یا زبان اصلی در Spotlight انتخاب می‌شود، نه با تکرار کارت روی Home. انتخاب
+آخر هر Rail ذخیره می‌شود و `مشاهده همه` Grid کامل همان بخش را باز می‌کند.
 
 ### ترتیب پیشنهادی Home
 
-1. هدر: لوگو، جستجوی یکپارچه، Sync، تنظیمات
-2. یک کارت بزرگ برای آخرین Continue Watching
+1. هدر: لوگو، جستجوی یکپارچه، Sync providerها و تنظیمات
+2. Hero پویا: آخرین Continue یا Promo مهم، بدون دزدیدن Focus
 3. ادامه تماشا
-4. جدیدترین‌های ParsiFlix با تب فیلم/سریال
-5. جدیدترین‌های FilmRooz با تب فیلم/سریال
-6. کتابخانه من: علاقه‌مندی‌ها و اخیراً بازشده‌ها
-7. میان‌بر ورود مستقیم به دو سرویس
+4. تازه‌های ایرانی با تب فیلم/سریال
+5. تازه‌های خارجی Canonical با تب فیلم/سریال
+6. سریال‌های من و قسمت بعدی
+7. کتابخانه من: علاقه‌مندی‌ها و اخیراً بازشده‌ها
+8. پخش زنده
+9. میان‌بر ورود مستقیم به Providerها در انتهای صفحه
 
-کارت‌ها پوستر 2:3، عنوان، نشان سرویس، نشان فیلم/سریال و در صورت موجود بودن
-سال را نمایش می‌دهند. Focus کنترل و Hover موس از یک زبان بصری مشترک استفاده
-می‌کنند.
+کارت‌ها پوستر 2:3، عنوان، نوع، سال، دوبله/زیرنویس و برای سریال آخرین
+فصل/قسمت را نمایش می‌دهند. Provider فقط وقتی چند نسخه وجود دارد در Spotlight
+یا Quick Menu دیده می‌شود. Focus کنترل و Hover موس از یک زبان بصری مشترک
+استفاده می‌کنند.
 
 ## منابع کاتالوگ
 
@@ -106,10 +188,21 @@
 
 - فیلم‌ها: صفحه لاگین‌شده
   `https://sean.robert-redford.net/archive/category/featured-films/`
-- سریال‌ها: مسیر دقیق از منوی حساب لاگین‌شده قبل از پیاده‌سازی استخراج و
-  تأیید می‌شود؛ هیچ مسیر حدسی در نسخه نهایی استفاده نخواهد شد.
+- سریال‌های به‌روز شده:
+  `https://sean.robert-redford.net/archive/series/`
+- سریال‌های برگزیده:
+  `https://sean.robert-redford.net/archive/playlist/show/most-popular-tv-shows/`
 - فقط عنوان، پوستر و لینک پایدار `/post/film|series/...` ذخیره می‌شود.
 - پوسترهای نیازمند ورود داخل WebView دانلود و در حافظه خصوصی اپ کش می‌شوند.
+
+### MyMoviz — پس از Coverage Lab
+
+- Home: `https://mymoviz.co/_modern/home`
+- لینک پایدار عنوان: `/_modern/title/{id}/{slug}`
+- صفحه عادی Watch: `/_modern/watch/{id}` و برای سریال فصل/قسمت عادی سایت.
+- شناسه IMDb، دوبله/زیرنویس، Person، آخرین فصل/قسمت و Progress عادی حساب
+  قابل‌مشاهده‌اند.
+- فقط Coverage gap یا SourceVariant بهتر وارد UI می‌شود.
 
 ## جستجوی یکپارچه
 
@@ -124,8 +217,9 @@
 
 - جستجوی هم‌زمان هر دو سرویس با تأخیر 400 میلی‌ثانیه پس از تایپ.
 - صفحه نتیجه با فیلترهای:
-  `همه | فیلم | سریال | ParsiFlix | FilmRooz`
-- نتایج Native با پوستر، عنوان، سرویس و لینک صفحه جزئیات.
+  `همه | فیلم | سریال | دوبله | درحال پخش`
+- نتایج Native Canonical با پوستر، عنوان و لینک Spotlight؛ Provider filter
+  فقط در بخش پیشرفته یا Diagnostics لازم است.
 - در صورت خراب‌شدن Adapter یک سایت، دکمه «جستجو داخل سایت» همیشه به‌عنوان
   راه جایگزین باقی می‌ماند.
 - اطلاعات ورود و توکن‌ها داخل WebView باقی می‌مانند و هیچ URL مدیا/استریم
@@ -133,12 +227,14 @@
 
 ## معماری پیشنهادی
 
-- `CatalogItem`: عنوان، پوستر، سرویس، نوع محتوا، سال، لینک جزئیات
-- `CatalogSection`: سرویس، فیلتر فیلم/سریال، زمان آخرین بروزرسانی، آیتم‌ها
-- `CatalogProvider`: Adapter مستقل برای هر سرویس
-- `CatalogRepository`: ادغام، حذف تکراری‌ها، کش و وضعیت خطا
+- `CanonicalMedia`: هویت یکتای فیلم/سریال، IMDb، عنوان‌ها، سال، نوع و Metadata
+- `SourceVariant`: Provider، صفحه جزئیات، صفحه Watch عادی، زبان و Availability
+- `CatalogSection`: مقصد محصولی، فیلتر فیلم/سریال، زمان Sync و Canonical itemها
+- `CatalogProvider`: Adapter مستقل برای هر Provider
+- `CatalogRepository`: Match، ادغام، حذف تکراری، کش و وضعیت خطا
+- `BestSourceResolver`: ترجیح دوبله/زبان اصلی و سلامت Provider
 - کش سبک JSON و پوستر خصوصی برای استارت سریع روی Android Box
-- بروزرسانی دستی با Sync و بروزرسانی محدود خودکار، نه Poll دائمی
+- Sync خودکار محدود و مستقل در اولین اجرا + Refresh دستی هر بخش؛ نه Poll دائمی
 
 ## برنامه نسخه‌ها
 

@@ -221,22 +221,25 @@ media URLs or authentication values.
 
 ## Next update queue — after v0.15.0
 
-### 0.15.1 — Spotlight Series & People
+1. **0.15.1 — Episode Navigator:** season/episode selection, separate
+   next-episode and latest-release actions, and evidence-based progress.
+2. **0.15.2 — Canonical Library & Dedupe:** one card per title across
+   ParsiFlix/FilmRooz, source variants, and normalized searches such as
+   `spiderman` / `spider man` / `spider-man`.
+3. **0.15.3 — My Series:** followed shows, manual watched baseline, new episode
+   and new season indicators, then provider-account progress where reliable.
+4. **0.15.4 — Cinematic Promo Banners:** one TV-safe Hero from provider
+   carousels; title banners open Spotlight and Live TV banners stay direct.
+5. **0.16.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
+   variant after a 100-title overlap/coverage report.
+6. **0.16.1 — Best Source Resolver:** dub-first/original-first/ask preferences
+   while keeping one canonical card and never switching sources mid-play.
+7. **0.16.2+ — People, Personal Home, Reliability and Geek Mode:** merged
+   filmographies, person alerts, pinnable rails, provider health, and curated
+   MCU/Star Wars/LOTR/Harry Potter collections.
 
-- Add season and episode selection after provider DOM rules are verified.
-- Keep separate actions for latest published episode and honest smart Continue.
-- Add an optional `تا این قسمت دیدم` baseline for viewing done elsewhere.
-- Never claim `دیده‌نشده` without exact watched evidence.
-- Make director and cast names selectable and open their provider-backed filmography.
-- Allow following a person locally in Aminema.
-
-### 0.15.2 — Cinema Library & Alerts
-
-- Add `مشاهده همه` grids for Latest, Continue, Recent and Favorites.
-- Filter by movie/series, cinema, genre and year using cached normal metadata.
-- Keep focus restoration and low-RAM Android Box performance as hard gates.
-- Surface a local, non-spammy alert when catalog refresh finds a new work from
-  a followed actor or director.
+The complete prioritized roadmap and the signed-in MyMoviz product analysis are
+kept in `ROADMAP.md` and `MYMOVIZ_PRODUCT_ANALYSIS.md`.
 
 ## Requirements
 
