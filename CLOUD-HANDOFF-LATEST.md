@@ -16,7 +16,10 @@ release و Next queue واقعی را نشان دهد.
 
 - محصول: **Aminema**
 - نسخه کد و APK: **0.14.5 / versionCode 29 — Cinema Polish**
-- وضعیت در این لحظه: Candidate پذیرفته‌شده، آماده Commit/Tag/انتشار GitHub
+- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
+- Commit انتشار: `e95c56e`
+- Tag: `v0.14.5`
+- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
 - نسخه عمومی قبلی: **0.14.0 / code 28**
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
@@ -130,17 +133,29 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 
 ## گزینه‌های مرحله بعد
 
-1. **Cinema Library:** View All grid برای Latest/Continue/Recent/Favorites با
+1. **0.14.6 — Pointer & Playback Polish:** در FilmRooz پس از رسیدن به پلیر،
+   Play خودکار امن انجام شود (ParsiFlix از قبل درست است). کارت‌ها در Focus
+   ریموت و Hover واقعی موس به‌جای Border قرمز با Scale، روشنایی و سایهٔ نرم
+   سینمایی انتخاب شوند؛ مکث موس Quick Glance را باز کند و Click مقصد را باز
+   نگه دارد.
+2. **Cinema Library:** View All grid برای Latest/Continue/Recent/Favorites با
    Filter سرویس، نوع، ژانر و سال؛ همراه حفظ Focus هنگام برگشت.
-2. **Cinematic Home Hero:** یک Hero بزرگ و بدون اسپویل برای بهترین Continue،
+3. **Cinematic Home Hero:** یک Hero بزرگ و بدون اسپویل برای بهترین Continue،
    با یک کلیک پخش و Backdrop نرم.
-3. **Honest Episode Progress:** Baseline دستی `تا این قسمت دیدم` و Release
+4. **Honest Episode Progress:** Baseline دستی `تا این قسمت دیدم` و Release
    delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق.
-4. **Back UX برای FilmRooz:** Short Back = history، Long Back/Menu = Home؛
+5. **Back UX برای FilmRooz:** Short Back = history، Long Back/Menu = Home؛
    ابتدا KeyCode واقعی Android Box Log شود.
 
 ## وضعیت Release
 
-پس از انتشار باید همین بخش با Commit، Tag، URL، Asset size، SHA-256 و تأیید
-GitHub Latest API جایگزین شود. Release body حتماً `versionCode: 29` داشته باشد
-تا Updater داخلی نسخه را تشخیص دهد.
+- Commit: `e95c56e`
+- Tag و Latest API: `v0.14.5`
+- Release عمومی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
+- APK: `Aminema-v0.14.5-debug.apk` — `22,216,560` بایت — state `uploaded`
+- SHA asset: `Aminema-v0.14.5-debug.apk.sha256` — state `uploaded`
+- SHA-256:
+  `28b2101a6ac55c0867f7485f59ed4271fec108165e3eedf134c91c57ab5a7ffb`
+- Release عمومی، `draft=false` و `prerelease=false` است و
+  `/releases/latest` همین Tag و هر دو Asset را برگرداند.
+- Release body شامل `versionCode: 29` است تا Updater داخلی نسخه را تشخیص دهد.

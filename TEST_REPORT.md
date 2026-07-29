@@ -1,6 +1,6 @@
 # Aminema — current test status
 
-Latest accepted candidate: **0.14.5 / versionCode 29 — Cinema Polish**.
+Latest published release: **0.14.5 / versionCode 29 — Cinema Polish**.
 The complete current evidence is in `TEST_REPORT_0.14.5.md`; implementation
 decisions are in `DEVELOPMENT_LOG_0.14.5.md`.
 
