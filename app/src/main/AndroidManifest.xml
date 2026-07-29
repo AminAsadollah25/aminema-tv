@@ -59,6 +59,12 @@
             android:screenOrientation="landscape" />
 
         <activity
+            android:name=".ui.spotlight.SpotlightActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".browser.AccountSyncActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
             android:exported="false"

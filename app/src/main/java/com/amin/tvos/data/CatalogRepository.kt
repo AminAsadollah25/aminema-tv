@@ -3,6 +3,7 @@ package com.amin.tvos.data
 import android.content.Context
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.CatalogItem
+import com.amin.tvos.data.model.TitleMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,14 @@ class CatalogRepository(private val context: Context) {
 
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val file: File get() = File(context.filesDir, "catalog.json")
+    private val metadataFile: File get() = File(context.filesDir, "title_metadata.json")
 
     private val _sections = MutableStateFlow<List<CatalogSection>>(emptyList())
     val sections: StateFlow<List<CatalogSection>> = _sections.asStateFlow()
     private val _refreshingServices = MutableStateFlow<Set<String>>(emptySet())
     val refreshingServices: StateFlow<Set<String>> = _refreshingServices.asStateFlow()
+    private val _titleMetadata = MutableStateFlow<Map<String, TitleMetadata>>(emptyMap())
+    val titleMetadata: StateFlow<Map<String, TitleMetadata>> = _titleMetadata.asStateFlow()
 
     suspend fun load() = withContext(Dispatchers.IO) {
         val loaded = runCatching {
@@ -38,10 +42,38 @@ class CatalogRepository(private val context: Context) {
             runCatching { file.writeText(json.encodeToString(normalized)) }
         }
         _sections.value = normalized
+
+        val metadata = runCatching {
+            json.decodeFromString<List<TitleMetadata>>(metadataFile.readText())
+        }.getOrDefault(emptyList())
+            .map(::normalize)
+            .filter { it.contentUrl.isNotBlank() }
+            .sortedByDescending { it.fetchedAt }
+            .take(MAX_TITLE_METADATA)
+            .associateBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+        _titleMetadata.value = metadata
     }
 
     fun section(serviceId: String): CatalogSection? =
         _sections.value.firstOrNull { it.serviceId == serviceId }
+
+    fun metadataFor(contentUrl: String): TitleMetadata? =
+        _titleMetadata.value[ContentMetadataPolicy.canonicalContentUrl(contentUrl)]
+
+    suspend fun saveTitleMetadata(metadata: TitleMetadata) = withContext(Dispatchers.IO) {
+        val normalized = normalize(metadata)
+        if (normalized.contentUrl.isBlank()) return@withContext
+        val key = ContentMetadataPolicy.canonicalContentUrl(normalized.contentUrl)
+        val merged = (_titleMetadata.value + (key to normalized))
+            .values
+            .sortedByDescending { it.fetchedAt }
+            .take(MAX_TITLE_METADATA)
+            .associateBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+        runCatching {
+            metadataFile.writeText(json.encodeToString(merged.values.toList()))
+        }
+        _titleMetadata.value = merged
+    }
 
     /** Ephemeral UI state; catalog data itself remains available throughout a refresh. */
     fun setRefreshing(serviceId: String, refreshing: Boolean) {
@@ -87,6 +119,8 @@ class CatalogRepository(private val context: Context) {
 
     private fun normalize(item: CatalogItem): CatalogItem =
         item.copy(
+            country = cleanText(item.country, 60),
+            language = cleanText(item.language, 60),
             genres = item.genres
                 .map {
                     it.replace(Regex("""\s+"""), " ")
@@ -101,6 +135,57 @@ class CatalogRepository(private val context: Context) {
                 }
                 .filter { it.isNotBlank() }
                 .distinct()
-                .take(4)
+                .take(4),
+            directors = item.directors
+                .map { it.copy(name = it.name.replace(Regex("""\s+"""), " ").trim()) }
+                .filter { it.name.isNotBlank() }
+                .distinctBy { it.name.lowercase() }
+                .take(3),
+            cast = item.cast
+                .map { it.copy(name = it.name.replace(Regex("""\s+"""), " ").trim()) }
+                .filter { it.name.isNotBlank() }
+                .distinctBy { it.name.lowercase() }
+                .take(6)
         )
+
+    private fun normalize(metadata: TitleMetadata): TitleMetadata =
+        metadata.copy(
+            contentUrl = ContentMetadataPolicy.canonicalContentUrl(metadata.contentUrl),
+            summary = cleanText(metadata.summary, 520),
+            year = metadata.year.replace(Regex("""[^0-9۰-۹]"""), "").take(4),
+            genres = metadata.genres
+                .map { cleanText(it, 28) }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .take(4),
+            rating = metadata.rating
+                .replace(Regex("""[^0-9۰-۹.٫]"""), "")
+                .replace('٫', '.')
+                .take(5),
+            runtime = cleanText(metadata.runtime, 24),
+            country = cleanText(metadata.country, 60),
+            language = cleanText(metadata.language, 60),
+            directors = normalizePeople(metadata.directors, 3),
+            cast = normalizePeople(metadata.cast, 8)
+        )
+
+    private fun normalizePeople(people: List<com.amin.tvos.data.model.PersonRef>, limit: Int) =
+        people
+            .map {
+                it.copy(
+                    name = cleanText(it.name, 80),
+                    providerId = it.providerId.take(80),
+                    profileUrl = it.profileUrl.take(2_000)
+                )
+            }
+            .filter { it.name.isNotBlank() }
+            .distinctBy { it.name.lowercase() }
+            .take(limit)
+
+    private fun cleanText(value: String, limit: Int): String =
+        value.replace(Regex("""\s+"""), " ").trim().take(limit)
+
+    private companion object {
+        const val MAX_TITLE_METADATA = 150
+    }
 }

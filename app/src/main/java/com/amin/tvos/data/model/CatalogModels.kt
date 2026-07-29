@@ -7,6 +7,19 @@ import kotlinx.serialization.Serializable
 enum class CatalogKind { MOVIE, SERIES }
 
 /**
+ * A provider-supplied person reference, deliberately small enough for the local catalog.
+ *
+ * [providerId] and [profileUrl] make the model ready for a future native Person page without
+ * forcing Aminema to guess that two people with the same display name are identical.
+ */
+@Serializable
+data class PersonRef(
+    val name: String,
+    val providerId: String = "",
+    val profileUrl: String = ""
+)
+
+/**
  * Recognises movie vs. series from a normal detail-page URL alone.
  *
  * Recently Opened and Favorites store only [MovieItem], which predates the catalog/search
@@ -56,7 +69,14 @@ data class CatalogItem(
     val year: String = "",
     val genres: List<String> = emptyList(),
     val rating: String = "",
-    val runtime: String = ""
+    val runtime: String = "",
+    val country: String = "",
+    val language: String = "",
+    val hasPersianDub: Boolean = false,
+    val hasPersianSubtitle: Boolean = false,
+    /** Ordinary public title credits, when the provider exposes them in its catalog card/API. */
+    val directors: List<PersonRef> = emptyList(),
+    val cast: List<PersonRef> = emptyList()
 )
 
 /**

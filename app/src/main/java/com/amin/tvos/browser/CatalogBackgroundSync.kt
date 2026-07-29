@@ -20,6 +20,7 @@ import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.PlaybackSession
+import com.amin.tvos.data.model.PersonRef
 import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
@@ -215,6 +216,37 @@ class CatalogBackgroundSync(
                     val kind = if (
                         entry.optString("kind").equals("SERIES", true)
                     ) CatalogKind.SERIES else CatalogKind.MOVIE
+                    fun people(key: String): List<PersonRef> {
+                        val values = entry.optJSONArray(key) ?: return emptyList()
+                        return buildList {
+                            for (personIndex in 0 until minOf(values.length(), 8)) {
+                                val person = values.optJSONObject(personIndex)
+                                val name = (
+                                    person?.optString("name")
+                                        ?: values.optString(personIndex)
+                                    )
+                                    .replace(Regex("""\s+"""), " ")
+                                    .trim()
+                                    .take(80)
+                                if (name.isBlank()) continue
+                                val rawProfile = person?.optString("profileUrl").orEmpty()
+                                    .take(2_000)
+                                val safeProfile = rawProfile.takeIf {
+                                    it.startsWith("http", true) &&
+                                        Uri.parse(it).host.equals(serviceHost, true)
+                                }.orEmpty()
+                                add(
+                                    PersonRef(
+                                        name = name,
+                                        providerId = person?.optString("providerId")
+                                            .orEmpty()
+                                            .take(80),
+                                        profileUrl = safeProfile
+                                    )
+                                )
+                            }
+                        }.distinctBy { it.name.lowercase() }
+                    }
                     add(
                         CatalogItem(
                             title = entry.optString("title").trim().take(140)
@@ -262,7 +294,20 @@ class CatalogBackgroundSync(
                             runtime = entry.optString("runtime")
                                 .replace(Regex("""\s+"""), " ")
                                 .trim()
-                                .take(24)
+                                .take(24),
+                            country = entry.optString("country")
+                                .replace(Regex("""\s+"""), " ")
+                                .trim()
+                                .take(60),
+                            language = entry.optString("language")
+                                .replace(Regex("""\s+"""), " ")
+                                .trim()
+                                .take(60),
+                            hasPersianDub = entry.optBoolean("hasPersianDub"),
+                            hasPersianSubtitle =
+                                entry.optBoolean("hasPersianSubtitle"),
+                            directors = people("directors"),
+                            cast = people("cast")
                         )
                     )
                 }
@@ -353,12 +398,38 @@ class CatalogBackgroundSync(
                   }
                   return String(value.name || value.title || value.label || '');
                 }
+                function people(value) {
+                  if (!value) return [];
+                  if (!Array.isArray(value)) value = [value];
+                  return value.map(function(person) {
+                    if (person == null) return null;
+                    if (typeof person === 'string') {
+                      return {name: person.slice(0, 80)};
+                    }
+                    var name = text(person).replace(/\s+/g, ' ').trim();
+                    if (!name) return null;
+                    return {
+                      name: name.slice(0, 80),
+                      providerId: String(person.id || person.personId || '').slice(0, 80),
+                      profileUrl: ''
+                    };
+                  }).filter(Boolean).slice(0, 8);
+                }
+                function joined(value) {
+                  if (!value) return '';
+                  if (!Array.isArray(value)) value = [value];
+                  return value.map(text).filter(Boolean).join('، ');
+                }
                 var rawGenres = item.genres || item.genre || item.categories || [];
                 if (!Array.isArray(rawGenres)) rawGenres = [rawGenres];
                 var published = text(
                   item.releaseYear || item.year || item.publishedAt || item.published
                 );
                 var yearMatch = published.match(/(?:19|20)\d{2}/);
+                var availabilityText = joined(
+                  item.audioTypes || item.audioType || item.languages ||
+                  item.language || item.tags || item.badges
+                );
                 return {
                   title: String(item.title || '').slice(0, 140),
                   kind: kind,
@@ -373,7 +444,26 @@ class CatalogBackgroundSync(
                   rating: text(
                     item.imdbRating || item.rating || item.rate
                   ).replace(/[^0-9.]/g, '').slice(0, 4),
-                  runtime: text(item.runtime || item.duration || '')
+                  runtime: text(item.runtime || item.duration || ''),
+                  country: joined(
+                    item.countries || item.country || item.countryOfOrigin ||
+                    item.productionCountries
+                  ).slice(0, 60),
+                  language: joined(
+                    item.languages || item.language || item.originalLanguage
+                  ).slice(0, 60),
+                  hasPersianDub: Boolean(
+                    item.isDubbed || item.dubbed || item.hasPersianDub
+                  ) || /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(availabilityText),
+                  hasPersianSubtitle: Boolean(
+                    item.hasPersianSubtitle || item.persianSubtitle
+                  ) || /زیرنویس\s*(?:چسبیده\s*)?فارسی/i.test(availabilityText),
+                  directors: people(
+                    item.directors || item.director || item.directorList || item.creators
+                  ),
+                  cast: people(
+                    item.actors || item.cast || item.casts || item.stars || item.performers
+                  )
                 };
               }
               try {
@@ -496,6 +586,33 @@ class CatalogBackgroundSync(
                         }
                       ) : null;
                     }
+                    function peopleField(pattern) {
+                      var node = field(pattern);
+                      if (!node) return [];
+                      var linked = Array.from(node.querySelectorAll('a')).map(
+                        function(personLink) {
+                          var name = (personLink.textContent || '')
+                            .replace(/\s+/g, ' ').trim();
+                          if (!name) return null;
+                          var profile = new URL(
+                            personLink.getAttribute('href') || '', location.origin
+                          );
+                          return {
+                            name: name.slice(0, 80),
+                            profileUrl: profile.origin === location.origin
+                              ? profile.href : ''
+                          };
+                        }
+                      ).filter(Boolean);
+                      if (linked.length) return linked.slice(0, 8);
+                      return (node.textContent || '')
+                        .replace(/^(?:کارگردان|Director|بازیگران|ستارگان|Cast)\s*:\s*/i, '')
+                        .split(/[،,|]/)
+                        .map(function(name) {
+                          name = name.replace(/\s+/g, ' ').trim();
+                          return name ? {name: name.slice(0, 80)} : null;
+                        }).filter(Boolean).slice(0, 8);
+                    }
                     var ratingNode = field(/از\s*۱۰|IMDb/i);
                     var ratingMatch = ratingNode
                       ? (ratingNode.textContent || '').match(
@@ -537,6 +654,22 @@ class CatalogBackgroundSync(
                         summary = candidateSummary.slice(0, 420);
                       }
                     }
+                    function plainField(pattern, labelPattern) {
+                      var node = field(pattern);
+                      return node
+                        ? (node.textContent || '')
+                            .replace(/\s+/g, ' ').trim()
+                            .replace(labelPattern, '').trim().slice(0, 60)
+                        : '';
+                    }
+                    var localCard = card ? card.cloneNode(true) : null;
+                    if (localCard) {
+                      localCard.querySelectorAll(
+                        'header,nav,footer,a[href*="/archive/category/"]'
+                      ).forEach(function(node) { node.remove(); });
+                    }
+                    var localText = localCard
+                      ? (localCard.textContent || '').replace(/\s+/g, ' ').trim() : '';
                     items.push({
                       title: title.slice(0, 140),
                       kind: kind,
@@ -547,7 +680,22 @@ class CatalogBackgroundSync(
                       year: yearMatch ? yearMatch[0] : '',
                       genres: genres,
                       rating: ratingMatch ? ratingMatch[1] : '',
-                      runtime: runtimeMatch ? runtimeMatch[1] : ''
+                      runtime: runtimeMatch ? runtimeMatch[1] : '',
+                      country: plainField(
+                        /^(?:کشور|محصول|Country)\s*:/i,
+                        /^(?:کشور|محصول|Country)\s*:\s*/i
+                      ),
+                      language: plainField(
+                        /^(?:زبان|Language)\s*:/i,
+                        /^(?:زبان|Language)\s*:\s*/i
+                      ),
+                      hasPersianDub:
+                        /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(localText),
+                      hasPersianSubtitle:
+                        /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i
+                          .test(localText),
+                      directors: peopleField(/^(?:کارگردان|Director)\s*:/i),
+                      cast: peopleField(/^(?:بازیگران|ستارگان|Cast)\s*:/i)
                     });
                   }
                 );

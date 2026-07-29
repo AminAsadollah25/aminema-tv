@@ -52,6 +52,8 @@ import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.QuickLink
 import com.amin.tvos.data.model.ResumeStrategy
+import com.amin.tvos.data.model.SpotlightAction
+import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.CatalogCard
@@ -59,6 +61,7 @@ import com.amin.tvos.ui.components.PosterCard
 import com.amin.tvos.ui.components.SectionRow
 import com.amin.tvos.ui.components.ServiceCard
 import com.amin.tvos.ui.search.SearchActivity
+import com.amin.tvos.ui.spotlight.SpotlightActivity
 import com.amin.tvos.update.UpdateState
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
@@ -82,7 +85,6 @@ fun HomeScreen(
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val iranianFilter by viewModel.iranianFilter.collectAsState()
     val internationalFilter by viewModel.internationalFilter.collectAsState()
-    var hoverPreview by remember { mutableStateOf<CatalogItem?>(null) }
     val catalogItems = remember(catalogSections) {
         catalogSections
             .flatMap { it.all + it.movies + it.series + it.popularSeries }
@@ -93,13 +95,6 @@ fun HomeScreen(
     val catalogByUrl = remember(catalogItems) {
         catalogItems.associateBy {
             ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
-        }
-    }
-    fun setPreview(item: CatalogItem, visible: Boolean) {
-        if (visible) {
-            hoverPreview = item
-        } else if (hoverPreview?.contentUrl == item.contentUrl) {
-            hoverPreview = null
         }
     }
     fun previewFor(item: MovieItem): CatalogItem {
@@ -113,20 +108,67 @@ fun HomeScreen(
         )
     }
 
-    fun openCatalogItem(item: CatalogItem) =
-        context.startActivity(
-            BrowserActivity.intent(
-                context,
-                item.serviceId,
-                item.contentUrl,
-                contentUrl = item.contentUrl,
-                contentTitle = item.title,
-                contentPoster = item.posterUrl,
-                // Films go one step further, straight to the site's own player page.
-                // Series still open on their detail page until episode selection lands.
-                directPlay = item.kind == CatalogKind.MOVIE
-            )
+    fun serviceName(serviceId: String): String =
+        services.firstOrNull { it.id == serviceId }?.name.orEmpty()
+
+    fun openSpotlight(item: SpotlightItem) =
+        context.startActivity(SpotlightActivity.intent(context, item))
+
+    fun spotlightForCatalog(item: CatalogItem): SpotlightItem = SpotlightItem(
+        title = item.title,
+        kind = item.kind,
+        contentUrl = item.contentUrl,
+        posterUrl = item.posterUrl,
+        serviceId = item.serviceId,
+        serviceName = serviceName(item.serviceId),
+        summary = item.summary,
+        year = item.year,
+        genres = item.genres,
+        rating = item.rating,
+        runtime = item.runtime,
+        episodeLabel = item.episodeLabel,
+        country = item.country,
+        language = item.language,
+        hasPersianDub = item.hasPersianDub,
+        hasPersianSubtitle = item.hasPersianSubtitle,
+        directors = item.directors,
+        cast = item.cast,
+        // Films keep the existing one-step site resolver after the user presses Watch.
+        // Series stop on the provider detail page until native episode selection ships.
+        directPlay = item.kind == CatalogKind.MOVIE
+    )
+
+    fun spotlightForMovie(item: MovieItem): SpotlightItem {
+        val metadata = previewFor(item)
+        return SpotlightItem(
+            title = item.title,
+            kind = metadata.kind,
+            contentUrl = item.url,
+            posterUrl = item.posterUrl.ifBlank { metadata.posterUrl },
+            serviceId = item.serviceId,
+            serviceName = item.serviceName.ifBlank { serviceName(item.serviceId) },
+            summary = metadata.summary,
+            year = metadata.year,
+            genres = metadata.genres,
+            rating = metadata.rating,
+            runtime = metadata.runtime,
+            episodeLabel = metadata.episodeLabel,
+            country = metadata.country,
+            language = metadata.language,
+            hasPersianDub = metadata.hasPersianDub,
+            hasPersianSubtitle = metadata.hasPersianSubtitle,
+            directors = metadata.directors,
+            cast = metadata.cast,
+            primaryAction = if (item.resumePosition > 0L) {
+                SpotlightAction.CONTINUE
+            } else {
+                SpotlightAction.WATCH
+            },
+            resumePosition = item.resumePosition,
+            duration = item.duration,
+            directPlay = metadata.kind == CatalogKind.MOVIE
         )
+    }
 
     fun openService(service: StreamingService) =
         context.startActivity(BrowserActivity.intent(context, service.id, service.url))
@@ -161,23 +203,10 @@ fun HomeScreen(
             )
         )
 
-    fun openItem(item: MovieItem) =
-        context.startActivity(
-            BrowserActivity.intent(
-                context,
-                item.serviceId,
-                item.url,
-                item.resumePosition,
-                contentUrl = item.url,
-                contentTitle = item.title,
-                contentPoster = item.posterUrl,
-                // Recently Opened and Favorites predate the catalog's kind field, so the
-                // kind is read back from the saved URL's own path shape.
-                directPlay = catalogKindFromUrl(item.url) == CatalogKind.MOVIE
-            )
-        )
-
-    fun openPlayback(session: PlaybackSession) {
+    fun spotlightForPlayback(
+        session: PlaybackSession,
+        releaseOverride: CatalogItem? = null
+    ): SpotlightItem {
         // Some inline website players report the detail URL as their page URL.
         // It is not a reusable player destination unless it differs from content.
         val hasDedicatedPlaybackPage =
@@ -198,22 +227,39 @@ fun HomeScreen(
                         // Account imports with Play-online labels need the same resolver.
                         session.actionButtonTextPatterns.isNotEmpty()
                     )
-        context.startActivity(
-            BrowserActivity.intent(
-                context = context,
-                serviceId = session.serviceId,
-                url = startUrl,
-                resumePosition = session.resumePosition,
-                contentUrl = session.contentUrl,
-                contentTitle = session.title,
-                contentPoster = session.posterUrl,
-                autoResume = true,
-                // Only account-synced movies with normal quality choices need the resolver.
-                // ParsiFlix Continue remains the source of truth for episode/progress state.
-                directPlay = useDirectResolver,
-                resumeStrategyOverride = session.resumeStrategy,
-                actionButtonTextPatterns = session.actionButtonTextPatterns
-            )
+        val metadata = releaseOverride ?: catalogByUrl[
+            ContentMetadataPolicy.canonicalContentUrl(session.contentUrl)
+        ]
+        return SpotlightItem(
+            title = session.title,
+            kind = metadata?.kind ?: catalogKindFromUrl(session.contentUrl)
+                ?: CatalogKind.MOVIE,
+            contentUrl = session.contentUrl,
+            posterUrl = session.posterUrl.ifBlank { metadata?.posterUrl.orEmpty() },
+            serviceId = session.serviceId,
+            serviceName = session.serviceName.ifBlank { serviceName(session.serviceId) },
+            summary = metadata?.summary.orEmpty(),
+            year = metadata?.year.orEmpty(),
+            genres = metadata?.genres.orEmpty(),
+            rating = metadata?.rating.orEmpty(),
+            runtime = metadata?.runtime.orEmpty(),
+            episodeLabel = metadata?.episodeLabel.orEmpty(),
+            country = metadata?.country.orEmpty(),
+            language = metadata?.language.orEmpty(),
+            hasPersianDub = metadata?.hasPersianDub == true,
+            hasPersianSubtitle = metadata?.hasPersianSubtitle == true,
+            directors = metadata?.directors.orEmpty(),
+            cast = metadata?.cast.orEmpty(),
+            primaryAction = SpotlightAction.CONTINUE,
+            browserStartUrl = startUrl,
+            resumePosition = session.resumePosition,
+            duration = session.duration,
+            autoResume = true,
+            // Only account-synced movies with normal quality choices need the resolver.
+            // ParsiFlix Continue remains the source of truth for episode/progress state.
+            directPlay = useDirectResolver,
+            resumeStrategy = session.resumeStrategy,
+            actionButtonTextPatterns = session.actionButtonTextPatterns
         )
     }
 
@@ -371,7 +417,9 @@ fun HomeScreen(
                         CatalogFilter.SERIES
                     )
                     GreetingAction.SURPRISE ->
-                        viewModel.randomCatalogItem()?.let { openCatalogItem(it) }
+                        viewModel.randomCatalogItem()?.let {
+                            openSpotlight(spotlightForCatalog(it))
+                        }
                     GreetingAction.NONE -> Unit
                 }
             },
@@ -425,9 +473,7 @@ fun HomeScreen(
                     PosterCard(
                         item = item,
                         showContinueBadge = true,
-                        previewItem = previewFor(item),
-                        onPreviewStateChange = ::setPreview,
-                        onClick = { openPlayback(session) },
+                        onClick = { openSpotlight(spotlightForPlayback(session)) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
             }
@@ -463,21 +509,11 @@ fun HomeScreen(
                             rating = release?.rating.orEmpty(),
                             runtime = release?.runtime.orEmpty()
                         ),
-                        onPreviewStateChange = ::setPreview,
                         onClick = {
-                            openCatalogItem(
-                                CatalogItem(
-                                    title = session.title,
-                                    kind = CatalogKind.SERIES,
-                                    contentUrl = session.contentUrl,
-                                    posterUrl = session.posterUrl,
-                                    serviceId = session.serviceId,
-                                    episodeLabel = release?.episodeLabel.orEmpty(),
-                                    summary = release?.summary.orEmpty(),
-                                    year = release?.year.orEmpty(),
-                                    genres = release?.genres.orEmpty(),
-                                    rating = release?.rating.orEmpty(),
-                                    runtime = release?.runtime.orEmpty()
+                            openSpotlight(
+                                spotlightForPlayback(
+                                    session = session,
+                                    releaseOverride = release
                                 )
                             )
                         }
@@ -497,8 +533,7 @@ fun HomeScreen(
                 viewModel.setCatalogFilter(HomeViewModel.IRANIAN_SERVICE_ID, it)
             },
             onRefresh = { onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID) },
-            onOpen = { openCatalogItem(it) },
-            onPreviewStateChange = ::setPreview,
+            onOpen = { openSpotlight(spotlightForCatalog(it)) },
             isRefreshing = HomeViewModel.IRANIAN_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
@@ -513,8 +548,7 @@ fun HomeScreen(
                 viewModel.setCatalogFilter(HomeViewModel.INTERNATIONAL_SERVICE_ID, it)
             },
             onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
-            onOpen = { openCatalogItem(it) },
-            onPreviewStateChange = ::setPreview,
+            onOpen = { openSpotlight(spotlightForCatalog(it)) },
             isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
@@ -525,13 +559,12 @@ fun HomeScreen(
             it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
         }
         CatalogSectionRow(
-            title = "سریال‌های برگزیده جهان",
+            title = "سریال‌های برگزیده",
             section = internationalSection,
             filter = CatalogFilter.SERIES,
             onFilterChange = {},
             onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
-            onOpen = { openCatalogItem(it) },
-            onPreviewStateChange = ::setPreview,
+            onOpen = { openSpotlight(spotlightForCatalog(it)) },
             itemsOverride = internationalSection?.popularSeries.orEmpty(),
             showFilters = false,
             isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
@@ -585,9 +618,7 @@ fun HomeScreen(
             ) { item ->
                     PosterCard(
                         item = item,
-                        previewItem = previewFor(item),
-                        onPreviewStateChange = ::setPreview,
-                        onClick = { openItem(item) },
+                        onClick = { openSpotlight(spotlightForMovie(item)) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
             }
@@ -603,9 +634,7 @@ fun HomeScreen(
             ) { item ->
                     PosterCard(
                         item = item,
-                        previewItem = previewFor(item),
-                        onPreviewStateChange = ::setPreview,
-                        onClick = { openItem(item) },
+                        onClick = { openSpotlight(spotlightForMovie(item)) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
             }
@@ -623,11 +652,5 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(32.dp))
     }
-        CinematicHoverPreview(
-            item = hoverPreview,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 116.dp, end = 48.dp)
-        )
     }
 }

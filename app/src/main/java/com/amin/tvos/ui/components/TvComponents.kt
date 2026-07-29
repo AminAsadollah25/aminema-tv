@@ -67,7 +67,6 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.amin.tvos.data.model.MovieItem
-import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.SurfaceElevated
@@ -392,30 +391,17 @@ fun ServiceCard(
 fun PosterCard(
     item: MovieItem,
     showContinueBadge: Boolean = false,
-    previewItem: CatalogItem? = null,
-    onPreviewStateChange: (CatalogItem, Boolean) -> Unit = { _, _ -> },
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     // FilmRooz returns HTML for poster requests without the authenticated WebView
     // cookie, so the shared helper attaches it for same-host images only.
     val posterModel = authenticatedPosterModel(item.posterUrl, item.url)
-    var focused by remember(item.url) { mutableStateOf(false) }
-    androidx.compose.runtime.LaunchedEffect(focused, item.url, previewItem) {
-        val preview = previewItem ?: return@LaunchedEffect
-        if (focused) {
-            kotlinx.coroutines.delay(520L)
-            onPreviewStateChange(preview, true)
-        } else {
-            onPreviewStateChange(preview, false)
-        }
-    }
     FocusableCard(
         modifier = Modifier.width(190.dp),
         focusedScale = 1.06f,
         onClick = onClick,
-        onLongClick = onLongClick,
-        onInteractionFocusChanged = { focused = it }
+        onLongClick = onLongClick
     ) {
         Column {
             Box(Modifier.fillMaxWidth().height(260.dp)) {

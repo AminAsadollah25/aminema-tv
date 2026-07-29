@@ -19,11 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +35,6 @@ import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.ui.theme.SurfaceElevated
 import com.amin.tvos.ui.theme.TextSecondary
-import kotlinx.coroutines.delay
 
 /**
  * Builds the poster request for a card.
@@ -73,24 +68,13 @@ fun authenticatedPosterModel(posterUrl: String, pageUrl: String): Any? {
 @Composable
 fun CatalogCard(
     item: CatalogItem,
-    onClick: () -> Unit,
-    onPreviewStateChange: (CatalogItem, Boolean) -> Unit = { _, _ -> }
+    onClick: () -> Unit
 ) {
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
-    var focused by remember(item.contentUrl) { mutableStateOf(false) }
-    LaunchedEffect(focused, item.contentUrl) {
-        if (focused) {
-            delay(520L)
-            onPreviewStateChange(item, true)
-        } else {
-            onPreviewStateChange(item, false)
-        }
-    }
     FocusableCard(
         modifier = Modifier.width(190.dp),
         focusedScale = 1.06f,
-        onClick = onClick,
-        onInteractionFocusChanged = { focused = it }
+        onClick = onClick
     ) {
         Column {
             Box(Modifier.fillMaxWidth().height(260.dp)) {

@@ -47,7 +47,6 @@ fun CatalogSectionRow(
     onFilterChange: (CatalogFilter) -> Unit,
     onRefresh: () -> Unit,
     onOpen: (CatalogItem) -> Unit,
-    onPreviewStateChange: (CatalogItem, Boolean) -> Unit = { _, _ -> },
     itemsOverride: List<CatalogItem>? = null,
     showFilters: Boolean = true,
     isRefreshing: Boolean = false
@@ -158,8 +157,7 @@ fun CatalogSectionRow(
                 items(items, key = { it.contentUrl }) { item ->
                     CatalogCard(
                         item = item,
-                        onClick = { onOpen(item) },
-                        onPreviewStateChange = onPreviewStateChange
+                        onClick = { onOpen(item) }
                     )
                 }
             }

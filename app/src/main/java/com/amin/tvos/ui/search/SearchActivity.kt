@@ -39,12 +39,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.amin.tvos.AminTvApp
-import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.browser.SiteSearchEngine
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.SearchGroup
 import com.amin.tvos.data.model.SearchResult
+import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.RailNavigationControls
 import com.amin.tvos.ui.components.CatalogCard
@@ -54,6 +54,7 @@ import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceDark
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
+import com.amin.tvos.ui.spotlight.SpotlightActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -140,14 +141,19 @@ class SearchActivity : ComponentActivity() {
 
     private fun open(result: SearchResult) {
         startActivity(
-            BrowserActivity.intent(
+            SpotlightActivity.intent(
                 context = this,
-                serviceId = result.serviceId,
-                url = result.contentUrl,
-                contentUrl = result.contentUrl,
-                contentTitle = result.title,
-                contentPoster = result.posterUrl,
-                directPlay = result.kind == CatalogKind.MOVIE
+                item = SpotlightItem(
+                    title = result.title,
+                    kind = result.kind,
+                    contentUrl = result.contentUrl,
+                    posterUrl = result.posterUrl,
+                    serviceId = result.serviceId,
+                    serviceName = app.servicesRepository.findById(result.serviceId)?.name.orEmpty(),
+                    // Search currently returns compact cards; the title page deliberately
+                    // leaves unknown metadata empty rather than inventing it.
+                    directPlay = result.kind == CatalogKind.MOVIE
+                )
             )
         )
     }

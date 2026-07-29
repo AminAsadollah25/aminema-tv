@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Candidate جدید،
-فایل‌های `DEVELOPMENT_LOG_0.14.6.md`، `TEST_REPORT_0.14.6.md` و
-`RELEASE_NOTES_0.14.6.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.15.0.md`، `TEST_REPORT_0.15.0.md` و
+`RELEASE_NOTES_0.15.0.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -15,10 +15,9 @@ release و Next queue واقعی را نشان دهد.
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.14.6 / versionCode 30 — Pointer & Playback Polish**
-- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
-- Commit انتشار: `b08f7c1`
-- Tag: `v0.14.6`
+- نسخه کد: **0.15.0 / versionCode 31 — Aminema Spotlight**
+- وضعیت در این لحظه: **Candidate محلی آمادهٔ تست تلویزیون؛ هنوز منتشرنشده**
+- Commit/Tag نسخه 0.15.0: **هنوز ساخته نشده**
 - نسخه عمومی فعلی: **0.14.6 / code 30**
 - Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6`
 - شاخه: `main`
@@ -27,6 +26,78 @@ release و Next queue واقعی را نشان دهد.
 - Package پایه: `com.amin.tvos`
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
+
+## 0.15.0 چه چیزی را حل می‌کند
+
+### 1. Spotlight Native به‌جای وابستگی به Hover
+
+- کلیک اول روی فیلم/سریال ایرانی یا خارجی، صفحه Native سینمایی باز می‌کند.
+- کلیک دوم روی Watch/Continue همان Browser request آزمایش‌شده قبلی را اجرا
+  می‌کند؛ `browserStartUrl`، direct play، resume strategy و action patternها
+  داخل `SpotlightItem` حفظ می‌شوند.
+- Home، Search، Continue، My Series، Recent و Favorites متصل‌اند.
+- Live TV عمداً مستقیم و یک‌کلیکی باقی مانده است.
+- Back به Activity قبلی برمی‌گردد و موقعیت Rail/Scroll حفظ می‌شود.
+- Download و Trailer وجود ندارد.
+
+### 2. تکمیل اطلاعات واقعی برای عنوان‌های قدیمی
+
+- مشکل گزارش‌شده: Recentهای قدیمی فقط Title/Poster داشتند و Spotlight به‌اشتباه
+  می‌گفت معرفی دریافت نشده است، درحالی‌که اطلاعات روی سایت وجود داشت.
+- راه‌حل: `SpotlightMetadataLoader` هنگام بازشدن همان Normal signed-in detail
+  page را در WebView مخفی 2×2 باز می‌کند و فقط Visible/schema metadata را
+  می‌خواند.
+- داده‌ها: Synopsis، Year، Genre، Rating، Runtime، Country، Language،
+  Director، Cast و وضعیت title-local دوبله/زیرنویس فارسی.
+- نمونه واقعی Spider-Man Homecoming:
+  `2017`، `۷.۴`، `۱۳۳ دقیقه`، `اکشن/ماجراجویی/علمی-تخیلی`، `آمریکا`،
+  `انگلیسی/اسپانیایی`، Jon Watts و سه بازیگر اصلی.
+- FilmRooz Synopsis واقعی در
+  `.col-12.mt-2.p-2.text-justify.rounded` است؛ Selector قبلی بیش از حد محدود
+  بود و اصلاح شد.
+- `title_metadata.json` تا 150 عنوان Canonical را نگه می‌دارد و 14 روز تازه
+  محسوب می‌کند.
+- وضعیت سبز `دوبله فارسی` و آبی `زیرنویس فارسی` فقط از محتوای محلی همان
+  Title/Post/Download خوانده می‌شود؛ Header/Nav و Category link عمومی حذف
+  می‌شوند تا False positive نسازند.
+
+### 3. بازطراحی Safe Area
+
+- جمله ساختگی «جزئیات بیشتر هنگام ورود...» کاملاً حذف شد.
+- اگر Synopsis واقعاً خالی باشد، Section خالی هیچ فضا نمی‌گیرد.
+- عنوان و سال در یک Title block هستند؛ Font متعادل شده تا عنوان‌هایی مانند
+  Homecoming با سال کنار نام جا شوند و عنوان خیلی بلند حداکثر دو خط باشد.
+- Synopsis دو خط، Credits بالای CTAها و Poster کوتاه‌تر است؛ همه اطلاعات و
+  دکمه‌ها در 720p/1080p داخل Safe Area می‌مانند.
+- Progress کمتر از یک دقیقه به‌عنوان Beacon سایت نمایش داده نمی‌شود.
+- FocusRequester اکنون `remember` می‌شود؛ Crash ناشی از Recomposition
+  async metadata در QA پیدا و بسته شد.
+
+### 4. گیت‌های فنی Candidate
+
+- `testDebugUnitTest lintDebug assembleDebug`: موفق
+- Unit test: 10 pass، failure/error صفر
+- Lint error: صفر؛ 108 advisory
+- APK: `22,462,380` بایت
+- SHA-256:
+  `0cc3742aa1b3de12e0681ed61a61a781f0f9c49a6e647c660a50102dec2ae6ee`
+- Signing certificate همان 0.14.6:
+  `ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3`
+
+### 5. مرز امنیتی 0.15.0
+
+- فقط Normal same-host title page و Person profile URL عادی پذیرفته می‌شود.
+- هیچ Media/Stream URL، Network request، Cookie، Token، Password، Auth header
+  یا DRM value خوانده، ذخیره یا Log نمی‌شود.
+
+## صف بعد از پذیرش 0.15.0
+
+1. `0.15.1 — Spotlight Series & People`: انتخاب فصل/قسمت، Latest published،
+   Continue صادقانه، کلیک روی کارگردان/بازیگر و Provider filmography، Follow
+   محلی افراد.
+2. `0.15.2 — Cinema Library & Alerts`: View All grid و Alert کم‌مزاحمت برای
+   اثر جدید فرد دنبال‌شده پس از Sync معمول کاتالوگ.
+3. سپس `0.16.0 — Cinematic Home` و Reliability track.
 
 ## 0.14.6 چه چیزی را حل می‌کند
 

@@ -2,17 +2,20 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Current release
+## Current candidate
 
-**Aminema 0.14.6 — Pointer & Playback Polish** (`versionCode 30`)
+**Aminema 0.15.0 — Aminema Spotlight** (`versionCode 31`)
 
-- FilmRooz movies start automatically after reaching the provider's normal player page
-- Real physical-mouse hover and DPAD focus now share one cinematic interaction
-- Selected cards scale, brighten and lift smoothly instead of showing a red border
-- Mouse dwell opens spoiler-safe Quick Glance; leaving the card closes it
-- Existing ParsiFlix playback, logins, resume data and normal manual fallback remain intact
+- First click on a movie or series opens a cinematic native title page
+- Watch/Continue and My List are available without entering the provider page first
+- Old Recent/Continue titles enrich themselves from the normal signed-in detail page
+- Year, rating, runtime, genre, country, synopsis, director and principal cast are cached locally
+- A green `دوبله فارسی` badge and a blue `زیرنویس فارسی` badge appear only when the title page confirms them
+- Live TV remains direct one-click and never opens Spotlight
 
-[Download the latest APK from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/latest)
+The public GitHub release remains
+[0.14.6](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6)
+until the 0.15.0 TV acceptance pass and explicit publish step.
 
 The release status and next milestone below are updated as part of every
 version's release checklist, together with `CLOUD-HANDOFF-LATEST.md`.
@@ -212,28 +215,30 @@ autoplay step after Aminema reaches the provider's normal player route; it asks
 only the site's own HTML5 video or visible player control to start, while
 ParsiFlix remains unchanged and the manual timeout fallback stays available.
 
-## Next update queue — after v0.14.6
+Version 0.15.0, **Aminema Spotlight**, replaces hover-dependent decision making
+with a native, TV-safe title page. It preserves the exact existing browser
+request for Watch/Continue, restores the Home/Search position on Back and
+enriches old titles from ordinary visible provider metadata without reading
+media URLs or authentication values.
 
-### 0.15.0 — Aminema Spotlight
+## Next update queue — after v0.15.0
 
-- Add a cinematic Home hero and native movie/series detail page.
-- Show only cached/ordinary provider metadata: poster, year, genre, rating,
-  runtime, published episode and a spoiler-safe synopsis.
-- Primary actions: Watch/Continue, My List and More. No download and no trailer.
-- Preserve exact rail focus and scroll position after Back.
-
-### 0.15.1 — Episode Navigator
+### 0.15.1 — Spotlight Series & People
 
 - Add season and episode selection after provider DOM rules are verified.
 - Keep separate actions for latest published episode and honest smart Continue.
 - Add an optional `تا این قسمت دیدم` baseline for viewing done elsewhere.
 - Never claim `دیده‌نشده` without exact watched evidence.
+- Make director and cast names selectable and open their provider-backed filmography.
+- Allow following a person locally in Aminema.
 
-### 0.15.2 — Cinema Library
+### 0.15.2 — Cinema Library & Alerts
 
 - Add `مشاهده همه` grids for Latest, Continue, Recent and Favorites.
 - Filter by movie/series, cinema, genre and year using cached normal metadata.
 - Keep focus restoration and low-RAM Android Box performance as hard gates.
+- Surface a local, non-spammy alert when catalog refresh finds a new work from
+  a followed actor or director.
 
 ## Requirements
 
