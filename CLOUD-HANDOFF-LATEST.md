@@ -18,19 +18,18 @@
 ## وضعیت جاری
 
 - محصول: **Aminema**
-- نسخه عمومی: **0.13.0 / code 27**
-- Candidate نصب‌شده: **0.14.0 / code 28**
-- وضعیت: 0.13.0 **منتشرشده و GitHub Latest**؛ 0.14.0 **هنوز Push/Tag/Release نشده**
-- Release commit و Tag: `fd3ac33` / `v0.13.0`
+- نسخه عمومی و نصب‌شده: **0.14.0 / code 28**
+- وضعیت: **منتشرشده و GitHub Latest**
+- Release commit و Tag: `8dd5191` / `v0.14.0`
 - GitHub Release:
-  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.13.0`
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.0`
 - شاخه: `main`
 - Package نصب واقعی: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
   نشست‌های لاگین، Cookie، Poster و Library را حفظ کرد.
 
-## Candidate در حال انجام: 0.14.0 — Series Pulse
+## نسخه منتشرشده 0.14.0 — Series Pulse
 
 - مرجع کامل تغییرات: `DEVELOPMENT_LOG_0.14.0.md`
 - گزارش پذیرش: `TEST_REPORT_0.14.0.md`
@@ -54,7 +53,12 @@
   اضافی برای این کار زده نمی‌شود.
 - Build/Lint موفق؛ نصب `adb install -r` موفق؛ نسخه نصب‌شده
   `0.14.0 code 28`؛ MainActivity حین Sync Top/Resumed و Crash صفر.
-- هنوز Commit/Push/Tag/GitHub Release انجام نشده است.
+- Commit/Push/Tag/GitHub Release انجام و Latest API تأیید شد.
+- Assetها:
+  - `Aminema-v0.14.0-debug.apk` — `75,975,092` بایت
+  - `Aminema-v0.14.0-debug.apk.sha256` — `92` بایت
+- SHA-256:
+  `37a699b70c28bc21669e4d0d4f26254cd7cd336ebfda75af6efbd46ebcf24681`
 
 ## مسئله‌های حل‌شده در 0.12.1
 
@@ -204,9 +208,9 @@
   روی code 26 و پایین‌تر نسخه جدید را تشخیص می‌دهد.
 - README عمومی هم‌زمان به `Current release 0.13.0` و صف واقعی بعدی به‌روز شد.
 
-**مرحله فعلی:** Acceptance کوتاه 0.14.0 روی Android Box و سپس Commit/Push/
-Tag/Release با Asset و SHA. تا قبل از تأیید GitHub Latest، 0.14 منتشرشده
-اعلام نشود.
+**مرحله فعلی:** Acceptance کوتاه 0.14.0 روی Android Box. نسخه 0.14.5 برای
+رفع باگ Recently Opened، Hover Preview سینمایی، پاک‌سازی Performance/حجم/
+کد و Polish ظاهری برنامه‌ریزی شده است.
 
 **مرحله بعدی طراحی:** 0.15.0 با عنوان **Cinematic Hover Preview** برای
 فیلم/سریال خارجی: Synopsis بدون اسپویل، سال/ژانر/امتیاز/مدت، آخرین قسمت،

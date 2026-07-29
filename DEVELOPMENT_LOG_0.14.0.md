@@ -5,8 +5,10 @@
 - Candidate version: `0.14.0`
 - `versionCode`: `28`
 - Package installed for acceptance: `com.amin.tvos.debug`
-- Release status: **not published yet**
-- Previous public release remains `v0.13.0`
+- Release status: **published, GitHub Latest**
+- Tag / release commit: `v0.14.0` / `8dd5191`
+- Release URL:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.0`
 - Local RC asset: `Aminema-v0.14.0-RC-debug.apk`
 - SHA-256:
   `37a699b70c28bc21669e4d0d4f26254cd7cd336ebfda75af6efbd46ebcf24681`
