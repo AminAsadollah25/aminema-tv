@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -13,13 +15,28 @@ android {
         applicationId = "com.amin.tvos"
         minSdk = 28          // Android 9+
         targetSdk = 35
-        versionCode = 28
-        versionName = "0.14.0"
+        versionCode = 29
+        versionName = "0.14.5"
+    }
+
+    androidResources {
+        // Aminema currently ships only Persian/English UI. Avoid packaging the
+        // transitive libraries' unused locale resources on low-storage TV boxes.
+        localeFilters += listOf("en", "fa")
     }
 
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            // The TV installs the debug-signed update channel today. Give that APK
+            // the same code/resource shrinking as release while preserving its
+            // package id and signing continuity for one-click updates.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         release {
             isMinifyEnabled = true
@@ -37,12 +54,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -71,4 +91,6 @@ dependencies {
 
     // Modern WebView helpers
     implementation("androidx.webkit:webkit:1.12.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

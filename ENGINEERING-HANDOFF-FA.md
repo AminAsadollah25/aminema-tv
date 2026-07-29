@@ -70,10 +70,11 @@ app/src/main/java/com/amin/tvos/
 │   ├── KeyboardSafeWebView.kt      WebView بدون IME سیستمی
 │   └── MouseKeyboardOverlay.kt     کیبورد اختصاصی Aminema
 ├── ui/home/
-│   ├── HomeScreen.kt               صفحه اصلی (Column+verticalScroll — هنوز Lazy نشده، نگاه کن به بخش ۸)
+│   ├── HomeScreen.kt               صفحه اصلی؛ Scroll عمودی + Railهای Lazy (0.14.5)
 │   ├── HomeViewModel.kt            State تمام ردیف‌های Home + Update state
 │   ├── SmartGreeting.kt            سلام هوشمند + تبدیل جلالی (0.8.1)
 │   ├── CinematicBackground.kt      پس‌زمینه محو از آخرین پوستر
+│   ├── CinematicHoverPreview.kt    Quick Glance بدون اسپویل (0.14.5)
 │   ├── CatalogSectionRow.kt        ردیف «تازه‌ها» با فیلتر همه/فیلم/سریال
 │   ├── LiveTvSectionRow.kt         ردیف بومی شبکه‌ها و کارت‌های LIVE (0.12.0)
 │   └── UpdateBanner.kt             بنر بروزرسانی خودکار (0.10.0)
@@ -85,6 +86,7 @@ app/src/main/java/com/amin/tvos/
     ├── ServicesRepository.kt       بارگذاری/ادغام services.json (نگاه کن به بخش ۷.۱ برای باگ مهاجرت)
     ├── CatalogRepository.kt        کش JSON «تازه‌ها»
     ├── LibraryRepository.kt        Continue/Recents/Favorites (MovieItem, PlaybackSession)
+    ├── ContentMetadataPolicy.kt    Canonical URL + رد Shell metadata (0.14.5)
     ├── SettingsRepository.kt       DataStore: Zoom, UA, فیلتر کاتالوگ، Skipped update version
     └── model/
         ├── Models.kt               StreamingService (شامل DirectPlayConfig), MovieItem, PlaybackSession
@@ -110,7 +112,8 @@ app/src/main/java/com/amin/tvos/
 | **0.12.0** | ردیف بومی ۲۰ شبکه با لوگوی واقعی، پخش مستقیم CSS تمام‌صفحه، D-pad/موس و Back به همان کارت |
 | **0.12.1** | Continue/Direct Play تأییدمحور، Sync حساب خودکار و یکسان بین دستگاه‌ها، Loading سینمایی و فلش مشترک ردیف‌ها |
 | **0.13.0** | Search Deck و Login Input Deck با QWERTY فارسی/انگلیسی و State Machine پایدار |
-| **0.14.0 Candidate** | Series Pulse: قسمت/فصل، سریال‌های من، برگزیده‌ها، Sync مستقل و پس‌زمینه‌ای |
+| **0.14.0** | Series Pulse: قسمت/فصل، سریال‌های من، برگزیده‌ها، Sync مستقل و پس‌زمینه‌ای |
+| **0.14.5** | Cinema Polish: اصلاح Recent، Quick Glance، Lazy rail، APK حدود 71٪ کوچک‌تر |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
@@ -377,21 +380,22 @@ DataStore Async است و باعث Flash صفحه اصلی قبل از اینت�
 
 ## ۸. عمداً پیاده‌سازی‌نشده (با دلیل، برای اینکه دوباره اشتباه گرفته نشود)
 
-- **R8/Minify** جدا از 0.10 نگه داشته شد. Build دیباگ بدون فشرده‌سازی
-  می‌ماند چون: (۱) تغییر سطح کل Build است، (۲) می‌تواند WebView JS
-  Bridge، Coil (Reflection)، kotlinx.serialization (Reflection) را
-  بشکند، (۳) فقط با امولاتور قابل تأیید کامل نیست. نیاز به نسخه جدا با
-  تست دقیق‌تر (فعلاً بدون شماره).
+- **R8/Minify در 0.14.5 انجام شد.** کانال Update فعلی Debug-signed باقی
+  مانده ولی Code/Resource shrink فعال است. تمام کلاس‌ها و متدهای
+  `@JavascriptInterface` با Rule صریح حفظ شده‌اند؛ Catalog/Keyboard/
+  Playback bridge روی نشست لاگین‌شده تست شدند. APK از حدود 76MB به 22.2MB
+  رسید.
 - **انتخاب خودکار قسمت سریال:** تیک‌های قسمت FilmRooz روی لپ‌تاپ و امولاتور
   با یک حساب یکسان نبودند و browser-local ثابت شدند. 0.14 فقط آخرین قسمت
   منتشرشده را نشان می‌دهد. Next/Unwatched نیازمند `SeriesProgress` محلی یا
   تأیید «تا این قسمت دیدم» است؛ هیچ قسمت حدس زده نمی‌شود.
-- **Home هنوز `Column`+`verticalScroll` است، نه `LazyColumn`.** با ۵
-  ردیف اولیه و دو ردیف سبک 0.14 در امولاتور مشکل نداشت، ولی **قبل از افزودن
-  ردیف‌های ژانری/سنگین باید
-  LazyColumn شود** وگرنه روی Box ضعیف کند می‌شود.
-- **Cinematic Hover Preview:** هدف 0.15؛ خلاصه بدون اسپویل، سال/ژانر/امتیاز/
-  مدت، آخرین قسمت و Backdrop محو با Dwell حدود 600ms و کش سبک.
+- **Home عمودی هنوز `Column`+`verticalScroll` است، نه `LazyColumn`.**
+  همه Railهای افقی در 0.14.5 به `LazyRow` منتقل شده‌اند؛ بنابراین پوسترهای
+  خارج Viewport دیگر هم‌زمان Decode/Compose نمی‌شوند. LazyColumn فقط پیش
+  از رشد محسوس تعداد بخش‌های عمودی لازم است.
+- **Cinematic Hover Preview در 0.14.5 انجام شد:** خلاصه بدون اسپویل،
+  سال/ژانر/امتیاز/مدت/آخرین قسمت با Dwell برابر 520ms، داده کش‌شده و بدون
+  Request شبکه روی هر حرکت فوکوس.
 
 ---
 
@@ -479,7 +483,7 @@ Decode تصویر بزرگ ندارد.
    همان Provider را حذف نمی‌کرد.
 
 در 0.12.1، `MainActivity` بعد از Intro از Gate یک‌بارمصرف سطح Process استفاده
-می‌کرد. **این مسیر در Candidate 0.14.0 supersede شد:** اکنون
+می‌کرد. **این مسیر در نسخه 0.14.0 supersede شد:** اکنون
 `CatalogBackgroundSync` حساب و کاتالوگ هر Provider را در یک Pass پشت Home
 می‌خواند؛ Auto `AccountSyncActivity` و SharedPreferences gate حذف شده‌اند.
 `AccountSyncActivity` فقط برای دکمه دستی/تشخیصی باقی است.
@@ -504,9 +508,30 @@ Provider ابتدا کنار گذاشته و incoming معتبر جایگزین 
 
 ### ۹.۵ فلش مشترک Rail
 
-`RailNavigationControls(scrollState)` در `TvComponents.kt` تنها منبع رفتار
-فلش‌هاست. Header و Row همان `ScrollState` را Share می‌کنند. هر عمل 82٪
-`viewportSize` (حداقل 360px) را با `animateScrollTo` جابه‌جا می‌کند؛ در ابتدا
-و انتها `FocusableCard(enabled=false)` Dim می‌شود. این کامپوننت در
-`SectionRow`, `CatalogSectionRow`, `LiveTvSectionRow` و Search `ResultGroup`
-استفاده می‌شود، بنابراین رفتار موس/DPAD همه ردیف‌ها یکسان می‌ماند.
+`RailNavigationControls` در `TvComponents.kt` تنها منبع رفتار فلش‌هاست.
+Search هنوز Overload مبتنی بر `ScrollState` را دارد؛ Home از 0.14.5 Overload
+مبتنی بر `LazyListState` را استفاده می‌کند. نسخه Lazy به تعداد کارت‌های قابل
+مشاهده Page می‌کند و در ابتدا/انتها از `canScrollBackward/Forward` برای
+Dim/Disable استفاده می‌کند. `SectionRow`, `CatalogSectionRow` و
+`LiveTvSectionRow` همگی keyed `LazyRow` هستند.
+
+### ۹.۶ Metadata Race و Quick Glance در 0.14.5
+
+در ParsiFlix SPA، Router می‌توانست `location.href` را زودتر از Hydrateشدن
+Detail DOM تغییر دهد. نتیجه: URL فیلم واقعی بود اما Title از Shell صفحه اصلی.
+`captureResumeMetadata()` اکنون `pageUrl: location.href` را هم برمی‌گرداند و
+فقط وقتی نتیجه را می‌پذیرد که Requested URL، DOM URL و `webView.url` با
+`ContentMetadataPolicy.canonicalContentUrl()` یکسان باشند. Title عمومی
+Provider نیز روی Content route رد می‌شود.
+
+برای داده قدیمی، `LibraryRepository.repairMetadata()` URL را با Catalog cache
+تطبیق می‌دهد و Title/Poster خراب را ترمیم می‌کند. Home هم دفاع دوم دارد:
+Shell entry بدون Match را نشان نمی‌دهد. این Policy چهار Unit test دارد.
+
+`CatalogItem` پنج Field اختیاری سازگار با Cacheهای قدیمی گرفت:
+`summary/year/genres/rating/runtime`. خروجی JS محدود و پاک‌سازی می‌شود.
+ParsiFlix از JSON کاتالوگ خودش و FilmRooz از ساختار واقعی `.postMeta` شامل
+`<spl>` ژانر، Runtime، Rating و Synopsis استفاده می‌کند.
+`CinematicHoverPreview` پس از 520ms Hover/Focus ظاهر می‌شود، Layout را جابه‌جا
+نمی‌کند، Episode plot یا Video autoplay ندارد و روی Focus move هیچ Request
+شبکه‌ای نمی‌زند.

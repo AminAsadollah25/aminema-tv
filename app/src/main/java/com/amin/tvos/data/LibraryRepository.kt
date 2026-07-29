@@ -4,6 +4,7 @@ import android.content.Context
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.ResumeStrategy
+import com.amin.tvos.data.model.CatalogItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -175,6 +176,36 @@ class LibraryRepository(private val context: Context) {
     }
 
     /**
+     * Repairs legacy SPA race-condition entries from the provider catalog.
+     * A generic service-shell title must never replace a real catalog title.
+     */
+    suspend fun repairMetadata(catalogItems: List<CatalogItem>) =
+        withContext(Dispatchers.IO) {
+            if (catalogItems.isEmpty() || _items.value.isEmpty()) return@withContext
+            val byUrl = catalogItems.associateBy {
+                ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+            }
+            var changed = false
+            val repaired = _items.value.map { item ->
+                val catalog = byUrl[
+                    ContentMetadataPolicy.canonicalContentUrl(item.url)
+                ] ?: return@map item
+                val titleIsGeneric = ContentMetadataPolicy.isGenericShellTitle(
+                    item.title,
+                    item.serviceId,
+                    item.serviceName
+                )
+                val next = item.copy(
+                    title = if (titleIsGeneric) catalog.title else item.title,
+                    posterUrl = item.posterUrl.ifBlank { catalog.posterUrl }
+                )
+                if (next != item) changed = true
+                next
+            }
+            if (changed) persist(repaired)
+        }
+
+    /**
      * Called only after a real HTML5 video play/timeupdate event.
      * The saved playbackUrl is the top-level browser page, never the media src.
      */
@@ -311,6 +342,7 @@ class LibraryRepository(private val context: Context) {
         file.writeText(json.encodeToString(list))
         _items.value = list
     }
+
 
     private fun persistPlayback(list: List<PlaybackSession>) {
         playbackFile.writeText(json.encodeToString(list))

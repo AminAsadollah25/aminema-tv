@@ -49,7 +49,14 @@ data class CatalogItem(
      * This describes what the provider has published. It deliberately does not claim that
      * the user has or has not watched the episode.
      */
-    val episodeLabel: String = ""
+    val episodeLabel: String = "",
+    /** Spoiler-safe title synopsis supplied on the provider's catalog card/API. */
+    val summary: String = "",
+    /** Compact metadata used by the TV hover preview. */
+    val year: String = "",
+    val genres: List<String> = emptyList(),
+    val rating: String = "",
+    val runtime: String = ""
 )
 
 /**

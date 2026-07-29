@@ -35,6 +35,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.amin.tvos.AminTvApp
+import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
@@ -327,7 +328,6 @@ class BrowserActivity : ComponentActivity() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
-            databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             loadWithOverviewMode = true
             useWideViewPort = true
@@ -1733,6 +1733,7 @@ class BrowserActivity : ComponentActivity() {
                 var imageTitle = largeImage ? (largeImage.alt || '') : '';
                 imageTitle = imageTitle.replace(/\s*کاور\s*$/i, '').trim();
                 return JSON.stringify({
+                    pageUrl: location.href,
                     // Several TV sites keep a generic app name in og:title.
                     // Prefer the visible content heading for a useful card.
                     title: (heading ? heading.innerText.trim() : '') ||
@@ -1748,6 +1749,16 @@ class BrowserActivity : ComponentActivity() {
         """.trimIndent()
         webView.evaluateJavascript(script) { raw ->
             val payload = decodeJavascriptJson(raw) ?: return@evaluateJavascript
+            // SPA routes can change while evaluateJavascript is in flight. Reject a
+            // response unless the requested route, DOM route and current WebView route
+            // still describe the same top-level page.
+            val pageUrl = payload.optString("pageUrl").trim()
+            val currentUrl = webView.url.orEmpty()
+            if (
+                !ContentMetadataPolicy.isSameTopLevelPage(url, pageUrl) ||
+                !ContentMetadataPolicy.isSameTopLevelPage(url, currentUrl)
+            ) return@evaluateJavascript
+
             val title = payload.optString("title").trim()
             val poster = payload.optString("poster").trim()
             val position = payload.optLong("position").coerceAtLeast(0L)
@@ -1756,6 +1767,20 @@ class BrowserActivity : ComponentActivity() {
             val adapter = serviceAdapter
             val isContent = adapter?.isContentUrl(url) == true
             val playable = detectedPlayer || adapter?.isPlaybackUrl(url) == true
+            // ParsiFlix updates location.href before its detail view has hydrated.
+            // During that short window document.title is still the service homepage.
+            // Never let that generic shell overwrite a real title in Recently Opened.
+            if (
+                isContent &&
+                ContentMetadataPolicy.isGenericShellTitle(
+                    title = title,
+                    serviceId = serviceId,
+                    serviceName = serviceName
+                )
+            ) {
+                currentTitle = title
+                return@evaluateJavascript
+            }
             val savedLocalPoster = if (isContent) {
                 app.libraryRepository.localPoster(url)
             } else {

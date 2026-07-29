@@ -15,9 +15,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,9 +33,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.amin.tvos.data.model.MovieItem
+import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.SurfaceElevated
@@ -76,12 +82,16 @@ fun FocusableCard(
     enabled: Boolean = true,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    onInteractionFocusChanged: (Boolean) -> Unit = {},
     content: @Composable (focused: Boolean) -> Unit
 ) {
     var dpadFocused by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
     val focused = enabled && (dpadFocused || hovered)
+    androidx.compose.runtime.LaunchedEffect(focused) {
+        onInteractionFocusChanged(focused)
+    }
     val scale by animateFloatAsState(
         targetValue = if (focused) 1.05f else 1f,
         animationSpec = tween(160),
@@ -146,7 +156,7 @@ fun RailNavigationControls(
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    Icons.Filled.KeyboardArrowLeft,
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "نمایش موارد قبلی",
                     modifier = Modifier.size(28.dp)
                 )
@@ -166,7 +176,69 @@ fun RailNavigationControls(
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    Icons.Filled.KeyboardArrowRight,
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "نمایش موارد بعدی",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    }
+}
+
+/** Lazy-rail variant: keeps only the visible TV cards composed and decoded. */
+@Composable
+fun RailNavigationControls(
+    listState: LazyListState,
+    itemCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val scope = rememberCoroutineScope()
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        FocusableCard(
+            modifier = Modifier.size(width = 48.dp, height = 42.dp),
+            shape = RoundedCornerShape(50),
+            enabled = listState.canScrollBackward,
+            onClick = {
+                scope.launch {
+                    val pageSize = (
+                        listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1) - 1
+                        ).coerceAtLeast(1)
+                    listState.animateScrollToItem(
+                        (listState.firstVisibleItemIndex - pageSize).coerceAtLeast(0)
+                    )
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "نمایش موارد قبلی",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+        FocusableCard(
+            modifier = Modifier.size(width = 48.dp, height = 42.dp),
+            shape = RoundedCornerShape(50),
+            enabled = listState.canScrollForward,
+            onClick = {
+                scope.launch {
+                    val pageSize = (
+                        listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1) - 1
+                        ).coerceAtLeast(1)
+                    listState.animateScrollToItem(
+                        (listState.firstVisibleItemIndex + pageSize)
+                            .coerceAtMost((itemCount - 1).coerceAtLeast(0))
+                    )
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "نمایش موارد بعدی",
                     modifier = Modifier.size(28.dp)
                 )
@@ -285,16 +357,29 @@ fun ServiceCard(
 fun PosterCard(
     item: MovieItem,
     showContinueBadge: Boolean = false,
+    previewItem: CatalogItem? = null,
+    onPreviewStateChange: (CatalogItem, Boolean) -> Unit = { _, _ -> },
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     // FilmRooz returns HTML for poster requests without the authenticated WebView
     // cookie, so the shared helper attaches it for same-host images only.
     val posterModel = authenticatedPosterModel(item.posterUrl, item.url)
+    var focused by remember(item.url) { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(focused, item.url, previewItem) {
+        val preview = previewItem ?: return@LaunchedEffect
+        if (focused) {
+            kotlinx.coroutines.delay(520L)
+            onPreviewStateChange(preview, true)
+        } else {
+            onPreviewStateChange(preview, false)
+        }
+    }
     FocusableCard(
         modifier = Modifier.width(190.dp),
         onClick = onClick,
-        onLongClick = onLongClick
+        onLongClick = onLongClick,
+        onInteractionFocusChanged = { focused = it }
     ) {
         Column {
             Box(Modifier.fillMaxWidth().height(260.dp)) {
@@ -352,7 +437,11 @@ fun PosterCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Continue", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                        Text(
+                            "ادامه",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White
+                        )
                     }
                 }
                 if (item.duration > 0L && item.resumePosition > 0L) {
@@ -394,11 +483,13 @@ fun PosterCard(
 
 /** Row with section title + horizontally scrolling content (smooth on air mouse & DPAD). */
 @Composable
-fun SectionRow(
+fun <T> SectionRow(
     title: String,
-    content: @Composable () -> Unit
+    items: List<T>,
+    key: (T) -> Any = { it.hashCode() },
+    content: @Composable (T) -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
     Column(Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -408,13 +499,15 @@ fun SectionRow(
         ) {
             Text(title, style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.weight(1f))
-            RailNavigationControls(scrollState)
+            RailNavigationControls(listState, items.size)
         }
-        Row(
+        LazyRow(
+            state = listState,
+            contentPadding = PaddingValues(horizontal = 48.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier
-                .horizontalScroll(scrollState)
-                .padding(horizontal = 48.dp, vertical = 8.dp)
-        ) { content() }
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(items, key = key) { item -> content(item) }
+        }
     }
 }

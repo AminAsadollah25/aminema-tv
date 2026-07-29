@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.BuildConfig
+import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -109,8 +110,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val recentlyOpened: StateFlow<List<MovieItem>> = libraryRepo.items
-        .combine(servicesRepo.services) { list, configuredServices ->
+    val recentlyOpened: StateFlow<List<MovieItem>> = combine(
+        libraryRepo.items,
+        servicesRepo.services,
+        catalogRepo.sections
+    ) { list, configuredServices, sections ->
+            val catalogByUrl = sections
+                .flatMap { it.all + it.movies + it.series + it.popularSeries }
+                .distinctBy {
+                    ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+                }
+                .associateBy {
+                    ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+                }
             list.asSequence()
                 .filterNot { item ->
                     val service = configuredServices.firstOrNull {
@@ -126,8 +138,27 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                         else -> genericExcluded(item.url)
                     }
                 }
+                // A legacy SPA race could save the generic ParsiFlix shell under a real
+                // movie URL. Keep the movie only when catalog metadata can repair it.
+                .filter { item ->
+                    !isGenericShellTitle(item) ||
+                        catalogByUrl.containsKey(
+                            ContentMetadataPolicy.canonicalContentUrl(item.url)
+                        )
+                }
                 .map { item ->
+                    val catalog = catalogByUrl[
+                        ContentMetadataPolicy.canonicalContentUrl(item.url)
+                    ]
                     item.copy(
+                        title = if (isGenericShellTitle(item)) {
+                            catalog?.title ?: item.title
+                        } else {
+                            item.title
+                        },
+                        posterUrl = item.posterUrl.ifBlank {
+                            catalog?.posterUrl.orEmpty()
+                        },
                         serviceName = configuredServices.firstOrNull {
                             it.id == item.serviceId
                         }?.name ?: item.serviceName
@@ -159,6 +190,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     init {
         refresh()
         checkForUpdate()
+        viewModelScope.launch {
+            catalogRepo.sections.collect { sections ->
+                libraryRepo.repairMetadata(
+                    sections.flatMap {
+                        it.all + it.movies + it.series + it.popularSeries
+                    }
+                )
+            }
+        }
     }
 
     fun refresh() = viewModelScope.launch {
@@ -225,6 +265,14 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             """(?:^|/)(?:login|signin|sign-in|auth|account|profile|settings)(?:/|$)""",
             RegexOption.IGNORE_CASE
         ).containsMatchIn(url)
+
+    private fun isGenericShellTitle(item: MovieItem): Boolean {
+        return ContentMetadataPolicy.isGenericShellTitle(
+            item.title,
+            item.serviceId,
+            item.serviceName
+        )
+    }
 
     companion object {
         /** Internal adapter ids; Home only ever shows «ایرانی» and «خارجی». */

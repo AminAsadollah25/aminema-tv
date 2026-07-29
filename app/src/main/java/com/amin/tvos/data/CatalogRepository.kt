@@ -2,6 +2,7 @@ package com.amin.tvos.data
 
 import android.content.Context
 import com.amin.tvos.data.model.CatalogSection
+import com.amin.tvos.data.model.CatalogItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,9 +30,14 @@ class CatalogRepository(private val context: Context) {
     val refreshingServices: StateFlow<Set<String>> = _refreshingServices.asStateFlow()
 
     suspend fun load() = withContext(Dispatchers.IO) {
-        _sections.value = runCatching {
+        val loaded = runCatching {
             json.decodeFromString<List<CatalogSection>>(file.readText())
         }.getOrDefault(emptyList())
+        val normalized = loaded.map(::normalize)
+        if (normalized != loaded) {
+            runCatching { file.writeText(json.encodeToString(normalized)) }
+        }
+        _sections.value = normalized
     }
 
     fun section(serviceId: String): CatalogSection? =
@@ -48,7 +54,9 @@ class CatalogRepository(private val context: Context) {
 
     /** Replaces one service's cached row, leaving every other service untouched. */
     suspend fun save(section: CatalogSection) = withContext(Dispatchers.IO) {
-        val merged = _sections.value.filterNot { it.serviceId == section.serviceId } + section
+        val normalized = normalize(section)
+        val merged =
+            _sections.value.filterNot { it.serviceId == normalized.serviceId } + normalized
         persist(merged)
     }
 
@@ -67,4 +75,32 @@ class CatalogRepository(private val context: Context) {
         runCatching { file.writeText(json.encodeToString(list)) }
         _sections.value = list
     }
+
+    /** Keeps old JSON caches visually clean after parser rules improve. */
+    private fun normalize(section: CatalogSection): CatalogSection =
+        section.copy(
+            all = section.all.map(::normalize),
+            movies = section.movies.map(::normalize),
+            series = section.series.map(::normalize),
+            popularSeries = section.popularSeries.map(::normalize)
+        )
+
+    private fun normalize(item: CatalogItem): CatalogItem =
+        item.copy(
+            genres = item.genres
+                .map {
+                    it.replace(Regex("""\s+"""), " ")
+                        .trim()
+                        .replace(
+                            Regex(
+                                """^(?:ژانر|Genre)\s*:\s*""",
+                                RegexOption.IGNORE_CASE
+                            ),
+                            ""
+                        )
+                }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .take(4)
+        )
 }

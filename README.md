@@ -4,12 +4,13 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Aminema 0.14.0 — Series Pulse** (`versionCode 28`)
+**Aminema 0.14.5 — Cinema Polish** (`versionCode 29`)
 
-- Episode-release-ordered international series with concise season/episode labels
-- Native `سریال‌های من` and separate curated-world-series rails
-- Independent Iranian/international background refresh with per-row spinner
-- Account Continue/Recent reconciliation without interrupting Home at startup
+- Fixed false ParsiFlix shell entries in `اخیراً بازشده` and repairs old malformed records
+- Spoiler-safe cinematic Quick Glance for mouse hover and DPAD focus
+- Real provider metadata: synopsis, year, genres, rating, runtime and published episode
+- Lazy Home rails for lower memory/CPU use on Android boxes
+- Shrunk update APK from about 76 MB to about 22.2 MB while retaining the intro and browser
 
 [Download the latest APK from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/latest)
 
@@ -191,26 +192,40 @@ history. Aminema therefore shows the latest **published** episode but never
 invents an “unwatched” count. ParsiFlix's catalog-list response contains no
 season/episode field, so those cards stay honest and leave the line blank.
 
-## Next update queue — after v0.14.0
+Version 0.14.5, **Cinema Polish**, fixes the SPA metadata race that could pair
+a real ParsiFlix movie URL with the generic service-home title. Metadata results
+now carry their DOM URL and are accepted only while the requested, current and
+DOM routes still match; generic shell titles are rejected, and old malformed
+items are repaired from the signed-in catalog. A 520 ms mouse-hover/DPAD-focus
+dwell now opens a no-layout-shift, spoiler-safe Quick Glance with provider
+synopsis, year, genres, rating, runtime and latest published episode when those
+fields exist. FilmRooz extraction follows its real authenticated `.postMeta`
+card structure; ParsiFlix reuses its existing catalog response. Every Home rail
+now uses keyed lazy rendering. R8/resource shrinking, Persian/English locale
+filtering and compressed cinema artwork reduce the update APK from about 76 MB
+to about 22.2 MB without removing the offline intro or WebView features.
 
-### 0.15.0 — Cinematic Hover Preview
+## Next update queue — after v0.14.5
 
-- After a short 600 ms hover/DPAD dwell, expand an international movie/series
-  into a spoiler-safe cinematic information panel.
-- Show short synopsis, year, genre, rating, runtime and latest published
-  episode where the existing provider card exposes them.
-- Use a blurred backdrop and a lightweight local metadata cache; never perform
-  a network request on every focus move.
-- Keep pointer movement and D-pad navigation instant on low-RAM Android boxes.
+### Candidate: Cinema Library
 
-### Later — Honest Episode Progress
+- Add `مشاهده همه` grids for Latest, Continue, Recent and Favorites.
+- Filter by movie/series, provider, genre and year using only cached normal metadata.
+- Preserve TV focus position when returning from a detail page.
 
-- Add local `SeriesProgress` plus an optional one-click
-  `تا این قسمت دیدم` baseline for viewing done on another device.
-- Use `قسمت تازه` / `فصل جدید` for release deltas.
-- Say `دیده‌نشده` only when exact watched evidence exists.
-- Never guess the next episode or inspect/store protected media/stream URLs,
-  cookies, tokens or DRM data.
+### Candidate: Honest Episode Progress
+
+- Add local `SeriesProgress` plus an optional one-click `تا این قسمت دیدم` baseline
+  for viewing done on another device.
+- Use `قسمت تازه` / `فصل جدید` only when a release delta is known.
+- Never claim `دیده‌نشده` without exact watched evidence and never inspect protected
+  media URLs, cookies, tokens or DRM data.
+
+### Candidate: Cinematic Home Hero
+
+- Promote the most relevant unfinished title into a large, spoiler-safe hero.
+- One-click Continue, compact progress and a gentle backdrop transition.
+- Keep the current lightweight rows as the fast fallback on weak TV boxes.
 
 ## Requirements
 

@@ -226,7 +226,43 @@ class CatalogBackgroundSync(
                             episodeLabel = entry.optString("episodeLabel")
                                 .replace(Regex("""\s+"""), " ")
                                 .trim()
-                                .take(72)
+                                .take(72),
+                            summary = entry.optString("summary")
+                                .replace(Regex("""\s+"""), " ")
+                                .trim()
+                                .take(420),
+                            year = entry.optString("year")
+                                .replace(Regex("""[^0-9۰-۹]"""), "")
+                                .take(4),
+                            genres = entry.optJSONArray("genres")
+                                ?.let { genres ->
+                                    buildList {
+                                        for (genreIndex in 0 until minOf(genres.length(), 4)) {
+                                            genres.optString(genreIndex)
+                                                .replace(Regex("""\s+"""), " ")
+                                                .trim()
+                                                .replace(
+                                                    Regex(
+                                                        """^(?:ژانر|Genre)\s*:\s*""",
+                                                        RegexOption.IGNORE_CASE
+                                                    ),
+                                                    ""
+                                                )
+                                                .take(28)
+                                                .takeIf { it.isNotBlank() }
+                                                ?.let(::add)
+                                        }
+                                    }
+                                }
+                                .orEmpty(),
+                            rating = entry.optString("rating")
+                                .replace(Regex("""[^0-9۰-۹.٫]"""), "")
+                                .replace('٫', '.')
+                                .take(5),
+                            runtime = entry.optString("runtime")
+                                .replace(Regex("""\s+"""), " ")
+                                .trim()
+                                .take(24)
                         )
                     )
                 }
@@ -310,12 +346,34 @@ class CatalogBackgroundSync(
                 var kind = String(item.type || '').toUpperCase() === 'SERIES'
                   ? 'SERIES' : 'MOVIE';
                 var path = kind === 'SERIES' ? 'series' : 'movies';
+                function text(value) {
+                  if (value == null) return '';
+                  if (typeof value === 'string' || typeof value === 'number') {
+                    return String(value);
+                  }
+                  return String(value.name || value.title || value.label || '');
+                }
+                var rawGenres = item.genres || item.genre || item.categories || [];
+                if (!Array.isArray(rawGenres)) rawGenres = [rawGenres];
+                var published = text(
+                  item.releaseYear || item.year || item.publishedAt || item.published
+                );
+                var yearMatch = published.match(/(?:19|20)\d{2}/);
                 return {
                   title: String(item.title || '').slice(0, 140),
                   kind: kind,
                   contentUrl: location.origin + '/medias/' + path + '/' + item.id,
                   posterUrl: item.coverLink || item.thumbnailLink || '',
-                  episodeLabel: ''
+                  episodeLabel: '',
+                  summary: text(
+                    item.description || item.summary || item.overview || item.plot
+                  ).replace(/\s+/g, ' ').slice(0, 420),
+                  year: yearMatch ? yearMatch[0] : '',
+                  genres: rawGenres.map(text).filter(Boolean).slice(0, 4),
+                  rating: text(
+                    item.imdbRating || item.rating || item.rate
+                  ).replace(/[^0-9.]/g, '').slice(0, 4),
+                  runtime: text(item.runtime || item.duration || '')
                 };
               }
               try {
@@ -429,12 +487,67 @@ class CatalogBackgroundSync(
                       : '';
                     var poster = candidate && !/^data:/i.test(candidate)
                       ? new URL(candidate, location.origin).href : '';
+                    var yearMatch = title.match(/(?:19|20)\d{2}/) ||
+                      status.match(/(?:19|20)\d{2}/);
+                    function field(pattern) {
+                      return card ? Array.from(card.querySelectorAll('.col-12')).find(
+                        function(node) {
+                          return pattern.test((node.textContent || '').trim());
+                        }
+                      ) : null;
+                    }
+                    var ratingNode = field(/از\s*۱۰|IMDb/i);
+                    var ratingMatch = ratingNode
+                      ? (ratingNode.textContent || '').match(
+                          /([۰-۹0-9]+(?:[.٫][۰-۹0-9]+)?)\s*از\s*۱۰/
+                        )
+                      : null;
+                    var runtimeNode = field(/دقیقه|\bmin\b/i);
+                    var runtimeMatch = runtimeNode
+                      ? (runtimeNode.textContent || '').match(
+                          /([۰-۹0-9]{2,3}\s*(?:دقیقه|min))/i
+                        )
+                      : null;
+                    var genreNode = field(/^(?:ژانر|Genre)\s*:/i);
+                    var genres = [];
+                    if (genreNode) {
+                      var genreHtml = genreNode.innerHTML.replace(
+                        /<spl[^>]*><\/spl>/gi, '|'
+                      );
+                      var holder = document.createElement('div');
+                      holder.innerHTML = genreHtml;
+                      genres = (holder.textContent || '')
+                        .replace(/\s+/g, ' ').trim()
+                        .replace(/^(?:ژانر|Genre)\s*:\s*/i, '')
+                        .split('|')
+                        .map(function(value) {
+                          return value.replace(/\s+/g, ' ').trim();
+                        }).filter(Boolean).slice(0, 4);
+                    }
+                    var summary = '';
+                    if (card) {
+                      var summaryNode = card.querySelector(
+                        '.text-justify.mt-2.p-2,.postExcerpt,.excerpt,.summary,' +
+                        '[class*="excerpt" i],[class*="summary" i]'
+                      );
+                      var candidateSummary = summaryNode
+                        ? (summaryNode.textContent || '').replace(/\s+/g, ' ').trim()
+                        : '';
+                      if (candidateSummary.length >= 35) {
+                        summary = candidateSummary.slice(0, 420);
+                      }
+                    }
                     items.push({
                       title: title.slice(0, 140),
                       kind: kind,
                       contentUrl: url.origin + url.pathname,
                       posterUrl: poster,
-                      episodeLabel: episodeMatch ? episodeMatch[0].trim() : ''
+                      episodeLabel: episodeMatch ? episodeMatch[0].trim() : '',
+                      summary: summary,
+                      year: yearMatch ? yearMatch[0] : '',
+                      genres: genres,
+                      rating: ratingMatch ? ratingMatch[1] : '',
+                      runtime: runtimeMatch ? runtimeMatch[1] : ''
                     });
                   }
                 );

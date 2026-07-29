@@ -1,4 +1,18 @@
-# Aminema v0.12.1 — test report
+# Aminema — current test status
+
+Latest accepted candidate: **0.14.5 / versionCode 29 — Cinema Polish**.
+The complete current evidence is in `TEST_REPORT_0.14.5.md`; implementation
+decisions are in `DEVELOPMENT_LOG_0.14.5.md`.
+
+Current gates: clean Build successful, four unit tests passed, Android Lint
+zero errors, `adb install -r` preserved app data, both authenticated provider
+background adapters returned catalog data, the real malformed ParsiFlix Recent
+entry was repaired, and no FATAL EXCEPTION was observed. APK size is about
+22.2 MB versus about 76 MB in 0.14.0.
+
+---
+
+## Historical report: v0.12.1
 
 Tested on Android TV 1080p emulator (API 36) with the user's existing,
 authenticated ParsiFlix and FilmRooz WebView sessions. Installed over v0.12.0

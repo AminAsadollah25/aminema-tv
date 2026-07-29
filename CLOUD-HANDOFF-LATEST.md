@@ -1,218 +1,146 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
-این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. قبل از تغییر بعدی، همراه
-`ENGINEERING-HANDOFF-FA.md`، `ROADMAP.md` و `TEST_REPORT.md` خوانده شود.
+این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات 0.14.5، فایل‌های
+`DEVELOPMENT_LOG_0.14.5.md`، `TEST_REPORT_0.14.5.md` و
+`RELEASE_NOTES_0.14.5.md` خوانده شوند. معماری پایدار در
+`ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
-## قرارداد دائمی همکاری دو برنامه‌نویس
+## قرارداد دائمی دو برنامه‌نویس
 
-بعد از هر Feature/Fix/Release ثبت کن: نسخه و versionCode، تصمیم UX، فایل‌ها
-و مسیرهای تغییرکرده، شواهد Probe واقعی، تست‌ها، مرز امنیتی، محدودیت‌ها، قدم
-بعدی و وضعیت Commit/Tag/Release/Assets. فقط Release Notes کافی نیست.
+بعد از هر Feature/Fix/Release ثبت شود: نسخه و versionCode، تصمیم UX، علت باگ،
+فایل‌های تغییرکرده، Probe واقعی، تست‌ها، مرز امنیتی، محدودیت‌ها، قدم بعدی و
+وضعیت Commit/Tag/GitHub Release/Assets. README عمومی نیز باید هم‌زمان Current
+release و Next queue واقعی را نشان دهد.
 
-**الزام تازه از 0.13.0:** در هر Release، بخش‌های `Current release` و
-`Next update queue` در `README.md` هم باید همان لحظه به نسخه واقعی به‌روز
-شوند. README عمومی GitHub نباید از Handoff یا Latest Release عقب بماند.
-
----
-
-## وضعیت جاری
+## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه عمومی و نصب‌شده: **0.14.0 / code 28**
-- وضعیت: **منتشرشده و GitHub Latest**
-- Release commit و Tag: `8dd5191` / `v0.14.0`
-- GitHub Release:
-  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.0`
+- نسخه کد و APK: **0.14.5 / versionCode 29 — Cinema Polish**
+- وضعیت در این لحظه: Candidate پذیرفته‌شده، آماده Commit/Tag/انتشار GitHub
+- نسخه عمومی قبلی: **0.14.0 / code 28**
 - شاخه: `main`
-- Package نصب واقعی: `com.amin.tvos.debug`
+- مخزن: `https://github.com/AminAsadollah25/aminema-tv`
+- Package نصب: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
-- Package، Debug signature و داده برنامه تغییر نکرده‌اند؛ `adb install -r`
-  نشست‌های لاگین، Cookie، Poster و Library را حفظ کرد.
+- Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
+  Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
 
-## نسخه منتشرشده 0.14.0 — Series Pulse
+## 0.14.5 چه چیزی را حل می‌کند
 
-- مرجع کامل تغییرات: `DEVELOPMENT_LOG_0.14.0.md`
-- گزارش پذیرش: `TEST_REPORT_0.14.0.md`
-- Release draft: `RELEASE_NOTES_0.14.0.md`
-- FilmRooz Series از `/archive/series/` می‌آید؛ این فید با انتشار قسمت تازه
-  مرتب می‌شود، نه صرفاً سال ساخت سریال.
-- زیر کارت سریال، فقط بخش مفید وضعیت ذخیره/نمایش می‌شود:
-  `قسمت ۰۴ فصل سوم`. عبارت‌های «در حال پخش» و «پایان فصل» حذف می‌شوند.
-- ردیف `سریال‌های من` از عضویت Account Recent/Continue و Session محلی ساخته
-  شد. ردیف `سریال‌های برگزیده جهان` از Popular feed جداست و با Fresh مخلوط
-  نمی‌شود.
-- Refresh ایرانی و خارجی مستقل است، در Cold Start پشت Home و به‌ترتیب انجام
-  می‌شود، Cache را نگه می‌دارد و فقط Spinner کوچک همان Provider را نشان
-  می‌دهد. `CatalogSyncActivity` قدیمی حذف شد.
-- Account Continue/Recent نیز در همان Provider pass همگام می‌شود؛ شروع برنامه
-  دیگر `AccountSyncActivity` تمام‌صفحه باز نمی‌کند. دکمه Sync دستی باقی است.
-- تیک‌های Episode FilmRooz با یک حساب روی لپ‌تاپ و امولاتور متفاوت بودند؛
-  پس browser-local هستند و منبع `دیده‌نشده` نیستند. 0.14 فقط Latest Published
-  را می‌گوید و Unwatched را حدس نمی‌زند.
-- ParsiFlix list API فصل/قسمت ندارد؛ خط Metadata خالی می‌ماند و Detail request
-  اضافی برای این کار زده نمی‌شود.
-- Build/Lint موفق؛ نصب `adb install -r` موفق؛ نسخه نصب‌شده
-  `0.14.0 code 28`؛ MainActivity حین Sync Top/Resumed و Crash صفر.
-- Commit/Push/Tag/GitHub Release انجام و Latest API تأیید شد.
-- Assetها:
-  - `Aminema-v0.14.0-debug.apk` — `75,975,092` بایت
-  - `Aminema-v0.14.0-debug.apk.sha256` — `92` بایت
-- SHA-256:
-  `37a699b70c28bc21669e4d0d4f26254cd7cd336ebfda75af6efbd46ebcf24681`
+### 1. باگ Recently Opened پارسی‌فلیکس
 
-## مسئله‌های حل‌شده در 0.12.1
+رکورد واقعی خراب روی امولاتور این بود:
 
-1. Continue گاهی فقط Detail page را باز می‌کرد؛ چون `click()` موفقیت حساب
-   می‌شد حتی اگر React/SPA هنوز آماده نبود و کلیک را نپذیرفته بود.
-2. هنگام Direct Play ابتدا Detail page برای چند ثانیه دیده می‌شد.
-3. Continue تلویزیون و امولاتور فرق داشت؛ Sync فقط دستی بود و Repository
-   موارد قدیمی محلی را کنار نتیجه حساب نگه می‌داشت.
-4. ردیف‌های افقی برای موس دکمه صفحه‌به‌صفحه نداشتند.
-5. زیرعنوان اضافی «پخش مستقیم • تمام‌صفحه» کنار Live لازم نبود.
-6. کاربر خواست Loading شخصیت بامزه Aminema داشته باشد.
+- URL: `https://app.parsiflix.com/medias/movies/357`
+- Title ذخیره‌شده: عنوان عمومی Home یعنی `ParsiFlix - Watch Persian...`
 
-## تصمیم UX نهایی
+URL classifier صحیح بود. علت، Race در SPA بود: Router URL فیلم را پیش از
+Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنوان Shell را زیر URL
+فیلم ذخیره می‌کرد.
 
-- موفقیت Continue/Direct Play فقط وقتی تأیید می‌شود که URL مطابق
-  `playbackUrlPatterns` باشد یا رویداد واقعی HTML5 Video/Fullscreen برسد؛
-  نه صرفاً وقتی JavaScript تابع `click()` را صدا زده است.
-- Detail bootstrap پشت یک Loading سینمایی پنهان می‌شود. متن Continue:
-  «پاپ‌کورن یادت نره… 🍿» و «داریم فیلمت رو از همون‌جایی که جا گذاشتی
-  میاریم؛ خوش بگذره!»
-- اگر تا ۱۴ ثانیه Player تأیید نشود، Detail page برای انتخاب دستی آشکار
-  می‌شود؛ صفحه سیاه دائمی نداریم. Back حین Loading مستقیم Activity را می‌بندد.
-- از Candidate 0.14.0، Continue حساب در همان Refresh پس‌زمینه‌ای و مستقل
-  Providerها Sync می‌شود؛ Activity تمام‌صفحه در شروع برنامه حذف شده است.
-  دکمه Sync دستی همچنان باقی است.
-- نتیجه موفق هر سرویس برای عضویت Continue authoritative است؛ Local فقط
-  `playbackUrl/position/duration/poster` همان Content مشترک را غنی می‌کند.
-- همه ردیف‌های افقی فلش ثابت چپ/راست در گوشه راست Header دارند؛ هر کلیک
-  ۸۲٪ Viewport را با `animateScrollTo` جابه‌جا می‌کند.
+اصلاح چندلایه:
 
-## تغییرات فنی و فایل‌ها
+1. `BrowserActivity.captureResumeMetadata()` حالا `location.href` را همراه DOM
+   metadata برمی‌گرداند و Requested/DOM/Current WebView URL باید یکسان باشند.
+2. عنوان عمومی Provider روی Content route رد می‌شود.
+3. `ContentMetadataPolicy.kt` Canonical URL و Generic-title policy مشترک است.
+4. `LibraryRepository.repairMetadata()` داده قدیمی را از Catalog cache ترمیم
+   می‌کند.
+5. Home دفاع دوم دارد؛ Generic shell بدون Catalog match نمایش داده نمی‌شود.
+6. چهار Unit test این Policy را پوشش می‌دهند.
 
-### Playback reliability
+شاهد پذیرش: همان رکورد `/movies/357` روی دستگاه به **دو روز دیرتر** و Poster
+صحیح آن ترمیم شد.
 
-- `browser/BrowserActivity.kt`
-  - retryهای Direct: 250ms تا 12s؛ Continue: 250ms تا 10.8s
-  - Cooldown برابر 850ms و guardهای `probeInFlight`
-  - candidate scoring: Visible/Enabled، Exact text، تگ button/a، جلوگیری از
-    Container/episode-season اشتباه
-  - `observePlaybackNavigation()` و `confirmPlaybackReady()`
-  - Click attempt دیگر فلگ success را Set نمی‌کند.
-  - Login/Error automation را Cancel می‌کند تا Toast/Click دیرهنگام نرسد.
-  - Timeout امن 14s و Back فوری در Loading
-- `browser/PlaybackLoadingView.kt` (جدید)
-  - View سبک Native، بدون Compose/WebView اضافه
-  - تصویر، متن بامزه، Progress و Gradient سینمایی
-- `drawable-nodpi/aminema_loading_popcorn.png` (جدید)
-  - 640×640، 556KB؛ مسکات روی صندلی سینما با پاپ‌کورن و کنترل
-  - مرجع هویت: `aminema_mascot.png`؛ تولید با built-in ImageGen
-- `ui/home/HomeScreen.kt`
-  - Detail URL مساوی Playback URL دیگر مقصد Dedicated تلقی نمی‌شود.
-  - FilmRooz movie فاقد Player page ذخیره‌شده دوباره از Resolver معمول
-    language/quality عبور می‌کند.
-  - ParsiFlix Continue از دکمه دقیق account-aware خود سایت استفاده می‌کند.
+### 2. Cinematic Quick Glance
 
-### Cross-device Continue
+- بعد از 520ms Hover موس یا Focus ریموت/DPAD ظاهر می‌شود.
+- Panel ثابت است و Rail را هل نمی‌دهد یا Focus را نمی‌دزدد.
+- Title، Synopsis بدون اسپویل، Year، Genre، Rating، Runtime و Latest published
+  episode را در صورت وجود نشان می‌دهد.
+- Episode plot و Video autoplay عمداً وجود ندارند.
+- ParsiFlix از JSON عادی کاتالوگ خودش استفاده می‌کند.
+- DOM واقعی FilmRooz در WebView لاگین‌شده Probe شد: `.postMeta`، فیلدهای
+  Runtime/Rating/Genre با separator `<spl>` و Synopsis معمولی کارت.
+- `CatalogItem` پنج Field اختیاری و backward-compatible گرفت:
+  `summary/year/genres/rating/runtime`.
+- JS output قبل از Cache محدود و پاک‌سازی می‌شود؛ Focus move Request جدید
+  شبکه نمی‌زند.
 
-- `browser/AccountSyncActivity.kt`
-  - از 0.14 فقط مسیر دستی/تشخیصی است؛ Auto gate حذف شده.
-  - سقف Parse از 12 به 20 (هم‌اندازه rail Home)
-  - Sync موفق حتی با لیست خالی authoritative است.
-- `browser/CatalogBackgroundSync.kt`
-  - از 0.14 Account Recent/Continue و Catalog هر Provider را در یک Pass
-    غیرقابل‌فوکوس پشت Home reconcile می‌کند.
-- `MainActivity.kt`
-  - بعد از پایان/Skip Intro، Providerها را ترتیبی و بدون بازکردن Activity
-    تازه می‌کند؛ Configuration recreation کار را دوباره شروع نمی‌کند.
-- `data/LibraryRepository.kt`
-  - `syncAccountSessions(serviceId, incoming)` کل همان Provider را reconcile
-    می‌کند؛ سایر Providerها دست‌نخورده می‌مانند.
-  - Local item فقط در صورت حضور همان Content در حساب حفظ و غنی می‌شود.
+### 3. Performance، حجم و Cleanup
 
-### Rail navigation
+- تمام Railهای افقی Home به keyed `LazyRow` منتقل شدند.
+- Arrowها Overload مبتنی بر `LazyListState` دارند و به اندازه تعداد کارت‌های
+  قابل مشاهده Page می‌کنند.
+- R8 و Resource shrink برای همان Debug-signed update channel فعال شد.
+- کلاس‌ها و متدهای `@JavascriptInterface` با ProGuard rule صریح حفظ شدند.
+- فقط Localeهای `fa/en` Package می‌شوند.
+- دو Artwork سینما از PNG حدود 2.3MB مجموع به JPEG حدود 390KB مجموع رسیدند؛
+  ابعاد 1280×720 حفظ شد.
+- WebSettings deprecated و Lifecycle importهای قدیمی حذف شدند؛ Arrowها
+  AutoMirrored هستند.
+- Labelهای باقیمانده Home فارسی شدند.
+- APK قبلی 0.14.0: `75,975,092` بایت؛ APK Candidate 0.14.5 حدود
+  `22,216,560` بایت؛ حدود **71٪ کوچک‌تر**، با حفظ ویدئوی Intro 10.6MB.
 
-- `ui/components/TvComponents.kt`
-  - `RailNavigationControls(ScrollState)` مشترک
-  - `FocusableCard(enabled)` با حالت Dim/Disabled
-  - `SectionRow` اکنون ScrollState را با Header controls شریک می‌کند.
-- `CatalogSectionRow.kt`, `LiveTvSectionRow.kt`, `SearchActivity.kt`
-  - استفاده از همان کنترل مشترک و ScrollState
-- `LiveTvSectionRow.kt`
-  - حذف کامل متن «پخش مستقیم • تمام‌صفحه»؛ badgeهای LIVE کارت‌ها باقی است.
+## فایل‌های اصلی تغییرکرده
 
-### Version/docs
+- `app/build.gradle.kts`, `app/proguard-rules.pro`
+- `browser/BrowserActivity.kt`, `browser/CatalogBackgroundSync.kt`
+- `data/ContentMetadataPolicy.kt`, `data/LibraryRepository.kt`
+- `data/model/CatalogModels.kt`
+- `ui/components/CatalogCard.kt`, `ui/components/TvComponents.kt`
+- `ui/home/CinematicHoverPreview.kt`, `HomeScreen.kt`, `HomeViewModel.kt`
+- `ui/home/CatalogSectionRow.kt`, `LiveTvSectionRow.kt`
+- `app/src/test/java/com/amin/tvos/data/ContentMetadataPolicyTest.kt`
+- `service_iranian_cinema.jpg`, `service_international_cinema.jpg`
 
-- `app/build.gradle.kts`: `0.12.1`, code `26`
-- `RELEASE_NOTES_0.12.1.md`
-- همین فایل + `ENGINEERING-HANDOFF-FA.md`, `ROADMAP.md`, `TEST_REPORT.md`
+## شواهد تست 0.14.5
 
-## شواهد واقعی حساب و تست
+- `clean testDebugUnitTest lintDebug assembleDebug`: موفق
+- Unit test: 4 passed، failure/error صفر
+- Android Lint: error صفر
+- `git diff --check`: پاک
+- نصب: `adb install -r` موفق
+- نسخه نصب‌شده: 0.14.5 code 29
+- Process بعد از Cold launch فعال؛ FATAL EXCEPTION صفر
+- Background catalog واقعی:
+  - ParsiFlix: 10 All، 24 Movie، 24 Series
+  - FilmRooz: 24 All، 8 Movie، 16 Series در نشست مشاهده‌شده
+- نمونه واقعی FilmRooz: Leviticus؛ Synopsis، Year 2026، Genre، Rating ۶.۷ و
+  Runtime ۸۸ دقیقه استخراج شد.
+- R8 build با Catalog/Keyboard/Playback/Poster bridge rule حفظ‌شده اجرا شد.
 
-روی AVD `Television_1080p`، API 36، 1920×1080 و نشست واقعی لاگین‌شده:
+## مرز امنیتی که نباید شکسته شود
 
-- Sync account دستی 15 مورد ساخت: 7 FilmRooz و 8 ParsiFlix.
-- شروع سرد 0.12.1 مقدار `last_attempt_at` را نوشت و `lastPlayed` همه نتایج
-  حساب را تازه کرد؛ Auto Sync بدون پاک‌کردن login انجام شد.
-- دو FilmRooz session محلی که داخل Account Recent هم بودند Player/Position
-  خود را حفظ کردند؛ هیچ Local-only قدیمی خارج از Account باقی نماند.
-- FilmRooz movie **Her Private Hell**: Loading → normal player page؛ Flash
-  Detail دیده نشد. موردی که `playbackUrl == contentUrl` داشت با Resolver
-  اصلاح‌شده باز هم به Player رسید.
-- ParsiFlix movie **دو روز دیرتر**: Detail → دکمه Continue خود سایت → `/play`؛
-  Retryها فقط بعد از Player route متوقف شدند.
-- FilmRooz series فاقد مقصد Account-aware: بعد از Timeout به Detail page
-  امن برگشت (fallback عمدی؛ exact episode از Account Recent ارائه نمی‌شود).
-- Loading جدید با تصویر اختصاصی و متن بامزه در 1920×1080 درست Render شد.
-- فلش‌ها در Services/Continue/Catalog/Live/More/Recent/Favorites/Search
-  Headerها دیده می‌شوند؛ حالت ابتدا/انتها Dim می‌شود.
-- زیرعنوان Live حذف و badge LIVE کارت‌ها حفظ شد.
-- `assembleDebug` و `lintDebug`: موفق؛ Lint error صفر.
-- نصب `adb install -r`: موفق؛ نسخه نصب‌شده 0.12.1 code 26.
-- Continue هر دو Provider به Player واقعی رسید؛ fallback series بدون crash.
+- فقط Normal top-level page URL و Catalog/Card metadata عادی خوانده می‌شود.
+- هیچ `video.src/currentSrc`، Media/Stream request، Protected URL، Cookie،
+  Token، Auth header، Password یا DRM value خوانده/ذخیره/Log/Export نمی‌شود.
+- هیچ Authentication bypass یا Download/Redistribution وجود ندارد.
 
-## محدودیت واقعی که باید حفظ شود
+## محدودیت‌های صادقانه
 
-- ParsiFlix Account API واقعاً Continue می‌دهد، پس سریال/قسمت را خود سایت
-  می‌تواند ادامه دهد.
-- FilmRooz `/user/panel/` فقط «مشاهدات اخیر» و Content detail را می‌دهد؛
-  برای فیلم‌ها Resolver عادی Player را پیدا می‌کند، اما برای Series
-  Cross-device exact episode/quality/time همیشه موجود نیست. در این حالت
-  Aminema پس از Timeout Detail را نشان می‌دهد و چیزی را حدس نمی‌زند.
-- Loading زمان شبکه را حذف نمی‌کند؛ فقط Detail flash را به تجربه سینمایی
-  تبدیل می‌کند.
+- FilmRooz watched checkmark بین Browserها device-local مشاهده شده؛ پس مبنای
+  `قسمت ندیده` cross-device نیست.
+- ParsiFlix list API همیشه Episode/Season نمی‌دهد؛ Aminema چیزی حدس نمی‌زند.
+- Home عمودی هنوز `Column + verticalScroll` است؛ Railها Lazy شده‌اند. اگر
+  تعداد بخش‌های عمودی زیاد شود، مرحله بعدی Performance مهاجرت به LazyColumn است.
+- Physical Android Box هنوز باید Mouse-hover و WebView device-specific را در
+  Acceptance کوتاه تأیید کند.
 
-## مرز امنیتی
+## گزینه‌های مرحله بعد
 
-- فقط بخش Continue/Recent حساب خود کاربر و Page URLهای عادی خوانده می‌شوند.
-- هیچ Media URL، `video.src/currentSrc`، Stream request، DRM، Cookie، Token
-  یا Auth header خوانده/ذخیره/Log/Export نمی‌شود.
-- هیچ Auth bypass یا endpoint حدسی اضافه نشده است.
-- Asset تصویری فقط Local resource است و در Runtime شبکه مصرف نمی‌کند.
+1. **Cinema Library:** View All grid برای Latest/Continue/Recent/Favorites با
+   Filter سرویس، نوع، ژانر و سال؛ همراه حفظ Focus هنگام برگشت.
+2. **Cinematic Home Hero:** یک Hero بزرگ و بدون اسپویل برای بهترین Continue،
+   با یک کلیک پخش و Backdrop نرم.
+3. **Honest Episode Progress:** Baseline دستی `تا این قسمت دیدم` و Release
+   delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق.
+4. **Back UX برای FilmRooz:** Short Back = history، Long Back/Menu = Home؛
+   ابتدا KeyCode واقعی Android Box Log شود.
 
-## وضعیت انتشار و قدم بعدی
+## وضعیت Release
 
-- Release commit: `fd3ac33`
-- Tag: `v0.13.0`
-- GitHub Release: Published، Latest، Draft=false، Prerelease=false
-- Assetهای عمومی:
-  - `Aminema-v0.13.0-debug.apk` — `75,958,740` بایت، state=`uploaded`
-  - `Aminema-v0.13.0-debug.apk.sha256` — `92` بایت، state=`uploaded`
-- SHA-256 APK:
-  `acd6ed8d43df33f2c4813e603efe4e1f474622305129f05ea320c5da136e3b91`
-- امضای APK با 0.12.1 یکسان است:
-  `ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3`
-- GitHub Latest API تأیید شد: `tag_name=v0.13.0`، متن Release شامل
-  `versionCode: 27` و هر دو Download URL است؛ بنابراین updater خود Aminema
-  روی code 26 و پایین‌تر نسخه جدید را تشخیص می‌دهد.
-- README عمومی هم‌زمان به `Current release 0.13.0` و صف واقعی بعدی به‌روز شد.
-
-**مرحله فعلی:** Acceptance کوتاه 0.14.0 روی Android Box. نسخه 0.14.5 برای
-رفع باگ Recently Opened، Hover Preview سینمایی، پاک‌سازی Performance/حجم/
-کد و Polish ظاهری برنامه‌ریزی شده است.
-
-**مرحله بعدی طراحی:** 0.15.0 با عنوان **Cinematic Hover Preview** برای
-فیلم/سریال خارجی: Synopsis بدون اسپویل، سال/ژانر/امتیاز/مدت، آخرین قسمت،
-Backdrop محو، Dwell حدود 600ms و کش سبک. قبل از ردیف‌های محتوایی سنگین‌تر،
-Home به Lazy layout مهاجرت کند.
+پس از انتشار باید همین بخش با Commit، Tag، URL، Asset size، SHA-256 و تأیید
+GitHub Latest API جایگزین شود. Release body حتماً `versionCode: 29` داشته باشد
+تا Updater داخلی نسخه را تشخیص دهد.

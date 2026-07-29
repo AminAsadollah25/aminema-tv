@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -41,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
+import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -80,6 +82,36 @@ fun HomeScreen(
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val iranianFilter by viewModel.iranianFilter.collectAsState()
     val internationalFilter by viewModel.internationalFilter.collectAsState()
+    var hoverPreview by remember { mutableStateOf<CatalogItem?>(null) }
+    val catalogItems = remember(catalogSections) {
+        catalogSections
+            .flatMap { it.all + it.movies + it.series + it.popularSeries }
+            .distinctBy {
+                ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+            }
+    }
+    val catalogByUrl = remember(catalogItems) {
+        catalogItems.associateBy {
+            ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+        }
+    }
+    fun setPreview(item: CatalogItem, visible: Boolean) {
+        if (visible) {
+            hoverPreview = item
+        } else if (hoverPreview?.contentUrl == item.contentUrl) {
+            hoverPreview = null
+        }
+    }
+    fun previewFor(item: MovieItem): CatalogItem {
+        val key = ContentMetadataPolicy.canonicalContentUrl(item.url)
+        return catalogByUrl[key] ?: CatalogItem(
+            title = item.title,
+            kind = catalogKindFromUrl(item.url) ?: CatalogKind.MOVIE,
+            contentUrl = item.url,
+            posterUrl = item.posterUrl,
+            serviceId = item.serviceId
+        )
+    }
 
     fun openCatalogItem(item: CatalogItem) =
         context.startActivity(
@@ -290,7 +322,7 @@ fun HomeScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Sync accounts", style = MaterialTheme.typography.labelLarge)
+                    Text("همگام‌سازی", style = MaterialTheme.typography.labelLarge)
                 }
             }
             Spacer(Modifier.width(12.dp))
@@ -348,16 +380,19 @@ fun HomeScreen(
         Spacer(Modifier.height(20.dp))
 
         // ---------- Cinemas ----------
-        SectionRow("سینماهای من") {
-            services.forEach { service ->
-                ServiceCard(service = service, onClick = { openService(service) })
-            }
-            if (services.isEmpty()) {
-                Text(
-                    "No services configured. Add them in Settings or edit services.json.",
-                    color = TextSecondary
-                )
-            }
+        SectionRow(
+            title = "سینماهای من",
+            items = services,
+            key = { it.id }
+        ) { service ->
+            ServiceCard(service = service, onClick = { openService(service) })
+        }
+        if (services.isEmpty()) {
+            Text(
+                "هنوز سینمایی تنظیم نشده؛ از تنظیمات یک سرویس اضافه کن.",
+                color = TextSecondary,
+                modifier = Modifier.padding(horizontal = 48.dp)
+            )
         }
         Spacer(Modifier.height(24.dp))
 
@@ -369,8 +404,11 @@ fun HomeScreen(
                         (coordinates.positionInParent().y.toInt() - 24).coerceAtLeast(0)
                 }
             ) {
-            SectionRow("Continue Watching") {
-                continueWatching.forEach { session ->
+            SectionRow(
+                title = "ادامه تماشا",
+                items = continueWatching,
+                key = { it.id }
+            ) { session ->
                     val item = MovieItem(
                         id = session.id,
                         title = session.title,
@@ -387,10 +425,11 @@ fun HomeScreen(
                     PosterCard(
                         item = item,
                         showContinueBadge = true,
+                        previewItem = previewFor(item),
+                        onPreviewStateChange = ::setPreview,
                         onClick = { openPlayback(session) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
-                }
             }
             }
             Spacer(Modifier.height(16.dp))
@@ -398,11 +437,11 @@ fun HomeScreen(
 
         // ---------- My Series ----------
         if (mySeries.isNotEmpty()) {
-            val catalogItems = catalogSections.flatMap { section ->
-                section.all + section.series + section.popularSeries
-            }
-            SectionRow("سریال‌های من") {
-                mySeries.forEach { session ->
+            SectionRow(
+                title = "سریال‌های من",
+                items = mySeries,
+                key = { it.id }
+            ) { session ->
                     val release = catalogItems.firstOrNull {
                         it.contentUrl.trimEnd('/') == session.contentUrl.trimEnd('/')
                     }
@@ -417,8 +456,14 @@ fun HomeScreen(
                             serviceId = session.serviceId,
                             // Publication status only — never claim "unwatched" without
                             // exact episode evidence from this Aminema device.
-                            episodeLabel = release?.episodeLabel.orEmpty()
+                            episodeLabel = release?.episodeLabel.orEmpty(),
+                            summary = release?.summary.orEmpty(),
+                            year = release?.year.orEmpty(),
+                            genres = release?.genres.orEmpty(),
+                            rating = release?.rating.orEmpty(),
+                            runtime = release?.runtime.orEmpty()
                         ),
+                        onPreviewStateChange = ::setPreview,
                         onClick = {
                             openCatalogItem(
                                 CatalogItem(
@@ -427,12 +472,16 @@ fun HomeScreen(
                                     contentUrl = session.contentUrl,
                                     posterUrl = session.posterUrl,
                                     serviceId = session.serviceId,
-                                    episodeLabel = release?.episodeLabel.orEmpty()
+                                    episodeLabel = release?.episodeLabel.orEmpty(),
+                                    summary = release?.summary.orEmpty(),
+                                    year = release?.year.orEmpty(),
+                                    genres = release?.genres.orEmpty(),
+                                    rating = release?.rating.orEmpty(),
+                                    runtime = release?.runtime.orEmpty()
                                 )
                             )
                         }
                     )
-                }
             }
             Spacer(Modifier.height(16.dp))
         }
@@ -449,6 +498,7 @@ fun HomeScreen(
             },
             onRefresh = { onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID) },
             onOpen = { openCatalogItem(it) },
+            onPreviewStateChange = ::setPreview,
             isRefreshing = HomeViewModel.IRANIAN_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
@@ -464,6 +514,7 @@ fun HomeScreen(
             },
             onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
             onOpen = { openCatalogItem(it) },
+            onPreviewStateChange = ::setPreview,
             isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
@@ -480,6 +531,7 @@ fun HomeScreen(
             onFilterChange = {},
             onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
             onOpen = { openCatalogItem(it) },
+            onPreviewStateChange = ::setPreview,
             itemsOverride = internationalSection?.popularSeries.orEmpty(),
             showFilters = false,
             isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
@@ -497,8 +549,11 @@ fun HomeScreen(
 
         // ---------- Secondary quick links (e.g. YouTube tab) — lower priority, lower down ----------
         if (secondaryQuickLinks.isNotEmpty()) {
-            SectionRow("بیشتر") {
-                secondaryQuickLinks.forEach { (service, quickLink) ->
+            SectionRow(
+                title = "بیشتر",
+                items = secondaryQuickLinks,
+                key = { (service, quickLink) -> "${service.id}:${quickLink.id}" }
+            ) { (service, quickLink) ->
                     FocusableCard(
                         shape = RoundedCornerShape(16.dp),
                         onClick = { openQuickLink(service, quickLink) }
@@ -517,42 +572,50 @@ fun HomeScreen(
                             Text(quickLink.label, style = MaterialTheme.typography.titleMedium)
                         }
                     }
-                }
             }
             Spacer(Modifier.height(16.dp))
         }
 
         // ---------- Recently Opened ----------
         if (recents.isNotEmpty()) {
-            SectionRow("Recently Opened") {
-                recents.forEach { item ->
+            SectionRow(
+                title = "اخیراً بازشده",
+                items = recents,
+                key = { it.id }
+            ) { item ->
                     PosterCard(
                         item = item,
+                        previewItem = previewFor(item),
+                        onPreviewStateChange = ::setPreview,
                         onClick = { openItem(item) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
-                }
             }
             Spacer(Modifier.height(16.dp))
         }
 
         // ---------- Favorites ----------
         if (favorites.isNotEmpty()) {
-            SectionRow("Favorites") {
-                favorites.forEach { item ->
+            SectionRow(
+                title = "موردعلاقه‌ها",
+                items = favorites,
+                key = { it.id }
+            ) { item ->
                     PosterCard(
                         item = item,
+                        previewItem = previewFor(item),
+                        onPreviewStateChange = ::setPreview,
                         onClick = { openItem(item) },
                         onLongClick = { viewModel.toggleFavorite(item.id) }
                     )
-                }
             }
         }
 
         if (continueWatching.isEmpty() && recents.isEmpty()) {
             Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    "Open a service to start building your library.\nLong-press any card to add it to Favorites.",
+                    "یکی از سینماها را باز کن تا کتابخانه‌ات ساخته شود.\n" +
+                        "برای افزودن به علاقه‌مندی‌ها، روی کارت نگه دار.",
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -560,5 +623,11 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(32.dp))
     }
+        CinematicHoverPreview(
+            item = hoverPreview,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 116.dp, end = 48.dp)
+        )
     }
 }
