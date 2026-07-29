@@ -16,10 +16,11 @@ release و Next queue واقعی را نشان دهد.
 
 - محصول: **Aminema**
 - نسخه کد: **0.14.6 / versionCode 30 — Pointer & Playback Polish**
-- وضعیت در این لحظه: Candidate پذیرفته‌شده روی امولاتور؛ در گیت نهایی
-  Lint/Build/Release
-- نسخه عمومی فعلی: **0.14.5 / code 29**
-- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
+- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
+- Commit انتشار: `b08f7c1`
+- Tag: `v0.14.6`
+- نسخه عمومی فعلی: **0.14.6 / code 30**
+- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
@@ -173,31 +174,34 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 - Physical Android Box هنوز باید Mouse-hover و WebView device-specific را در
   Acceptance کوتاه تأیید کند.
 
-## گزینه‌های مرحله بعد
+## صف قطعی نسخه‌های بعد
 
-1. **0.14.6 — Pointer & Playback Polish:** در FilmRooz پس از رسیدن به پلیر،
-   Play خودکار امن انجام شود (ParsiFlix از قبل درست است). کارت‌ها در Focus
-   ریموت و Hover واقعی موس به‌جای Border قرمز با Scale، روشنایی و سایهٔ نرم
-   سینمایی انتخاب شوند؛ مکث موس Quick Glance را باز کند و Click مقصد را باز
-   نگه دارد.
-2. **Cinema Library:** View All grid برای Latest/Continue/Recent/Favorites با
-   Filter سرویس، نوع، ژانر و سال؛ همراه حفظ Focus هنگام برگشت.
-3. **Cinematic Home Hero:** یک Hero بزرگ و بدون اسپویل برای بهترین Continue،
-   با یک کلیک پخش و Backdrop نرم.
-4. **Honest Episode Progress:** Baseline دستی `تا این قسمت دیدم` و Release
-   delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق.
-5. **Back UX برای FilmRooz:** Short Back = history، Long Back/Menu = Home؛
-   ابتدا KeyCode واقعی Android Box Log شود.
+1. **0.15.0 — Aminema Spotlight:** Hero/Detail سینمایی Native برای فیلم و
+   سریال، خلاصه بدون اسپویل، Watch/Continue، My List و More؛ بدون Download و
+   بدون Trailer در مسیر اصلی.
+2. **0.15.1 — Episode Navigator:** انتخاب فصل/قسمت پس از Provider Probe،
+   «آخرین قسمت منتشرشده» مستقل و «ادامه قسمت بعد» فقط با شاهد معتبر.
+3. **0.15.2 — Cinema Library:** View All grid برای Latest/Continue/Recent/
+   Favorites با Filter سرویس، نوع، ژانر و سال و حفظ Focus هنگام برگشت.
+4. **0.16.0 — Cinematic Home:** Hero پویا، Continue اولویت‌دار، Backdrop نرم
+   و ردیف‌های کمتر و هدفمندتر.
+5. **0.16.1 — Reliability & Provider Health:** وضعیت Login سرویس‌ها، تفکیک
+   Internet/DNS/Login/Unavailable، Cache آفلاین و Back بهتر FilmRooz.
+
+قانون Progress همچنان «صادقانه» است: Baseline دستی `تا این قسمت دیدم` و
+Release delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق. برای Back در FilmRooz نیز
+ابتدا KeyCode واقعی Android Box ثبت می‌شود، سپس Short Back = history و Long
+Back/Menu = Home طراحی خواهد شد.
 
 ## وضعیت Release
 
-- Commit: `e95c56e`
-- Tag و Latest API: `v0.14.5`
-- Release عمومی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
-- APK: `Aminema-v0.14.5-debug.apk` — `22,216,560` بایت — state `uploaded`
-- SHA asset: `Aminema-v0.14.5-debug.apk.sha256` — state `uploaded`
+- Commit: `b08f7c1`
+- Tag و Latest API: `v0.14.6`
+- Release عمومی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6`
+- APK: `Aminema-v0.14.6-debug.apk` — `22,232,968` بایت — state `uploaded`
+- SHA asset: `Aminema-v0.14.6-debug.apk.sha256` — state `uploaded`
 - SHA-256:
-  `28b2101a6ac55c0867f7485f59ed4271fec108165e3eedf134c91c57ab5a7ffb`
+  `08889d3e65ac170a35c1806668bdcdec5b0154237749f49415ef968301fe011e`
 - Release عمومی، `draft=false` و `prerelease=false` است و
   `/releases/latest` همین Tag و هر دو Asset را برگرداند.
-- Release body شامل `versionCode: 29` است تا Updater داخلی نسخه را تشخیص دهد.
+- Release body شامل `versionCode: 30` است تا Updater داخلی نسخه را تشخیص دهد.

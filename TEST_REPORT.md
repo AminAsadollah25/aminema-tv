@@ -1,6 +1,6 @@
 # Aminema — current test status
 
-Latest accepted candidate: **0.14.6 / versionCode 30 — Pointer & Playback
+Latest published release: **0.14.6 / versionCode 30 — Pointer & Playback
 Polish**. The complete current evidence is in `TEST_REPORT_0.14.6.md`;
 implementation decisions are in `DEVELOPMENT_LOG_0.14.6.md`.
 
