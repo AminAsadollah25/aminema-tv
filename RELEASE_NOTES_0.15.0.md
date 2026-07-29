@@ -55,4 +55,5 @@ Install this APK over the existing `com.amin.tvos.debug` app. Package ID and
 debug signing identity are unchanged, so WebView logins, cookies, settings,
 library, progress and poster cache remain intact.
 
-The public GitHub release remains 0.14.6 until the explicit 0.15.0 publish step.
+This is the official Latest GitHub release for the existing debug-signed update
+channel.

@@ -121,4 +121,4 @@ URLs must be ordinary same-host provider pages.
    cast/director filmography and local following.
 2. `0.15.2 — Cinema Library & Alerts`: View All grids plus restrained local
    alerts for new catalog works from followed people.
-3. Physical Android Box acceptance and explicit GitHub release of 0.15.0.
+3. Short post-release acceptance on the user's physical Android Box.

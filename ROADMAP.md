@@ -1,8 +1,8 @@
 # نقشه توسعه Aminema
 
-نسخه عمومی فعلی `0.14.6 / code 30` است. Candidate آمادهٔ تست تلویزیون
-`0.15.0 / code 31 — Aminema Spotlight` است و هنوز عمداً روی GitHub منتشر
-نشده. مرجع Candidate فایل‌های `DEVELOPMENT_LOG_0.15.0.md`،
+نسخه عمومی فعلی `0.15.0 / code 31 — Aminema Spotlight` است؛ روی GitHub
+به‌عنوان Latest منتشر و Asset دانلودشده با SHA رسمی راستی‌آزمایی شده است.
+مرجع نسخه فایل‌های `DEVELOPMENT_LOG_0.15.0.md`،
 `TEST_REPORT_0.15.0.md` و `RELEASE_NOTES_0.15.0.md` است.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
@@ -27,7 +27,7 @@
 - مکث موس Quick Glance را نمایش می‌دهد و Click همچنان محتوا را باز می‌کند.
 - حرکت‌ها سبک، بدون جابه‌جایی Rail و مناسب Android Box کم‌قدرت پیاده شدند.
 
-## 0.15.0 — Aminema Spotlight — Candidate آماده
+## 0.15.0 — Aminema Spotlight — انجام و منتشر شد
 
 - صفحه جزئیات Native برای فیلم و سریال ایرانی و خارجی.
 - کلیک اول Spotlight و کلیک دوم Watch/Continue موجود را بدون تغییر باز می‌کند.

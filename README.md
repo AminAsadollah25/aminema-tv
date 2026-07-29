@@ -2,7 +2,7 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Current candidate
+## Current release
 
 **Aminema 0.15.0 — Aminema Spotlight** (`versionCode 31`)
 
@@ -13,9 +13,7 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 - A green `دوبله فارسی` badge and a blue `زیرنویس فارسی` badge appear only when the title page confirms them
 - Live TV remains direct one-click and never opens Spotlight
 
-The public GitHub release remains
-[0.14.6](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6)
-until the 0.15.0 TV acceptance pass and explicit publish step.
+[Download Aminema 0.15.0 from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0)
 
 The release status and next milestone below are updated as part of every
 version's release checklist, together with `CLOUD-HANDOFF-LATEST.md`.

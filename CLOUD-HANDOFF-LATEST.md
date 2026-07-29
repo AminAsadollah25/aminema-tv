@@ -16,10 +16,11 @@ release و Next queue واقعی را نشان دهد.
 
 - محصول: **Aminema**
 - نسخه کد: **0.15.0 / versionCode 31 — Aminema Spotlight**
-- وضعیت در این لحظه: **Candidate محلی آمادهٔ تست تلویزیون؛ هنوز منتشرنشده**
-- Commit/Tag نسخه 0.15.0: **هنوز ساخته نشده**
-- نسخه عمومی فعلی: **0.14.6 / code 30**
-- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.6`
+- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
+- Commit کد انتشار: `dc39cbc`
+- Tag: `v0.15.0`
+- نسخه عمومی فعلی: **0.15.0 / code 31**
+- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
@@ -73,7 +74,7 @@ release و Next queue واقعی را نشان دهد.
 - FocusRequester اکنون `remember` می‌شود؛ Crash ناشی از Recomposition
   async metadata در QA پیدا و بسته شد.
 
-### 4. گیت‌های فنی Candidate
+### 4. گیت‌های فنی و انتشار
 
 - `testDebugUnitTest lintDebug assembleDebug`: موفق
 - Unit test: 10 pass، failure/error صفر
@@ -83,6 +84,11 @@ release و Next queue واقعی را نشان دهد.
   `0cc3742aa1b3de12e0681ed61a61a781f0f9c49a6e647c660a50102dec2ae6ee`
 - Signing certificate همان 0.14.6:
   `ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3`
+- GitHub Assetها:
+  - `Aminema-v0.15.0-debug.apk` — state `uploaded`
+  - `Aminema-v0.15.0-debug.apk.sha256` — state `uploaded`
+- `/releases/latest` برابر `v0.15.0`، `draft=false` و `prerelease=false` است.
+- APK دوباره از GitHub دانلود شد و SHA آن دقیقاً با مقدار بالا برابر بود.
 
 ### 5. مرز امنیتی 0.15.0
 
