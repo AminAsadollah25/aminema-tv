@@ -4,12 +4,12 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Aminema 0.13.0 — Keyboard Edition** (`versionCode 27`)
+**Aminema 0.14.0 — Series Pulse** (`versionCode 28`)
 
-- Cinematic native Search Deck with real staggered Persian/English QWERTY
-- Stable WebView Input Deck for Username → Password → Caps/Language → Done
-- Mouse-hover and DPAD-focus polish, explicit Close and password Show/Hide
-- Session/token state machine that prevents password typing from returning to Username
+- Episode-release-ordered international series with concise season/episode labels
+- Native `سریال‌های من` and separate curated-world-series rails
+- Independent Iranian/international background refresh with per-row spinner
+- Account Continue/Recent reconciliation without interrupting Home at startup
 
 [Download the latest APK from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/latest)
 
@@ -174,7 +174,7 @@ rebuild cannot redirect password typing back into Username. Caps and language
 no longer delete focused key rows, Android's system IME stays out of the flow,
 and mouse hover plus DPAD focus share the same clear visual state.
 
-The 0.14.0 candidate, **Series Pulse**, replaces the old modal catalog sync
+Version 0.14.0, **Series Pulse**, replaces the old modal catalog sync
 with independent background provider jobs. Home stays interactive, cached
 cards remain visible, and only the active provider's refresh button shows a
 small spinner. FilmRooz series now use `/archive/series/`, which is ordered by

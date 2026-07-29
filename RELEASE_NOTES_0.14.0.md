@@ -30,3 +30,5 @@ confident but wrong badge.
 Aminema still stores only ordinary detail-page metadata. It does not bypass
 login, inspect protected streams, read DRM data, or export cookies/tokens.
 
+---
+versionCode: 28
