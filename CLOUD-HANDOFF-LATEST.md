@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
-این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات 0.14.5، فایل‌های
-`DEVELOPMENT_LOG_0.14.5.md`، `TEST_REPORT_0.14.5.md` و
-`RELEASE_NOTES_0.14.5.md` خوانده شوند. معماری پایدار در
+این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Candidate جدید،
+فایل‌های `DEVELOPMENT_LOG_0.14.6.md`، `TEST_REPORT_0.14.6.md` و
+`RELEASE_NOTES_0.14.6.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -15,18 +15,60 @@ release و Next queue واقعی را نشان دهد.
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد و APK: **0.14.5 / versionCode 29 — Cinema Polish**
-- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
-- Commit انتشار: `e95c56e`
-- Tag: `v0.14.5`
-- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
-- نسخه عمومی قبلی: **0.14.0 / code 28**
+- نسخه کد: **0.14.6 / versionCode 30 — Pointer & Playback Polish**
+- وضعیت در این لحظه: Candidate پذیرفته‌شده روی امولاتور؛ در گیت نهایی
+  Lint/Build/Release
+- نسخه عمومی فعلی: **0.14.5 / code 29**
+- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.14.5`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
+
+## 0.14.6 چه چیزی را حل می‌کند
+
+### 1. Hover و Focus مشترک و سینمایی
+
+- `FocusableCard` اکنون DPAD Focus، Compose HoverInteraction و Pointer
+  Enter/Exit واقعی را با هم ادغام می‌کند.
+- Border قرمز حذف شد؛ Scale، Brightness، Elevation و Z-order با Transition
+  کوتاه جای آن را گرفت.
+- Posterها 1.06 و Service Cardها 1.035 بزرگ می‌شوند.
+- Railها Vertical padding کافی دارند؛ Scale کارت‌ها را Clip یا جابه‌جا
+  نمی‌کند.
+- Probe واقعی Mouse-source روی امولاتور Quick Glance را باز کرد و خروج موس
+  آن را بست.
+
+### 2. Autoplay فقط برای FilmRooz
+
+- `DirectPlayConfig.autoPlayOnPlaybackPage` اختیاری و پیش‌فرض `false` است.
+- فقط FilmRooz آن را فعال می‌کند؛ ParsiFlix دست‌نخورده باقی مانده است.
+- پس از رسیدن به Normal top-level `/stream/...`، Aminema روی HTML5 video همان
+  صفحه `play()` می‌زند یا کنترل Visible خود JW/Video.js/Plyr را Click می‌کند.
+- Test واقعی Leviticus پس از Mouse click بدون Click دوم به Playback position
+  `20,438ms` و duration `5,288,872ms` رسید؛ FATAL EXCEPTION صفر.
+- Loading تا Play واقعی می‌ماند؛ اگر Player آماده نشود Timeout قبلی صفحه
+  Manual را در دسترس می‌گذارد.
+- گیت نهایی `clean testDebugUnitTest lintDebug assembleDebug` موفق شد؛ ۶ تست
+  Pass، Lint error صفر، APK برابر `22,232,968` بایت و SHA-256 برابر
+  `08889d3e65ac170a35c1806668bdcdec5b0154237749f49415ef968301fe011e`
+  است. Signing certificate با 0.14.5 یکسان است.
+
+### 3. مرز امنیتی
+
+- هیچ `video.src/currentSrc`، Network request، Protected media URL، Cookie،
+  Token، Password، Auth header یا DRM value خوانده یا Log نمی‌شود.
+- فقط صفحه عادی Provider و کنترل Play قابل‌مشاهده همان صفحه استفاده می‌شود.
+
+## صف قطعی بعد از انتشار 0.14.6
+
+1. `0.15.0 — Aminema Spotlight`: Hero و Detail Native، بدون Download/Trailer.
+2. `0.15.1 — Episode Navigator`: فصل/قسمت، Latest published و Continue صادقانه.
+3. `0.15.2 — Cinema Library`: View All grid و Filter.
+4. `0.16.0 — Cinematic Home`.
+5. `0.16.1 — Reliability & Provider Health`.
 
 ## 0.14.5 چه چیزی را حل می‌کند
 

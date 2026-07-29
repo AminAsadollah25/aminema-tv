@@ -142,6 +142,8 @@ class BrowserActivity : ComponentActivity() {
     private var directPlayRequested = false
     private var directPlayTriggered = false
     private var directPlayProbeInFlight = false
+    private var playbackAutoStartConfirmed = false
+    private var playbackAutoStartScheduledUrl = ""
     private var continueProbeInFlight = false
     private var playbackAutomationTimedOut = false
     private var lastDirectPlayAttemptAt = 0L
@@ -360,6 +362,10 @@ class BrowserActivity : ComponentActivity() {
                 currentDuration = 0L
                 currentIsPlayable = false
                 liveTheaterModeApplied = false
+                if (serviceAdapter?.isPlaybackUrl(url) != true) {
+                    playbackAutoStartConfirmed = false
+                    playbackAutoStartScheduledUrl = ""
+                }
                 // Remove a scale left by a previous SPA route immediately.
                 view.evaluateJavascript(
                     "document.documentElement.style.zoom='100%';" +
@@ -375,6 +381,7 @@ class BrowserActivity : ComponentActivity() {
                 installAdaptivePageScale(view)
                 installMouseKeyboardBridge(view)
                 installPlaybackBridge(view)
+                schedulePlaybackAutoStart(view, url)
                 captureResumeMetadata(url)
                 tryRestoreResumePosition(view)
                 scheduleSiteContinue(view)
@@ -390,6 +397,10 @@ class BrowserActivity : ComponentActivity() {
                 view.postDelayed({ installPlaybackBridge(view) }, 450)
                 url?.let { changedUrl ->
                     observePlaybackNavigation(changedUrl)
+                    view.postDelayed(
+                        { schedulePlaybackAutoStart(view, changedUrl) },
+                        500
+                    )
                     view.postDelayed({ captureResumeMetadata(changedUrl) }, 900)
                     view.postDelayed({ tryRestoreResumePosition(view) }, 1_100)
                     view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
@@ -1397,15 +1408,113 @@ class BrowserActivity : ComponentActivity() {
      */
     private fun observePlaybackNavigation(url: String) {
         val adapter = serviceAdapter ?: return
-        if (adapter.isPlaybackUrl(url)) confirmPlaybackReady()
+        if (!adapter.isPlaybackUrl(url)) return
+        if (adapter.directPlay?.autoPlayOnPlaybackPage == true) {
+            schedulePlaybackAutoStart(webView, url)
+        } else {
+            confirmPlaybackReady()
+        }
     }
 
     private fun confirmPlaybackReady() {
+        playbackAutoStartConfirmed = true
         if (directPlayRequested) directPlayTriggered = true
         if (autoResumeRequested) autoResumeActionTriggered = true
         playbackAutomationTimedOut = false
         playbackAutomationHandler.removeCallbacks(playbackAutomationTimeout)
         if (::playbackLoadingView.isInitialized) playbackLoadingView.hide()
+    }
+
+    /**
+     * FilmRooz reaches a normal `/stream/...` page correctly, but its embedded player waits
+     * on a second Play gesture. Since the original card click is already a user-requested
+     * playback action and WebView allows media playback without another gesture, ask only
+     * the provider's own HTML5/player controls to start.
+     *
+     * The script never reads `video.src`, requests, cookies, tokens or DRM data. ParsiFlix
+     * opts out in services.json because its existing playback path already starts correctly.
+     */
+    private fun schedulePlaybackAutoStart(
+        view: WebView = webView,
+        pageUrl: String = view.url.orEmpty()
+    ) {
+        val adapter = serviceAdapter ?: return
+        if (
+            (!directPlayRequested && !autoResumeRequested) ||
+            adapter.directPlay?.autoPlayOnPlaybackPage != true ||
+            !adapter.isPlaybackUrl(pageUrl) ||
+            playbackAutoStartConfirmed
+        ) return
+
+        val canonical = pageUrl.substringBefore('#')
+        if (playbackAutoStartScheduledUrl == canonical) return
+        playbackAutoStartScheduledUrl = canonical
+        listOf(300L, 750L, 1_300L, 2_100L, 3_200L, 4_700L, 6_500L, 9_000L, 12_000L)
+            .forEach { delay ->
+                view.postDelayed({ tryStartPlaybackPage(view, canonical) }, delay)
+            }
+    }
+
+    private fun tryStartPlaybackPage(view: WebView, expectedUrl: String) {
+        val adapter = serviceAdapter ?: return
+        if (
+            playbackAutoStartConfirmed ||
+            playbackAutomationTimedOut ||
+            adapter.directPlay?.autoPlayOnPlaybackPage != true ||
+            !adapter.isPlaybackUrl(view.url.orEmpty()) ||
+            !view.url.orEmpty().substringBefore('#').startsWith(expectedUrl)
+        ) return
+
+        val script = """
+            (function() {
+              try {
+                var video = document.querySelector('video');
+                if (video) {
+                  video.autoplay = true;
+                  video.controls = true;
+                  if (!video.paused && !video.ended) return 'already-playing';
+                  try {
+                    var request = video.play();
+                    if (request && request.catch) request.catch(function() {});
+                    return 'video-play-requested';
+                  } catch (_) {}
+                }
+
+                function visible(el) {
+                  if (!el) return false;
+                  var box = el.getBoundingClientRect();
+                  var style = window.getComputedStyle(el);
+                  return box.width > 18 && box.height > 18 &&
+                    style.display !== 'none' && style.visibility !== 'hidden' &&
+                    style.pointerEvents !== 'none' && !el.disabled;
+                }
+                var selectors = [
+                  '.jw-display-icon-container .jw-icon-playback',
+                  '.jw-icon-playback',
+                  '.vjs-big-play-button',
+                  '.plyr__control--overlaid',
+                  '[data-plyr="play"]',
+                  'button[aria-label*="play" i]',
+                  'button[title*="play" i]'
+                ];
+                for (var i = 0; i < selectors.length; i++) {
+                  var control = document.querySelector(selectors[i]);
+                  if (visible(control)) {
+                    control.click();
+                    return 'player-control-clicked';
+                  }
+                }
+                return 'waiting-for-player';
+              } catch (_) {
+                return 'waiting-for-player';
+              }
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            if (result?.contains("already-playing") == true) {
+                confirmPlaybackReady()
+            }
+        }
     }
 
     private fun cancelPlaybackAutomation() {

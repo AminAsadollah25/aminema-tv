@@ -242,7 +242,8 @@
     ],
     "directPlay": {
       "preferredLanguages": ["dubbed-fa", "original"],
-      "preferredHeights": [1080, 720, 480]
+      "preferredHeights": [1080, 720, 480],
+      "autoPlayOnPlaybackPage": true
     },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
     "resumeButtonTextPatterns": []

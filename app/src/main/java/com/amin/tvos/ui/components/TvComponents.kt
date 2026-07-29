@@ -3,9 +3,10 @@ package com.amin.tvos.ui.components
 import android.net.Uri
 import android.webkit.CookieManager
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
@@ -55,10 +57,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.amin.tvos.data.model.MovieItem
@@ -71,8 +76,11 @@ import com.amin.tvos.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
 
 /**
- * Focus-aware wrapper: scales up + red glow border when focused (DPAD)
- * or hovered (air mouse / USB mouse).
+ * Shared cinematic interaction for DPAD and a real USB/Bluetooth mouse.
+ *
+ * Android TV Web/Compose combinations do not always emit HoverInteraction reliably, so
+ * explicit pointer Enter/Exit events back up the normal interaction source. Selection is
+ * communicated through a gentle lift, scale and brightness transition — never a red box.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -80,37 +88,63 @@ fun FocusableCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(14.dp),
     enabled: Boolean = true,
+    focusedScale: Float = 1.045f,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     onInteractionFocusChanged: (Boolean) -> Unit = {},
     content: @Composable (focused: Boolean) -> Unit
 ) {
     var dpadFocused by remember { mutableStateOf(false) }
+    var pointerHovered by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
-    val hovered by interactionSource.collectIsHoveredAsState()
-    val focused = enabled && (dpadFocused || hovered)
+    val interactionHovered by interactionSource.collectIsHoveredAsState()
+    val pressed by interactionSource.collectIsPressedAsState()
+    val focused = enabled && (dpadFocused || pointerHovered || interactionHovered)
     androidx.compose.runtime.LaunchedEffect(focused) {
         onInteractionFocusChanged(focused)
     }
     val scale by animateFloatAsState(
-        targetValue = if (focused) 1.05f else 1f,
-        animationSpec = tween(160),
+        targetValue = when {
+            pressed -> if (focused) 1.015f else 0.985f
+            focused -> focusedScale
+            else -> 1f
+        },
+        animationSpec = tween(190, easing = FastOutSlowInEasing),
         label = "focusScale"
     )
-    val borderColor by animateColorAsState(
-        targetValue = if (focused) CinemaRed else Color.Transparent,
-        animationSpec = tween(160),
-        label = "focusBorder"
+    val containerColor by animateColorAsState(
+        targetValue = if (focused) Color(0xFF292934) else SurfaceElevated,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "focusBrightness"
+    )
+    val elevation by animateDpAsState(
+        targetValue = if (focused) 18.dp else 2.dp,
+        animationSpec = tween(190, easing = FastOutSlowInEasing),
+        label = "focusElevation"
     )
     Surface(
-        color = SurfaceElevated,
+        color = containerColor,
         contentColor = TextPrimary,
         shape = shape,
-        border = BorderStroke(2.5.dp, borderColor),
+        shadowElevation = elevation,
         modifier = modifier
             .alpha(if (enabled) 1f else 0.34f)
+            .zIndex(if (focused) 2f else 0f)
             .scale(scale)
             .onFocusChanged { dpadFocused = it.isFocused || it.hasFocus }
+            .pointerInput(enabled) {
+                awaitPointerEventScope {
+                    while (true) {
+                        when (awaitPointerEvent().type) {
+                            PointerEventType.Enter -> {
+                                if (enabled) pointerHovered = true
+                            }
+                            PointerEventType.Exit -> pointerHovered = false
+                            else -> Unit
+                        }
+                    }
+                }
+            }
             .hoverable(interactionSource)
             .combinedClickable(
                 enabled = enabled,
@@ -272,6 +306,7 @@ fun ServiceCard(
     }
     FocusableCard(
         modifier = Modifier.width(400.dp).height(220.dp),
+        focusedScale = 1.035f,
         onClick = onClick,
         onLongClick = onLongClick
     ) {
@@ -377,6 +412,7 @@ fun PosterCard(
     }
     FocusableCard(
         modifier = Modifier.width(190.dp),
+        focusedScale = 1.06f,
         onClick = onClick,
         onLongClick = onLongClick,
         onInteractionFocusChanged = { focused = it }
@@ -503,7 +539,7 @@ fun <T> SectionRow(
         }
         LazyRow(
             state = listState,
-            contentPadding = PaddingValues(horizontal = 48.dp, vertical = 8.dp),
+            contentPadding = PaddingValues(horizontal = 48.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.fillMaxWidth()
         ) {

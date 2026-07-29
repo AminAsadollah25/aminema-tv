@@ -114,6 +114,7 @@ app/src/main/java/com/amin/tvos/
 | **0.13.0** | Search Deck و Login Input Deck با QWERTY فارسی/انگلیسی و State Machine پایدار |
 | **0.14.0** | Series Pulse: قسمت/فصل، سریال‌های من، برگزیده‌ها، Sync مستقل و پس‌زمینه‌ای |
 | **0.14.5** | Cinema Polish: اصلاح Recent، Quick Glance، Lazy rail، APK حدود 71٪ کوچک‌تر |
+| **0.14.6** | Pointer & Playback Polish: Hover واقعی موس، Focus بدون Border قرمز، Autoplay صفحه پلیر FilmRooz |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.

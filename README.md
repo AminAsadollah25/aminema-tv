@@ -4,13 +4,13 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Aminema 0.14.5 — Cinema Polish** (`versionCode 29`)
+**Aminema 0.14.6 — Pointer & Playback Polish** (`versionCode 30`)
 
-- Fixed false ParsiFlix shell entries in `اخیراً بازشده` and repairs old malformed records
-- Spoiler-safe cinematic Quick Glance for mouse hover and DPAD focus
-- Real provider metadata: synopsis, year, genres, rating, runtime and published episode
-- Lazy Home rails for lower memory/CPU use on Android boxes
-- Shrunk update APK from about 76 MB to about 22.2 MB while retaining the intro and browser
+- FilmRooz movies start automatically after reaching the provider's normal player page
+- Real physical-mouse hover and DPAD focus now share one cinematic interaction
+- Selected cards scale, brighten and lift smoothly instead of showing a red border
+- Mouse dwell opens spoiler-safe Quick Glance; leaving the card closes it
+- Existing ParsiFlix playback, logins, resume data and normal manual fallback remain intact
 
 [Download the latest APK from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/latest)
 
@@ -205,27 +205,35 @@ now uses keyed lazy rendering. R8/resource shrinking, Persian/English locale
 filtering and compressed cinema artwork reduce the update APK from about 76 MB
 to about 22.2 MB without removing the offline intro or WebView features.
 
-## Next update queue — after v0.14.5
+Version 0.14.6, **Pointer & Playback Polish**, gives USB/Bluetooth mouse hover
+and DPAD focus the same borderless scale, brightness and elevation transition.
+Mouse dwell now reliably drives Quick Glance. FilmRooz opts into a page-local
+autoplay step after Aminema reaches the provider's normal player route; it asks
+only the site's own HTML5 video or visible player control to start, while
+ParsiFlix remains unchanged and the manual timeout fallback stays available.
 
-### Candidate: Cinema Library
+## Next update queue — after v0.14.6
+
+### 0.15.0 — Aminema Spotlight
+
+- Add a cinematic Home hero and native movie/series detail page.
+- Show only cached/ordinary provider metadata: poster, year, genre, rating,
+  runtime, published episode and a spoiler-safe synopsis.
+- Primary actions: Watch/Continue, My List and More. No download and no trailer.
+- Preserve exact rail focus and scroll position after Back.
+
+### 0.15.1 — Episode Navigator
+
+- Add season and episode selection after provider DOM rules are verified.
+- Keep separate actions for latest published episode and honest smart Continue.
+- Add an optional `تا این قسمت دیدم` baseline for viewing done elsewhere.
+- Never claim `دیده‌نشده` without exact watched evidence.
+
+### 0.15.2 — Cinema Library
 
 - Add `مشاهده همه` grids for Latest, Continue, Recent and Favorites.
-- Filter by movie/series, provider, genre and year using only cached normal metadata.
-- Preserve TV focus position when returning from a detail page.
-
-### Candidate: Honest Episode Progress
-
-- Add local `SeriesProgress` plus an optional one-click `تا این قسمت دیدم` baseline
-  for viewing done on another device.
-- Use `قسمت تازه` / `فصل جدید` only when a release delta is known.
-- Never claim `دیده‌نشده` without exact watched evidence and never inspect protected
-  media URLs, cookies, tokens or DRM data.
-
-### Candidate: Cinematic Home Hero
-
-- Promote the most relevant unfinished title into a large, spoiler-safe hero.
-- One-click Continue, compact progress and a gentle backdrop transition.
-- Keep the current lightweight rows as the fast fallback on weak TV boxes.
+- Filter by movie/series, cinema, genre and year using cached normal metadata.
+- Keep focus restoration and low-RAM Android Box performance as hard gates.
 
 ## Requirements
 

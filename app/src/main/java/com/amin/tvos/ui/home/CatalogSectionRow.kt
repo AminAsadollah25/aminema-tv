@@ -151,7 +151,7 @@ fun CatalogSectionRow(
         } else {
             LazyRow(
                 state = listState,
-                contentPadding = PaddingValues(horizontal = 48.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 48.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {

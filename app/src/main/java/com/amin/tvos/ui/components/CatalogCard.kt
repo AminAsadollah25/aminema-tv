@@ -88,6 +88,7 @@ fun CatalogCard(
     }
     FocusableCard(
         modifier = Modifier.width(190.dp),
+        focusedScale = 1.06f,
         onClick = onClick,
         onInteractionFocusChanged = { focused = it }
     ) {

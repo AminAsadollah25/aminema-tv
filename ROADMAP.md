@@ -1,9 +1,10 @@
 # نقشه توسعه Aminema
 
-نسخه عمومی فعلی `0.14.5 / code 29` با نام **Cinema Polish** است؛ روی
-امولاتور 1080p پذیرفته و به‌عنوان Latest در GitHub منتشر شده است. مرجع اجرای
-آن `DEVELOPMENT_LOG_0.14.5.md`، `TEST_REPORT_0.14.5.md` و
-`RELEASE_NOTES_0.14.5.md` است.
+نسخه عمومی فعلی `0.14.5 / code 29` است. Candidate بعدی
+`0.14.6 / code 30 — Pointer & Playback Polish` روی امولاتور 1080p پیاده و
+در حال عبور از گیت نهایی انتشار است. مرجع آن
+`DEVELOPMENT_LOG_0.14.6.md`، `TEST_REPORT_0.14.6.md` و
+`RELEASE_NOTES_0.14.6.md` است.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -17,7 +18,7 @@
 - مرحله بعد `0.14.6 — Pointer & Playback Polish` است: پخش خودکار امن
   FilmRooz و تعامل مشترک Focus/Hover کارت‌ها با Scale و سایه نرم.
 
-## 0.14.6 — Pointer & Playback Polish — در حال انجام
+## 0.14.6 — Pointer & Playback Polish — Candidate پذیرفته‌شده
 
 - پخش خودکار ParsiFlix سالم است و نباید تغییر کند.
 - FilmRooz پس از رسیدن به صفحه پلیر باید یک Play خودکار امن انجام دهد؛ اگر
@@ -26,6 +27,36 @@
   سایه و روشنایی نرم؛ Border قرمز حذف شود.
 - مکث موس Quick Glance را نمایش دهد و Click همچنان محتوا را باز کند.
 - حرکت‌ها باید سبک، بدون جابه‌جایی Rail و مناسب Android Box کم‌قدرت باشند.
+
+## صف نسخه‌های قطعی بعدی
+
+### 0.15.0 — Aminema Spotlight
+
+- Hero سینمایی و صفحه جزئیات Native برای فیلم/سریال.
+- Watch/Continue، My List و More؛ بدون Download و Trailer.
+- اطلاعات معمول سرویس، خلاصه بدون اسپویل و بازگشت دقیق به همان کارت.
+
+### 0.15.1 — Episode Navigator
+
+- انتخاب فصل و قسمت پس از Probe دقیق کنترل‌های عادی هر Provider.
+- دکمه مستقل آخرین قسمت منتشرشده.
+- Continue هوشمند فقط از پخش واقعی، تیک معتبر یا Baseline دستی.
+- ترجیح هر سریال بین «ادامه داستان» و «همیشه آخرین انتشار».
+
+### 0.15.2 — Cinema Library
+
+- View All برای Latest/Continue/Recent/Favorites.
+- Grid و فیلتر فیلم/سریال، سینما، ژانر و سال.
+- حفظ Focus/Scroll و Performance روی Box کم‌قدرت.
+
+### 0.16.0 — Cinematic Home
+
+- Hero پویا، Continue اولویت‌دار، Backdrop نرم و ردیف‌های کمتر.
+
+### 0.16.1 — Reliability & Provider Health
+
+- وضعیت Login هر سرویس، خطای متمایز Internet/DNS/Login/Unavailable،
+  Cache آفلاین و Back بهتر FilmRooz.
 
 ## تصمیم طراحی پیشنهادی
 

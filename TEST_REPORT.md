@@ -1,14 +1,14 @@
 # Aminema — current test status
 
-Latest published release: **0.14.5 / versionCode 29 — Cinema Polish**.
-The complete current evidence is in `TEST_REPORT_0.14.5.md`; implementation
-decisions are in `DEVELOPMENT_LOG_0.14.5.md`.
+Latest accepted candidate: **0.14.6 / versionCode 30 — Pointer & Playback
+Polish**. The complete current evidence is in `TEST_REPORT_0.14.6.md`;
+implementation decisions are in `DEVELOPMENT_LOG_0.14.6.md`.
 
-Current gates: clean Build successful, four unit tests passed, Android Lint
-zero errors, `adb install -r` preserved app data, both authenticated provider
-background adapters returned catalog data, the real malformed ParsiFlix Recent
-entry was repaired, and no FATAL EXCEPTION was observed. APK size is about
-22.2 MB versus about 76 MB in 0.14.0.
+Current gates: 0.14.6 compiles, six unit tests pass, `adb install -r`
+preserved app data, physical-mouse hover opened and dismissed Quick Glance,
+and a real FilmRooz movie advanced to 20,438 ms without a second click or a
+FATAL EXCEPTION. Final clean Build/Lint/assembly passed with zero Lint errors;
+the APK is 22,232,968 bytes.
 
 ---
 

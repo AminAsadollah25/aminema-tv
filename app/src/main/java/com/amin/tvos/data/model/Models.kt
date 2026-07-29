@@ -41,7 +41,13 @@ data class DirectPlayConfig(
      * an include pattern. A page can offer an unrelated player — live TV, for instance —
      * whose label starts with the same verb as the title's own watch button.
      */
-    val excludeButtonTextPatterns: List<String> = emptyList()
+    val excludeButtonTextPatterns: List<String> = emptyList(),
+    /**
+     * After Aminema reaches the provider's normal top-level player page, ask that page's
+     * own HTML5/player control to start. This never reads a media URL and is opt-in per
+     * provider because ParsiFlix already starts correctly without it.
+     */
+    val autoPlayOnPlaybackPage: Boolean = false
 )
 
 /**
