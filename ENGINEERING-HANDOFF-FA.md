@@ -115,6 +115,8 @@ app/src/main/java/com/amin/tvos/
 | **0.14.0** | Series Pulse: قسمت/فصل، سریال‌های من، برگزیده‌ها، Sync مستقل و پس‌زمینه‌ای |
 | **0.14.5** | Cinema Polish: اصلاح Recent، Quick Glance، Lazy rail، APK حدود 71٪ کوچک‌تر |
 | **0.14.6** | Pointer & Playback Polish: Hover واقعی موس، Focus بدون Border قرمز، Autoplay صفحه پلیر FilmRooz |
+| **0.15.0/0.15.1** | Spotlight و Cinematic Home |
+| **0.16.0** | رفع باگ «تصویر عریض در کارت عمودی» (۴ جا)، بازطراحی Hero با رنگ استخراج‌شده از پوستر و اسکلت ثابت، رفع بریدگی دکمه‌ها در Hero و Spotlight، فیلد `backdropUrl`، دو ردیف «برگزیده‌ها» با بنر عریض خود سایت‌ها، انتقال خروجی بیلد به بیرون از iCloud |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.

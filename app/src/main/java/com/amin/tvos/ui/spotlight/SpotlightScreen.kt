@@ -182,6 +182,14 @@ fun SpotlightScreen(
                         .padding(top = 12.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
+                    // Everything descriptive lives in this flexible block. A long title,
+                    // wrapped metadata chips, a resume bar, a synopsis and a credits list
+                    // can together outgrow a 1080p screen; when they do, this block gives
+                    // room back instead of squeezing the action buttons below it off-screen.
+                    Column(
+                        modifier = Modifier.weight(1f, fill = false),
+                        horizontalAlignment = Alignment.Start
+                    ) {
                     Text(
                         "AMINEMA  •  ${if (item.kind == CatalogKind.SERIES) "سریال" else "فیلم"}",
                         color = CinemaRed,
@@ -291,6 +299,7 @@ fun SpotlightScreen(
                         }
                     }
                     CreditsBlock(item)
+                    }
 
                     Spacer(Modifier.height(20.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {

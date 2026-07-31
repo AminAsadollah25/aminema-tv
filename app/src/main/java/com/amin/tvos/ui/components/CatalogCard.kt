@@ -48,33 +48,58 @@ fun authenticatedPosterModel(posterUrl: String, pageUrl: String): Any? {
     val context = LocalContext.current
     return remember(posterUrl, pageUrl) {
         if (!posterUrl.startsWith("http")) return@remember posterUrl
-        ImageRequest.Builder(context)
-            .data(posterUrl)
-            .apply {
-                val posterHost = runCatching { Uri.parse(posterUrl).host }.getOrNull()
-                val pageHost = runCatching { Uri.parse(pageUrl).host }.getOrNull()
-                if (!posterHost.isNullOrBlank() && posterHost.equals(pageHost, true)) {
-                    CookieManager.getInstance().getCookie(posterUrl)
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { addHeader("Cookie", it) }
-                    addHeader("Referer", pageUrl)
-                }
-            }
+        posterRequest(context, posterUrl, pageUrl).build()
+    }
+}
+
+/**
+ * The same authenticated request, deliberately asked for at a tiny size so that scaling it
+ * up is what produces the blur. That keeps the soft cinema backdrop identical on Android 9 —
+ * where `Modifier.blur` does nothing — and costs a fraction of the memory of a full poster.
+ */
+@Composable
+fun blurredBackdropModel(posterUrl: String, pageUrl: String): Any? {
+    val context = LocalContext.current
+    return remember(posterUrl, pageUrl) {
+        if (!posterUrl.startsWith("http")) return@remember posterUrl
+        posterRequest(context, posterUrl, pageUrl)
+            .size(96, 144)
+            .crossfade(true)
             .build()
     }
 }
+
+/** Shared builder so the same-host cookie rule lives in exactly one place. */
+private fun posterRequest(
+    context: android.content.Context,
+    posterUrl: String,
+    pageUrl: String
+): ImageRequest.Builder = ImageRequest.Builder(context)
+    .data(posterUrl)
+    .apply {
+        val posterHost = runCatching { Uri.parse(posterUrl).host }.getOrNull()
+        val pageHost = runCatching { Uri.parse(pageUrl).host }.getOrNull()
+        if (!posterHost.isNullOrBlank() && posterHost.equals(pageHost, true)) {
+            CookieManager.getInstance().getCookie(posterUrl)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { addHeader("Cookie", it) }
+            addHeader("Referer", pageUrl)
+        }
+    }
 
 /** Poster card for a "latest" catalog row. Opens the service's normal detail page. */
 @Composable
 fun CatalogCard(
     item: CatalogItem,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onFocused: (Boolean) -> Unit = {}
 ) {
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     FocusableCard(
         modifier = Modifier.width(190.dp),
         focusedScale = 1.06f,
-        onClick = onClick
+        onClick = onClick,
+        onInteractionFocusChanged = onFocused
     ) {
         Column {
             Box(Modifier.fillMaxWidth().height(260.dp)) {

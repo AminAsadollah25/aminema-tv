@@ -219,17 +219,27 @@ request for Watch/Continue, restores the Home/Search position on Back and
 enriches old titles from ordinary visible provider metadata without reading
 media URLs or authentication values.
 
-## Next update queue — after v0.15.0
+Version 0.15.1, **Cinematic Home**, turns Home into a content-first personal
+cinema rather than a pair of provider doorways. A single rotating Hero chooses
+from Continue, My Series and fresh Iranian/international titles, pauses while
+the user interacts, crossfades the ambient artwork and opens the existing
+Spotlight action. The playful provider cards are now compact direct-entry
+shortcuts near the end of Home (or near the top only on a truly empty first
+run). Greeting, header, mouse hover and DPAD focus use one restrained cinematic
+motion language, while 220 ms backdrop dwell avoids image churn on fast remote
+navigation.
 
-1. **0.15.1 — Episode Navigator:** season/episode selection, separate
+## Next update queue — after v0.15.1
+
+1. **0.15.2 — Episode Navigator:** season/episode selection, separate
    next-episode and latest-release actions, and evidence-based progress.
-2. **0.15.2 — Canonical Library & Dedupe:** one card per title across
+2. **0.15.3 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as
    `spiderman` / `spider man` / `spider-man`.
-3. **0.15.3 — My Series:** followed shows, manual watched baseline, new episode
+3. **0.15.4 — My Series:** followed shows, manual watched baseline, new episode
    and new season indicators, then provider-account progress where reliable.
-4. **0.15.4 — Cinematic Promo Banners:** one TV-safe Hero from provider
-   carousels; title banners open Spotlight and Live TV banners stay direct.
+4. **0.15.5 — Cinematic Promo Feed:** provider carousels join the new Hero;
+   title promos open Spotlight and Live TV promos stay direct.
 5. **0.16.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
    variant after a 100-title overlap/coverage report.
 6. **0.16.1 — Best Source Resolver:** dub-first/original-first/ask preferences

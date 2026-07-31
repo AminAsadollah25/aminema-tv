@@ -4,9 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.theme.CinemaRed
@@ -49,17 +51,29 @@ fun SmartGreetingHeader(
         AnimatedContent(
             targetState = greeting,
             transitionSpec = {
-                fadeIn(tween(320)) togetherWith fadeOut(tween(200))
+                (
+                    fadeIn(tween(360)) +
+                        slideInVertically(tween(360)) { it / 5 }
+                    ) togetherWith (
+                    fadeOut(tween(180)) +
+                        slideOutVertically(tween(220)) { -it / 6 }
+                    )
             },
             label = "greeting"
         ) { current ->
-            Column {
-                Text(current.headline, style = MaterialTheme.typography.displayMedium)
-                Spacer(Modifier.width(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    current.subline,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextSecondary
+                    current.headline,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "• ${current.subline}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

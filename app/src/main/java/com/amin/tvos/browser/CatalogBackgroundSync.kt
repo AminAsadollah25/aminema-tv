@@ -213,6 +213,9 @@ class CatalogBackgroundSync(
                     val poster = entry.optString("posterUrl").take(2_000)
                         .takeIf { it.startsWith("http", ignoreCase = true) }
                         .orEmpty()
+                    val backdrop = entry.optString("backdropUrl").take(2_000)
+                        .takeIf { it.startsWith("http", ignoreCase = true) }
+                        .orEmpty()
                     val kind = if (
                         entry.optString("kind").equals("SERIES", true)
                     ) CatalogKind.SERIES else CatalogKind.MOVIE
@@ -254,6 +257,7 @@ class CatalogBackgroundSync(
                             kind = kind,
                             contentUrl = contentUrl,
                             posterUrl = poster,
+                            backdropUrl = backdrop,
                             serviceId = service.id,
                             episodeLabel = entry.optString("episodeLabel")
                                 .replace(Regex("""\s+"""), " ")
@@ -320,6 +324,7 @@ class CatalogBackgroundSync(
             movies = list("movies"),
             series = list("series"),
             popularSeries = list("popularSeries"),
+            featured = list("featured"),
             syncedAt = System.currentTimeMillis(),
             error = ""
         )
@@ -434,7 +439,11 @@ class CatalogBackgroundSync(
                   title: String(item.title || '').slice(0, 140),
                   kind: kind,
                   contentUrl: location.origin + '/medias/' + path + '/' + item.id,
-                  posterUrl: item.coverLink || item.thumbnailLink || '',
+                  // thumbnail is the portrait artwork and cover is the wide one; measured
+                  // on live data as roughly 0.8:1 versus 1.8:1. Taking cover first put a
+                  // landscape image inside a 2:3 card, which cropped it to a magnified strip.
+                  posterUrl: item.thumbnailLink || item.coverLink || '',
+                  backdropUrl: item.coverLink || '',
                   episodeLabel: '',
                   summary: text(
                     item.description || item.summary || item.overview || item.plot
@@ -497,7 +506,8 @@ class CatalogBackgroundSync(
                     return {
                       title: String(item.title || '').slice(0, 140),
                       contentUrl: location.origin + '/medias/' + kind + '/' + item.id,
-                      posterUrl: item.coverLink || item.thumbnailLink || '',
+                      // Portrait first: see the note on the catalog mapper above.
+                      posterUrl: item.thumbnailLink || item.coverLink || '',
                       resumePosition: 0
                     };
                   });
@@ -516,11 +526,42 @@ class CatalogBackgroundSync(
                 if (!all.length) {
                   all = movies.slice(0, 12).concat(series.slice(0, 12));
                 }
+
+                // The provider's own banner carousel. It is the one CUSTOM section, its items
+                // are marked SLIDER, and — unlike every other row — they carry only the wide
+                // artwork (their thumbnail field is empty) plus a ready-made link.
+                var slider = (home.sections || []).find(function(section) {
+                  return String(section.type || '').toUpperCase() === 'CUSTOM' &&
+                    (section.items || []).some(function(entry) {
+                      return String(entry.itemType || '').toUpperCase() === 'SLIDER';
+                    });
+                });
+                var featured = ((slider && slider.items) || [])
+                  .filter(function(entry) { return entry && entry.link && entry.cover; })
+                  .slice(0, 14)
+                  .map(function(entry) {
+                    var link = String(entry.link || '');
+                    var isSeries = /\/medias\/series\//.test(link);
+                    return {
+                      title: String(entry.title || '').slice(0, 140),
+                      kind: isSeries ? 'SERIES' : 'MOVIE',
+                      contentUrl: link,
+                      // A SLIDER item has no portrait artwork at all, so the wide image is
+                      // both the backdrop and the only poster this item can offer.
+                      posterUrl: entry.cover || '',
+                      backdropUrl: entry.cover || '',
+                      // Not the shared text() helper: that one is scoped inside map().
+                      summary: String(entry.description || '')
+                        .replace(/\s+/g, ' ').slice(0, 420)
+                    };
+                  });
+
                 AminCatalog.section('parsiflix', JSON.stringify({
                   all: all,
                   movies: movies,
                   series: series,
                   popularSeries: [],
+                  featured: featured,
                   accountItems: accountItems
                 }));
               } catch (error) {
@@ -718,6 +759,60 @@ class CatalogBackgroundSync(
                   return true;
                 });
               }
+              // The provider's own banner carousel, from its home page: a Bootstrap carousel
+              // whose slides are plain links wrapping one wide image each. Measured on live
+              // data at 1504x846, exactly 16:9. One extra page fetch, not one per title.
+              async function featuredBanners() {
+                try {
+                  var response = await fetch(location.origin + '/', {
+                    credentials: 'include'
+                  });
+                  if (!response.ok) return [];
+                  var doc = new DOMParser().parseFromString(
+                    await response.text(), 'text/html'
+                  );
+                  var box = doc.querySelector('.carousel-inner') ||
+                    doc.querySelector('.carousel');
+                  if (!box) return [];
+                  var seen = {};
+                  var items = [];
+                  Array.from(box.querySelectorAll('a[href*="/post/"]')).forEach(
+                    function(anchor) {
+                      var href = anchor.getAttribute('href') || '';
+                      if (!href) return;
+                      var url = new URL(href, location.origin);
+                      if (url.origin !== location.origin) return;
+                      var match = url.pathname.match(/^\/post\/(film|series)\/(\d+)\//);
+                      if (!match || seen[url.pathname]) return;
+                      var img = anchor.querySelector('img');
+                      var raw = img
+                        ? (img.getAttribute('data-src') || img.getAttribute('src') || '')
+                        : '';
+                      if (!raw || /^data:/i.test(raw)) return;
+                      var art = new URL(raw, location.origin);
+                      if (art.origin !== location.origin) return;
+                      seen[url.pathname] = true;
+                      // The slides carry no alt text, so the title comes from the slug the
+                      // provider already puts in its own content URL.
+                      var slug = decodeURIComponent(url.pathname.split('/')[4] || '')
+                        .replace(/[-_]+/g, ' ')
+                        .replace(/\b[a-z]/g, function(c) { return c.toUpperCase(); })
+                        .trim();
+                      var alt = img ? (img.getAttribute('alt') || '').trim() : '';
+                      items.push({
+                        title: (alt || slug).slice(0, 140),
+                        kind: match[1] === 'series' ? 'SERIES' : 'MOVIE',
+                        contentUrl: url.origin + url.pathname,
+                        // A slide publishes only wide artwork, so it serves as both.
+                        posterUrl: art.href,
+                        backdropUrl: art.href,
+                        summary: ''
+                      });
+                    }
+                  );
+                  return items.slice(0, 14);
+                } catch (_) { return []; }
+              }
               async function recentAccountItems() {
                 function findBox() {
                   var heading = Array.from(
@@ -802,7 +897,8 @@ class CatalogBackgroundSync(
                   all: unique(all).slice(0, 24),
                   movies: unique(movies),
                   series: unique(series),
-                  popularSeries: unique(popularSeries)
+                  popularSeries: unique(popularSeries),
+                  featured: await featuredBanners()
                 };
                 if (accountItems !== null) payload.accountItems = accountItems;
                 AminCatalog.section('filmrooz', JSON.stringify(payload));

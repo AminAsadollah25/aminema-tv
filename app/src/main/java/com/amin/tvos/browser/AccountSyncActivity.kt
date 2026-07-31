@@ -236,7 +236,9 @@ class AccountSyncActivity : ComponentActivity() {
                     return {
                       title: String(item.title || '').slice(0, 140),
                       contentUrl: location.origin + '/medias/' + kind + '/' + item.id,
-                      posterUrl: item.coverLink || item.thumbnailLink || '',
+                      // Portrait artwork for a portrait card: thumbnail is ~0.8:1 while
+                      // cover is ~1.8:1, so taking cover first cropped a wide image badly.
+                      posterUrl: item.thumbnailLink || item.coverLink || '',
                       resumePosition: 0
                     };
                   }

@@ -21,7 +21,10 @@ data class SpotlightItem(
     val title: String,
     val kind: CatalogKind,
     val contentUrl: String,
+    /** Portrait artwork, ~2:3 — see [CatalogItem.posterUrl] on why the two are not swappable. */
     val posterUrl: String = "",
+    /** The provider's own wide key art, ~16:9, when it publishes one. */
+    val backdropUrl: String = "",
     val serviceId: String,
     val serviceName: String = "",
     val summary: String = "",

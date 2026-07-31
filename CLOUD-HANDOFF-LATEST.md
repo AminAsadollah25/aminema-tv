@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Candidate جدید،
-فایل‌های `DEVELOPMENT_LOG_0.15.0.md`، `TEST_REPORT_0.15.0.md` و
-`RELEASE_NOTES_0.15.0.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.15.1.md`، `TEST_REPORT_0.15.1.md` و
+`RELEASE_NOTES_0.15.1.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,18 +21,72 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.15.0 / versionCode 31 — Aminema Spotlight**
-- وضعیت در این لحظه: **منتشرشده و Latest روی GitHub**
-- Commit کد انتشار: `dc39cbc`
-- Tag: `v0.15.0`
-- نسخه عمومی فعلی: **0.15.0 / code 31**
-- Release فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0`
+- نسخه کد: **0.15.1 / versionCode 32 — Cinematic Home**
+- وضعیت در این لحظه: **Candidate نهایی؛ Build و Emulator QA موفق**
+- Commit کد انتشار: پس از Release ثبت شود
+- Tag هدف: `v0.15.1`
+- نسخه عمومی فعلی تا Push نهایی: **0.15.0 / code 31**
+- Release هدف: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.1`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
+
+## 0.15.1 چه چیزی را حل می‌کند
+
+### 1. Home محتوامحور و یک Moment سینمایی
+
+- Service cardهای بزرگ دیگر تصمیم اول کاربر نیستند.
+- `CinematicHero` حداکثر پنج عنوان Canonical از Continue، My Series،
+  تازه‌های ایرانی/خارجی و سریال برگزیده می‌سازد.
+- Hero هر ۱۱ ثانیه با Fade/Depth نرم عوض می‌شود و هنگام Focus/Hover روی
+  دکمه‌ها متوقف می‌ماند.
+- Primary action همان `SpotlightItem` قبلی را باز می‌کند؛ هیچ Browser،
+  Login، Resume یا Direct-play path بازنویسی نشده است.
+- عنوان، سال، نوع، آخرین Episode label، Rating و دوبله/زیرنویس فقط در صورت
+  وجود واقعی نمایش داده می‌شوند؛ Chipها برای 720p حداکثر چهار عددند.
+
+### 2. سلسله‌مراتب جدید Home
+
+- Brand bar کوچک: Mascot، Search، Sync و Settings.
+- Greeting از Header دوخطی بزرگ به Moment یک‌خطی تبدیل شد.
+- Hero کامل داخل First viewport 1080p می‌ماند و ابتدای Rail بعدی را نیز نشان
+  می‌دهد.
+- Continue، My Series، تازه‌های ایرانی، تازه‌های خارجی، برگزیده، Live،
+  Recent و Favorites همان Data/Action قبلی را حفظ کرده‌اند.
+- دو کارت بامزه فیلم ایرانی/خارجی حذف نشدند: در انتهای Home به‌عنوان
+  `ورود مستقیم به سینماها` هستند. فقط اگر Home واقعاً هیچ Hero data نداشته
+  باشد نزدیک بالا با عنوان `از اینجا شروع کن` می‌آیند.
+
+### 3. Motion و Performance
+
+- Header و Hero با Fade/Slide کوتاه وارد می‌شوند.
+- Focus ریموت و Hover موس روی Cardها همان Scale، Lift، Brightness و Z-order
+  ۱۸۰–۱۹۰ms را دارند؛ Border قرمز وجود ندارد.
+- Focus هر کارت Poster/Title، Backdrop همان عنوان را درخواست می‌کند.
+- Dwell برابر ۲۲۰ms مانع Decode هنگام DPAD sweep سریع است؛ Crossfade
+  پس‌زمینه ۷۰۰ms است.
+- Backdrop همچنان نسخه کوچک 96×144 می‌گیرد؛ Railها LazyRow باقی مانده‌اند.
+- Hero Promoهای واقعی Provider هنوز خوانده نمی‌شوند؛ 0.15.5 می‌تواند همان
+  Shell را با Adapter عادی Carousel تغذیه کند.
+
+### 4. فایل‌ها و تست فعلی Candidate
+
+- فایل جدید: `ui/home/CinematicHero.kt`
+- فایل‌های اصلی تغییرکرده: `HomeScreen.kt`، `SmartGreetingHeader.kt`،
+  `CatalogSectionRow.kt`، `CatalogCard.kt` و `TvComponents.kt`
+- `clean testDebugUnitTest lintDebug assembleDebug`: موفق
+- Unit test: ۱۰ pass، failure/error صفر؛ Lint blocking error صفر
+- نصب `adb install -r` روی Android TV 1920×1080: موفق
+- QA بصری: Header/Greeting/Hero کامل، Rail بعدی قابل‌تشخیص و FATAL
+  EXCEPTION صفر
+- APK Candidate: `22,544,296` بایت
+- SHA-256 Candidate:
+  `dacc292ba98cef9d0202f0edab1c485f025b80d6a25b5a8e00907f77c5b7a305`
+- تغییرات 0.15.1 هنوز Commit/Push/Tag/Release نشده‌اند؛ دستور ادامه دقیق در
+  `CLOUD-NEXT-PROMPT.md` است.
 
 ## 0.15.0 چه چیزی را حل می‌کند
 
@@ -102,14 +156,14 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - هیچ Media/Stream URL، Network request، Cookie، Token، Password، Auth header
   یا DRM value خوانده، ذخیره یا Log نمی‌شود.
 
-## صف بعد از پذیرش 0.15.0
+## صف بعد از پذیرش 0.15.1
 
-1. `0.15.1 — Spotlight Series & People`: انتخاب فصل/قسمت، Latest published،
-   Continue صادقانه، کلیک روی کارگردان/بازیگر و Provider filmography، Follow
-   محلی افراد.
-2. `0.15.2 — Cinema Library & Alerts`: View All grid و Alert کم‌مزاحمت برای
-   اثر جدید فرد دنبال‌شده پس از Sync معمول کاتالوگ.
-3. سپس `0.16.0 — Cinematic Home` و Reliability track.
+1. `0.15.2 — Episode Navigator`: انتخاب فصل/قسمت، Latest published و
+   Continue صادقانه.
+2. `0.15.3 — Canonical Library, Dedupe & Smart Search`.
+3. `0.15.4 — My Series`.
+4. `0.15.5 — Cinematic Promo Feed` داخل Hero موجود.
+5. سپس MyMoviz/Best Source/People و Reliability track طبق `ROADMAP.md`.
 
 ## 0.14.6 چه چیزی را حل می‌کند
 
@@ -262,14 +316,14 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 تحلیل کامل MyMoviz، Dedupe، Series Progress، Promo Banner و Geek Mode در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` و نسخه اولویت‌بندی‌شده در `ROADMAP.md` ثبت شد.
 
-1. **0.15.1 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
+1. **0.15.2 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
    `آخرین قسمت منتشرشده` و Progress صادقانه.
-2. **0.15.2 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
+2. **0.15.3 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
    چند SourceVariant؛ پذیرش اولیه با `لیسانسه`؛ Query variant برای
    `spiderman`، `spider man` و `spider-man`.
-3. **0.15.3 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
+3. **0.15.4 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
    Account progress در Providerهایی که شاهد قابل‌اعتماد دارند.
-4. **0.15.4 — Cinematic Promo Banners:** Hero مشترک، توقف روی Focus و
+4. **0.15.5 — Cinematic Promo Feed:** تغذیه Hero موجود، توقف روی Focus و
    Title→Spotlight / Live→Direct.
 5. **Coverage Lab:** گزارش حداقل 100 عنوان پیش از ادعای درصد هم‌پوشانی.
 6. **0.16.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
@@ -290,7 +344,7 @@ Release delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق. ب
 ابتدا KeyCode واقعی Android Box ثبت می‌شود، سپس Short Back = history و Long
 Back/Menu = Home طراحی خواهد شد.
 
-## وضعیت Release
+## آخرین Release عمومی پیش از Candidate 0.15.1
 
 - Commit کد: `dc39cbc`
 - Commit انتشار مستندات 0.15.0: `7a54238`

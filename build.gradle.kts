@@ -5,3 +5,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.20" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20" apply false
 }
+
+val generatedOutputRoot: java.io.File =
+    File(System.getProperty("user.home"), "Library/Caches/AminemaBuild")
+
+allprojects {
+    layout.buildDirectory.set(File(generatedOutputRoot, project.name))
+}

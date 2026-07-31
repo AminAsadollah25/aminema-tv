@@ -54,7 +54,20 @@ data class CatalogItem(
     val title: String,
     val kind: CatalogKind,
     val contentUrl: String,
+    /**
+     * The portrait poster, roughly 2:3 — the shape every card in a rail is built for.
+     *
+     * Both providers publish two separate artworks per title and they are not
+     * interchangeable: the portrait one belongs here, and the wide one in [backdropUrl].
+     * Filling this with the wide artwork is what used to crop a landscape image into a
+     * narrow, magnified strip inside a poster card.
+     */
     val posterUrl: String = "",
+    /**
+     * The provider's own wide key art, roughly 16:9 — what their site puts in its banner
+     * carousel. Empty when a provider does not publish one for this title.
+     */
+    val backdropUrl: String = "",
     val serviceId: String,
     /**
      * Ordinary, spoiler-safe release metadata such as `قسمت ۰۴ فصل سوم`.
@@ -95,6 +108,12 @@ data class CatalogSection(
     val series: List<CatalogItem> = emptyList(),
     /** Provider-curated series; kept separate from release-ordered [series]. */
     val popularSeries: List<CatalogItem> = emptyList(),
+    /**
+     * What the provider itself puts in the banner carousel on its own home page: an
+     * editorial pick rather than anything recency-ordered, and the only list whose items
+     * are guaranteed to carry wide [CatalogItem.backdropUrl] artwork.
+     */
+    val featured: List<CatalogItem> = emptyList(),
     val syncedAt: Long = 0L,
     /** Adapter failure text for this service only; the other row stays usable. */
     val error: String = ""

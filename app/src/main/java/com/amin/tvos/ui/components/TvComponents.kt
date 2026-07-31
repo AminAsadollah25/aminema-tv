@@ -280,7 +280,13 @@ fun RailNavigationControls(
     }
 }
 
-/** Large "My Services" card. */
+/**
+ * Compact provider doorway.
+ *
+ * Services are an escape hatch now, not the main content of Home. Their playful mascot
+ * artwork stays available near the bottom of the page without competing with Continue,
+ * latest titles or the cinematic hero.
+ */
 @Composable
 fun ServiceCard(
     service: StreamingService,
@@ -304,8 +310,8 @@ fun ServiceCard(
         }
     }
     FocusableCard(
-        modifier = Modifier.width(400.dp).height(220.dp),
-        focusedScale = 1.035f,
+        modifier = Modifier.width(286.dp).height(150.dp),
+        focusedScale = 1.045f,
         onClick = onClick,
         onLongClick = onLongClick
     ) {
@@ -353,33 +359,33 @@ fun ServiceCard(
             Column(
                 Modifier
                     .align(Alignment.BottomStart)
-                    .padding(28.dp)
+                    .padding(18.dp)
             ) {
                 if (service.subtitle.isNotBlank()) {
                     Text(
                         service.subtitle.uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = accent
                     )
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(3.dp))
                 }
-                Text(service.name, style = MaterialTheme.typography.headlineMedium)
-                Spacer(Modifier.height(14.dp))
+                Text(service.name, style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(9.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(Color.White.copy(alpha = 0.14f))
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                        .padding(horizontal = 11.dp, vertical = 6.dp)
                 ) {
                     Icon(
                         Icons.Filled.PlayArrow,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(17.dp)
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("ورود", style = MaterialTheme.typography.labelLarge)
+                    Text("ورود مستقیم", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -392,7 +398,8 @@ fun PosterCard(
     item: MovieItem,
     showContinueBadge: Boolean = false,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onFocused: (Boolean) -> Unit = {}
 ) {
     // FilmRooz returns HTML for poster requests without the authenticated WebView
     // cookie, so the shared helper attaches it for same-host images only.
@@ -401,7 +408,8 @@ fun PosterCard(
         modifier = Modifier.width(190.dp),
         focusedScale = 1.06f,
         onClick = onClick,
-        onLongClick = onLongClick
+        onLongClick = onLongClick,
+        onInteractionFocusChanged = onFocused
     ) {
         Column {
             Box(Modifier.fillMaxWidth().height(260.dp)) {
@@ -509,6 +517,7 @@ fun <T> SectionRow(
     title: String,
     items: List<T>,
     key: (T) -> Any = { it.hashCode() },
+    showNavigation: Boolean = true,
     content: @Composable (T) -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -521,7 +530,9 @@ fun <T> SectionRow(
         ) {
             Text(title, style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.weight(1f))
-            RailNavigationControls(listState, items.size)
+            if (showNavigation) {
+                RailNavigationControls(listState, items.size)
+            }
         }
         LazyRow(
             state = listState,
