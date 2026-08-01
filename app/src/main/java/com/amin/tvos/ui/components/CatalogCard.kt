@@ -34,6 +34,7 @@ import coil.request.ImageRequest
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.ui.theme.SurfaceElevated
+import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
 
 /**
@@ -96,13 +97,13 @@ fun CatalogCard(
 ) {
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     FocusableCard(
-        modifier = Modifier.width(190.dp),
+        modifier = Modifier.width(180.dp),
         focusedScale = 1.06f,
         onClick = onClick,
         onInteractionFocusChanged = onFocused
-    ) {
-        Column {
-            Box(Modifier.fillMaxWidth().height(260.dp)) {
+    ) { focused ->
+        Column(Modifier.padding(bottom = 8.dp)) {
+            Box(Modifier.fillMaxWidth().height(270.dp)) {
                 if (item.posterUrl.isNotBlank()) {
                     AsyncImage(
                         model = posterModel,
@@ -147,11 +148,12 @@ fun CatalogCard(
             }
             Text(
                 item.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                minLines = 2,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                maxLines = 1,
+                minLines = 1,
+                color = if (focused) Color.White else TextPrimary,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 2.dp)
             )
             Box(
                 modifier = Modifier
@@ -164,7 +166,7 @@ fun CatalogCard(
                     Text(
                         item.episodeLabel,
                         style = MaterialTheme.typography.labelLarge,
-                        color = TextSecondary,
+                        color = if (focused) Color.White.copy(alpha = 0.8f) else TextSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

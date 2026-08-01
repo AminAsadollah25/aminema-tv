@@ -46,7 +46,6 @@ fun CinematicBackground(
                 val request = remember(url, pageUrl) {
                     ImageRequest.Builder(context)
                         .data(url)
-                        .size(96, 144)
                         .crossfade(true)
                         .apply {
                             val posterHost = runCatching { Uri.parse(url).host }.getOrNull()

@@ -47,6 +47,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         catalogRepo.refreshingServices
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
+    val titleMetadata: StateFlow<Map<String, com.amin.tvos.data.model.TitleMetadata>> =
+        catalogRepo.titleMetadata
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
     fun section(serviceId: String): CatalogSection? =
         catalogSections.value.firstOrNull { it.serviceId == serviceId }
 

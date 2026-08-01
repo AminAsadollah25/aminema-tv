@@ -2,6 +2,11 @@ package com.amin.tvos.ui.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +15,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
@@ -31,6 +37,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,12 +49,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
@@ -150,25 +160,18 @@ private fun HeroSlideContent(
     // The wide key art the provider publishes for its own banner carousel is the right
     // shape for a hero; the portrait poster is the fallback when a title has none.
     val heroArtUrl = item.backdropUrl.ifBlank { item.posterUrl }
+    val backdropModel = authenticatedPosterModel(heroArtUrl, item.contentUrl)
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     val shape = RoundedCornerShape(30.dp)
 
-    // The hero takes its colour from the film itself, so the whole card shifts palette as
-    // the carousel moves instead of every title sitting on the same grey slab.
     val accent = rememberArtworkAccent(
         posterUrl = heroArtUrl,
         pageUrl = item.contentUrl,
         fallback = Color(0xFF23202B)
     )
 
-    // Two strengths of the film's own colour.
-    //
-    // The text sits on the darker one, because white type has to stay readable — that is the
-    // one real constraint on how colourful this can get. Approaching the poster the colour
-    // lightens towards the artwork's own tone, so the two meet at nearly the same value and
-    // the join disappears without touching the poster itself.
-    val themeDeep = lerp(Color(0xFF0A0A0F), accent, 0.55f)
-    val themeNearArtwork = lerp(Color(0xFF0A0A0F), accent, 0.95f)
+    val themeDeep = lerp(Color(0xFF0A0A0F), accent, 0.65f)
+    val themeNearArtwork = lerp(Color(0xFF0A0A0F), accent, 0.98f)
 
     Box(
         modifier = Modifier
@@ -177,40 +180,87 @@ private fun HeroSlideContent(
             .clip(shape)
             .background(themeDeep)
     ) {
-        // Order matters here. The poster is drawn first, underneath, and a single wash is
-        // then drawn across the *whole* card on top of it. That is what removes the hard
-        // vertical seam: when the poster carried its own fade, the fade ended where the
-        // poster ended, so the card's colour and the poster's colour met at a visible line.
-        // One continuous gradient spanning both means the poster has no edge of its own —
-        // it simply dissolves into the film's colour somewhere around the middle.
+        // 1. Full-bleed background from the wide backdrop
+        if (heroArtUrl.isNotBlank()) {
+            val isFallback = item.backdropUrl.isBlank() && item.posterUrl.isNotBlank()
+            val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "kenBurns")
+            val scale by infiniteTransition.animateFloat(
+                initialValue = 1.0f,
+                targetValue = 1.05f,
+                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                    animation = tween(25000, easing = androidx.compose.animation.core.LinearEasing),
+                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                ),
+                label = "backdropScale"
+            )
+            AsyncImage(
+                model = backdropModel,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (isFallback) Modifier.blur(48.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded) else Modifier)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+            )
+        }
+
+        val isRtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+
+        // 2. Gradients for text readability and cinematic depth
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer { scaleX = if (isRtl) -1f else 1f }
+                .background(
+                    Brush.horizontalGradient(
+                        0f to themeDeep.copy(alpha = 1.0f),
+                        0.45f to themeDeep.copy(alpha = 0.98f),
+                        0.75f to themeDeep.copy(alpha = 0.6f),
+                        1f to Color.Transparent
+                    )
+                )
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0f to themeDeep.copy(alpha = 0.4f),
+                        0.3f to Color.Transparent,
+                        0.65f to Color.Transparent,
+                        1f to Color.Black.copy(alpha = 0.9f)
+                    )
+                )
+        )
+
+        // 3. Right side: Full height portrait poster
         if (item.posterUrl.isNotBlank()) {
-            Box(
-                Modifier
-                    .align(AbsoluteAlignment.CenterRight)
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
                     .fillMaxHeight()
                     .aspectRatio(2f / 3f)
-                    // Offscreen compositing is required for the mask below to apply to this
-                    // layer rather than to everything already painted on the card.
                     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                     .drawWithContent {
                         drawContent()
-                        // The poster's own pixels are erased towards its left edge. Tinting
-                        // over the poster could never hide the seam — a translucent wash just
-                        // colours both sides of a hard boundary. Making the image itself
-                        // transparent is what actually dissolves it into the card.
-                        // Only the outermost sliver of the poster is softened — just enough
-                        // that it has no razor edge. Fading deep into the poster did hide the
-                        // seam, but it also washed the artwork out, and the poster has to stay
-                        // fully readable. Matching the card's colour to the poster's own tone
-                        // is what hides the join now, not erasing the poster.
+                        val isRtlDraw = layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl
+                        val start = if (isRtlDraw) size.width else 0f
+                        val end = if (isRtlDraw) 0f else size.width
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 0f to Color.Transparent,
-                                0.16f to Color.Black
+                                0.25f to Color.Black,
+                                1f to Color.Black,
+                                startX = start,
+                                endX = end
                             ),
                             blendMode = BlendMode.DstIn
                         )
-                    }
+                    },
+                color = Color.Transparent
             ) {
                 AsyncImage(
                     model = posterModel,
@@ -221,98 +271,75 @@ private fun HeroSlideContent(
             }
         }
 
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    // Spreads the film's colour from the text side outwards, lightening into
-                    // the artwork's own tone as it approaches it, and going fully clear just
-                    // before the poster starts so the poster is never tinted or dimmed.
-                    // A long ramp starting around the middle. Lightening over a short distance
-                    // produced a visible bright band next to the poster; spread across half
-                    // the card it reads as the artwork's colour diffusing outwards instead.
-                    Brush.horizontalGradient(
-                        0f to themeDeep,
-                        0.28f to themeDeep,
-                        0.50f to lerp(themeDeep, themeNearArtwork, 0.38f),
-                        0.66f to lerp(themeDeep, themeNearArtwork, 0.76f),
-                        0.75f to themeNearArtwork,
-                        0.83f to Color.Transparent
-                    )
-                )
-        )
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to Color.White.copy(alpha = 0.05f),
-                        0.5f to Color.Transparent,
-                        1f to Color.Black.copy(alpha = 0.42f)
-                    )
-                )
-        )
-
+        // 4. Left/Start side: The fixed-skeleton text block
         Column(
-            verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .align(AbsoluteAlignment.CenterLeft)
-                .fillMaxWidth(0.60f)
-                .padding(start = 36.dp, end = 24.dp, top = 26.dp, bottom = 26.dp)
+                .align(Alignment.CenterStart)
+                .fillMaxWidth(0.55f)
+                .fillMaxHeight()
+                .padding(start = 56.dp, top = 44.dp, bottom = 40.dp)
         ) {
+            // Eyebrow
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Filled.AutoAwesome,
                     contentDescription = null,
-                    tint = CinemaRed,
-                    modifier = Modifier.size(18.dp)
+                    tint = CinemaRed.copy(alpha = 0.9f),
+                    modifier = Modifier.size(16.dp)
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
                 Text(
                     slide.eyebrow,
                     style = MaterialTheme.typography.labelLarge,
-                    lineHeight = 20.sp,
-                    color = CinemaRed
+                    fontSize = 14.sp,
+                    letterSpacing = 1.2.sp,
+                    color = CinemaRed.copy(alpha = 0.9f)
                 )
             }
+            Spacer(Modifier.height(8.dp))
 
-            // Every block below reserves its space whether or not it has content. The
-            // providers describe their titles very unevenly — some carry a year, rating and
-            // episode label, some only a kind — and letting each block collapse made the
-            // buttons land at a different height on every slide, so the whole card twitched
-            // as the carousel turned.
-            Spacer(Modifier.height(10.dp))
-            Box(Modifier.height(92.dp), contentAlignment = Alignment.CenterStart) {
-                Text(
-                    heroTitle(item),
-                    color = Color.White,
-                    fontSize = 38.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 44.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+            // Title
+            Text(
+                heroTitle(item),
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                lineHeight = 56.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.8f),
+                        offset = Offset(0f, 8f),
+                        blurRadius = 24f
+                    )
                 )
-            }
+            )
+            Spacer(Modifier.height(14.dp))
 
-            Box(Modifier.height(36.dp), contentAlignment = Alignment.CenterStart) {
-                HeroMetadata(item)
-            }
+            // Metadata Chips
+            HeroMetadata(item)
+            Spacer(Modifier.height(18.dp))
 
-            Box(Modifier.height(56.dp), contentAlignment = Alignment.TopStart) {
-                Text(
-                    item.summary,
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 24.sp,
-                    color = Color.White.copy(alpha = 0.78f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            // Summary
+            Text(
+                item.summary.ifBlank { "بدون توضیحات." },
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 16.sp,
+                lineHeight = 28.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            )
 
+            // Dynamic space guarantees the buttons stay anchored to the bottom
+            Spacer(Modifier.weight(1f))
+
+            // Progress bar (if any) is squeezed above the buttons
             if (item.duration > 0L && item.resumePosition > 0L) {
                 val progress = (item.resumePosition.toFloat() / item.duration.toFloat())
                     .coerceIn(0.02f, 1f)
-                Spacer(Modifier.height(14.dp))
                 Box(
                     Modifier
                         .width(280.dp)
@@ -327,53 +354,75 @@ private fun HeroSlideContent(
                             .background(CinemaRed)
                     )
                 }
+                Spacer(Modifier.height(12.dp))
             }
 
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Buttons
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Primary Button
                 FocusableCard(
-                    shape = RoundedCornerShape(50),
-                    focusedScale = 1.035f,
+                    shape = RoundedCornerShape(percent = 50), // Pill shaped
+                    focusedScale = 1.05f,
                     onClick = onOpen,
                     onInteractionFocusChanged = onInteractionChanged
-                ) {
+                ) { focused ->
+                    val bgColor = when {
+                        focused -> Color.White
+                        else -> Color.White.copy(alpha = 0.15f)
+                    }
+                    val contentColor = if (focused) Color.Black else Color.White
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .background(CinemaRed)
-                            .padding(horizontal = 22.dp, vertical = 12.dp)
+                            .background(bgColor)
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
                     ) {
                         Icon(
                             Icons.Filled.PlayArrow,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = contentColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
                             slide.actionLabel,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.White
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor
                         )
                     }
                 }
 
+                // Secondary Button
                 if (slideCount > 1) {
                     FocusableCard(
-                        shape = RoundedCornerShape(50),
-                        focusedScale = 1.035f,
+                        shape = RoundedCornerShape(percent = 50), // Pill shaped
+                        focusedScale = 1.05f,
                         onClick = onNext,
                         onInteractionFocusChanged = onInteractionChanged
-                    ) {
+                    ) { focused ->
+                        val bgColor = when {
+                            focused -> Color.White
+                            else -> Color.White.copy(alpha = 0.08f)
+                        }
+                        val contentColor = if (focused) Color.Black else Color.White
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
+                            modifier = Modifier
+                                .background(bgColor)
+                                .padding(horizontal = 24.dp, vertical = 12.dp)
                         ) {
-                            Text("بعدی", style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                "اسلاید بعدی",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = contentColor
+                            )
                             Spacer(Modifier.width(8.dp))
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
+                                tint = contentColor,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -382,6 +431,7 @@ private fun HeroSlideContent(
             }
         }
 
+        // Pagination dots
         if (slideCount > 1) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -411,11 +461,11 @@ private fun HeroSlideContent(
         Box(
             Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth(0.68f)
+                .fillMaxWidth()
                 .height(1.dp)
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color.Transparent, CinemaRed.copy(alpha = 0.45f), Color.Transparent)
+                        listOf(Color.Transparent, CinemaRed.copy(alpha = 0.35f), Color.Transparent)
                     )
                 )
         )
@@ -453,20 +503,22 @@ private fun HeroMetadata(item: SpotlightItem) {
             val isDub = label == "دوبله فارسی"
             Box(
                 Modifier
-                    .clip(RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(6.dp))
                     .background(
-                        if (isDub) {
-                            Color(0xFF087A4B).copy(alpha = 0.92f)
-                        } else {
-                            SurfaceDark.copy(alpha = 0.86f)
-                        }
+                        if (isDub) Color(0xFF087A4B).copy(alpha = 0.92f)
+                        else Color.White.copy(alpha = 0.12f)
                     )
-                    .padding(horizontal = 11.dp, vertical = 6.dp)
+                    .border(
+                        BorderStroke(0.5.dp, if (isDub) Color.Transparent else Color.White.copy(alpha = 0.3f)),
+                        RoundedCornerShape(6.dp)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
                     label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isDub) Color.White else TextSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.9f),
                     maxLines = 1
                 )
             }

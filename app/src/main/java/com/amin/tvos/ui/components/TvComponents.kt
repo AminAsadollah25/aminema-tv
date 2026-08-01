@@ -6,9 +6,12 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.horizontalScroll
@@ -57,6 +60,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -108,7 +114,10 @@ fun FocusableCard(
             focused -> focusedScale
             else -> 1f
         },
-        animationSpec = tween(190, easing = FastOutSlowInEasing),
+        animationSpec = spring(
+            dampingRatio = 0.65f, // Bouncy
+            stiffness = 250f
+        ),
         label = "focusScale"
     )
     val containerColor by animateColorAsState(
@@ -117,8 +126,11 @@ fun FocusableCard(
         label = "focusBrightness"
     )
     val elevation by animateDpAsState(
-        targetValue = if (focused) 18.dp else 2.dp,
-        animationSpec = tween(190, easing = FastOutSlowInEasing),
+        targetValue = if (focused) 28.dp else 2.dp,
+        animationSpec = spring(
+            dampingRatio = 0.7f,
+            stiffness = 200f
+        ),
         label = "focusElevation"
     )
     Surface(
@@ -126,24 +138,12 @@ fun FocusableCard(
         contentColor = TextPrimary,
         shape = shape,
         shadowElevation = elevation,
+        border = if (focused) androidx.compose.foundation.BorderStroke(2.dp, Color.White.copy(alpha = 0.8f)) else null,
         modifier = modifier
             .alpha(if (enabled) 1f else 0.34f)
             .zIndex(if (focused) 2f else 0f)
             .scale(scale)
             .onFocusChanged { dpadFocused = it.isFocused || it.hasFocus }
-            .pointerInput(enabled) {
-                awaitPointerEventScope {
-                    while (true) {
-                        when (awaitPointerEvent().type) {
-                            PointerEventType.Enter -> {
-                                if (enabled) pointerHovered = true
-                            }
-                            PointerEventType.Exit -> pointerHovered = false
-                            else -> Unit
-                        }
-                    }
-                }
-            }
             .hoverable(interactionSource)
             .combinedClickable(
                 enabled = enabled,

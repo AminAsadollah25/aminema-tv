@@ -89,6 +89,7 @@ fun HomeScreen(
     val mySeries by viewModel.mySeries.collectAsState()
     val catalogSections by viewModel.catalogSections.collectAsState()
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
+    val titleMetadata by viewModel.titleMetadata.collectAsState()
     val iranianFilter by viewModel.iranianFilter.collectAsState()
     val internationalFilter by viewModel.internationalFilter.collectAsState()
     val catalogItems = remember(catalogSections) {
@@ -120,52 +121,54 @@ fun HomeScreen(
     fun openSpotlight(item: SpotlightItem) =
         context.startActivity(SpotlightActivity.intent(context, item))
 
-    fun spotlightForCatalog(item: CatalogItem): SpotlightItem = SpotlightItem(
-        title = item.title,
-        kind = item.kind,
-        contentUrl = item.contentUrl,
-        posterUrl = item.posterUrl,
-        backdropUrl = item.backdropUrl,
-        serviceId = item.serviceId,
-        serviceName = serviceName(item.serviceId),
-        summary = item.summary,
-        year = item.year,
-        genres = item.genres,
-        rating = item.rating,
-        runtime = item.runtime,
-        episodeLabel = item.episodeLabel,
-        country = item.country,
-        language = item.language,
-        hasPersianDub = item.hasPersianDub,
-        hasPersianSubtitle = item.hasPersianSubtitle,
-        directors = item.directors,
-        cast = item.cast,
-        // Films keep the existing one-step site resolver after the user presses Watch.
-        // Series stop on the provider detail page until native episode selection ships.
-        directPlay = item.kind == CatalogKind.MOVIE
-    )
-
-    fun spotlightForMovie(item: MovieItem): SpotlightItem {
-        val metadata = previewFor(item)
+    fun spotlightForCatalog(item: CatalogItem): SpotlightItem {
+        val meta = titleMetadata[ContentMetadataPolicy.canonicalContentUrl(item.contentUrl)]
         return SpotlightItem(
             title = item.title,
-            kind = metadata.kind,
+            kind = item.kind,
+            contentUrl = item.contentUrl,
+            posterUrl = item.posterUrl,
+            backdropUrl = item.backdropUrl,
+            serviceId = item.serviceId,
+            serviceName = serviceName(item.serviceId),
+            summary = meta?.summary?.takeIf { it.isNotBlank() } ?: item.summary,
+            year = meta?.year?.takeIf { it.isNotBlank() } ?: item.year,
+            genres = meta?.genres?.takeIf { it.isNotEmpty() } ?: item.genres,
+            rating = meta?.rating?.takeIf { it.isNotBlank() } ?: item.rating,
+            runtime = meta?.runtime?.takeIf { it.isNotBlank() } ?: item.runtime,
+            episodeLabel = item.episodeLabel,
+            country = meta?.country?.takeIf { it.isNotBlank() } ?: item.country,
+            language = meta?.language?.takeIf { it.isNotBlank() } ?: item.language,
+            hasPersianDub = meta?.hasPersianDub ?: item.hasPersianDub,
+            hasPersianSubtitle = meta?.hasPersianSubtitle ?: item.hasPersianSubtitle,
+            directors = meta?.directors?.takeIf { it.isNotEmpty() } ?: item.directors,
+            cast = meta?.cast?.takeIf { it.isNotEmpty() } ?: item.cast,
+            directPlay = item.kind == CatalogKind.MOVIE
+        )
+    }
+
+    fun spotlightForMovie(item: MovieItem): SpotlightItem {
+        val baseMeta = previewFor(item)
+        val fetchedMeta = titleMetadata[ContentMetadataPolicy.canonicalContentUrl(item.url)]
+        return SpotlightItem(
+            title = item.title,
+            kind = baseMeta.kind,
             contentUrl = item.url,
-            posterUrl = item.posterUrl.ifBlank { metadata.posterUrl },
+            posterUrl = item.posterUrl.ifBlank { baseMeta.posterUrl },
             serviceId = item.serviceId,
             serviceName = item.serviceName.ifBlank { serviceName(item.serviceId) },
-            summary = metadata.summary,
-            year = metadata.year,
-            genres = metadata.genres,
-            rating = metadata.rating,
-            runtime = metadata.runtime,
-            episodeLabel = metadata.episodeLabel,
-            country = metadata.country,
-            language = metadata.language,
-            hasPersianDub = metadata.hasPersianDub,
-            hasPersianSubtitle = metadata.hasPersianSubtitle,
-            directors = metadata.directors,
-            cast = metadata.cast,
+            summary = fetchedMeta?.summary?.takeIf { it.isNotBlank() } ?: baseMeta.summary,
+            year = fetchedMeta?.year?.takeIf { it.isNotBlank() } ?: baseMeta.year,
+            genres = fetchedMeta?.genres?.takeIf { it.isNotEmpty() } ?: baseMeta.genres,
+            rating = fetchedMeta?.rating?.takeIf { it.isNotBlank() } ?: baseMeta.rating,
+            runtime = fetchedMeta?.runtime?.takeIf { it.isNotBlank() } ?: baseMeta.runtime,
+            episodeLabel = baseMeta.episodeLabel,
+            country = fetchedMeta?.country?.takeIf { it.isNotBlank() } ?: baseMeta.country,
+            language = fetchedMeta?.language?.takeIf { it.isNotBlank() } ?: baseMeta.language,
+            hasPersianDub = fetchedMeta?.hasPersianDub ?: baseMeta.hasPersianDub,
+            hasPersianSubtitle = fetchedMeta?.hasPersianSubtitle ?: baseMeta.hasPersianSubtitle,
+            directors = fetchedMeta?.directors?.takeIf { it.isNotEmpty() } ?: baseMeta.directors,
+            cast = fetchedMeta?.cast?.takeIf { it.isNotEmpty() } ?: baseMeta.cast,
             primaryAction = if (item.resumePosition > 0L) {
                 SpotlightAction.CONTINUE
             } else {
@@ -173,7 +176,7 @@ fun HomeScreen(
             },
             resumePosition = item.resumePosition,
             duration = item.duration,
-            directPlay = metadata.kind == CatalogKind.MOVIE
+            directPlay = baseMeta.kind == CatalogKind.MOVIE
         )
     }
 
@@ -416,6 +419,8 @@ fun HomeScreen(
         heroEntered = true
     }
 
+    var activeLoader by remember { mutableStateOf<com.amin.tvos.ui.spotlight.SpotlightMetadataLoader?>(null) }
+
     Box(Modifier.fillMaxSize()) {
     CinematicBackground(posterUrl = visibleBackdrop.first, pageUrl = visibleBackdrop.second)
 
@@ -553,10 +558,47 @@ fun HomeScreen(
         ) {
             CinematicHero(
                 slides = heroSlides,
-                onOpen = { slide -> openSpotlight(slide.item) },
+                onOpen = { slide ->
+                    if (slide.item.primaryAction == SpotlightAction.CONTINUE) {
+                        context.startActivity(
+                            BrowserActivity.intent(
+                                context = context,
+                                serviceId = slide.item.serviceId,
+                                url = slide.item.browserStartUrl.ifBlank { slide.item.contentUrl },
+                                resumePosition = slide.item.resumePosition,
+                                contentUrl = slide.item.contentUrl,
+                                contentTitle = slide.item.title,
+                                contentPoster = slide.item.posterUrl,
+                                autoResume = slide.item.autoResume,
+                                directPlay = slide.item.directPlay,
+                                resumeStrategyOverride = slide.item.resumeStrategy,
+                                actionButtonTextPatterns = slide.item.actionButtonTextPatterns
+                            )
+                        )
+                    } else {
+                        openSpotlight(slide.item)
+                    }
+                },
                 onVisibleSlideChanged = { slide ->
                     if (heroOwnsBackdrop) {
                         previewBackdrop(slide.item.posterUrl, slide.item.contentUrl)
+                    }
+                    val url = slide.item.contentUrl
+                    val canonical = ContentMetadataPolicy.canonicalContentUrl(url)
+                    // If the current slide's summary is completely blank and we don't have it cached, fetch it
+                    if (slide.item.summary.isBlank() && titleMetadata[canonical] == null) {
+                        val app = context.applicationContext as com.amin.tvos.AminTvApp
+                        activeLoader?.destroy()
+                        activeLoader = com.amin.tvos.ui.spotlight.SpotlightMetadataLoader(
+                            activity = context as androidx.activity.ComponentActivity,
+                            app = app,
+                            onLoaded = { meta ->
+                                coroutineScope.launch {
+                                    app.catalogRepository.saveTitleMetadata(meta)
+                                }
+                            },
+                            onFailed = {}
+                        ).apply { load(slide.item) }
                     }
                 },
                 onHeroFocused = { focused -> if (focused) heroOwnsBackdrop = true }
@@ -609,7 +651,24 @@ fun HomeScreen(
                     PosterCard(
                         item = item,
                         showContinueBadge = true,
-                        onClick = { openSpotlight(spotlightForPlayback(session)) },
+                        onClick = {
+                            val spotlightItem = spotlightForPlayback(session)
+                            context.startActivity(
+                                BrowserActivity.intent(
+                                    context = context,
+                                    serviceId = spotlightItem.serviceId,
+                                    url = spotlightItem.browserStartUrl.ifBlank { spotlightItem.contentUrl },
+                                    resumePosition = spotlightItem.resumePosition,
+                                    contentUrl = spotlightItem.contentUrl,
+                                    contentTitle = spotlightItem.title,
+                                    contentPoster = spotlightItem.posterUrl,
+                                    autoResume = spotlightItem.autoResume,
+                                    directPlay = spotlightItem.directPlay,
+                                    resumeStrategyOverride = spotlightItem.resumeStrategy,
+                                    actionButtonTextPatterns = spotlightItem.actionButtonTextPatterns
+                                )
+                            )
+                        },
                         onLongClick = { viewModel.toggleFavorite(item.id) },
                         onFocused = { focused ->
                             if (focused) previewFromRail(item.posterUrl, item.url)

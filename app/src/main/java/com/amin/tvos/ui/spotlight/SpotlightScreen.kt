@@ -30,8 +30,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -60,8 +63,24 @@ import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceElevated
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.material3.Surface
 import kotlinx.coroutines.delay
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SpotlightScreen(
@@ -77,31 +96,103 @@ fun SpotlightScreen(
     val primaryFocus = remember { FocusRequester() }
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
 
+    val contentVisibleState = remember { MutableTransitionState(false) }
+
     LaunchedEffect(item.contentUrl) {
-        delay(220L)
+        delay(150L)
+        contentVisibleState.targetState = true
+        delay(100L)
         primaryFocus.requestFocus()
     }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        val heroArtUrl = item.backdropUrl.ifBlank { item.posterUrl }
+        val backdropModel = authenticatedPosterModel(heroArtUrl, item.contentUrl)
+
         Box(Modifier.fillMaxSize().background(Ink)) {
-            CinematicBackground(
-                posterUrl = item.posterUrl,
-                pageUrl = item.contentUrl
-            )
-            // Spotlight uses a stronger side fade than Home: the information block remains
-            // crisp even when the source only provides a bright portrait poster.
+            // 1. Full-bleed background from the wide backdrop with Ken Burns effect
+            if (heroArtUrl.isNotBlank()) {
+                val isFallback = item.backdropUrl.isBlank() && item.posterUrl.isNotBlank()
+                val infiniteTransition = rememberInfiniteTransition(label = "kenBurnsSpotlight")
+                val scale by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 1.05f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(25000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "backdropScale"
+                )
+                AsyncImage(
+                    model = backdropModel,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(if (isFallback) Modifier.blur(48.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded) else Modifier)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                )
+            }
+
+            // 2. Gradients for text readability and cinematic depth (RTL: Text is on the left)
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(
                         Brush.horizontalGradient(
-                            0f to Ink.copy(alpha = 0.98f),
-                            0.62f to Ink.copy(alpha = 0.68f),
-                            1f to Ink.copy(alpha = 0.20f)
+                            0f to Ink.copy(alpha = 0.95f),
+                            0.55f to Ink.copy(alpha = 0.85f),
+                            0.85f to Ink.copy(alpha = 0.4f),
+                            1f to Color.Transparent
+                        )
+                    )
+            )
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.7f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = 0.85f)
                         )
                     )
             )
 
+            // 3. Right side: Full height portrait poster
+            if (item.posterUrl.isNotBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart) // CenterStart in RTL means Right side
+                        .fillMaxHeight()
+                        .aspectRatio(2f / 3f)
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    0f to Color.Transparent,
+                                    0.25f to Color.Black,
+                                    1f to Color.Black
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                        },
+                    color = Color.Transparent
+                ) {
+                    AsyncImage(
+                        model = posterModel,
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            // 4. Back button
             FocusableCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -120,68 +211,27 @@ fun SpotlightScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 64.dp, end = 72.dp, top = 42.dp, bottom = 42.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // 5. Left side: Text, Metadata, Synopsis, Buttons
+            AnimatedVisibility(
+                visibleState = contentVisibleState,
+                enter = fadeIn(tween(800)) + slideInHorizontally(
+                    tween(800, easing = FastOutSlowInEasing),
+                    initialOffsetX = { it / 10 }
+                ),
+                modifier = Modifier.fillMaxSize()
             ) {
-                // In RTL the first child sits on the right: the poster anchors the page
-                // while all decision-making controls stay in the large left content area.
                 Box(
                     modifier = Modifier
-                        .width(300.dp)
-                        .fillMaxHeight(0.74f)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(SurfaceElevated)
+                        .fillMaxSize()
+                        .padding(start = 72.dp, end = 64.dp, top = 42.dp, bottom = 42.dp)
                 ) {
-                    if (item.posterUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = posterModel,
-                            contentDescription = item.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(Color(0xFF292934), Ink)
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Filled.PlayArrow,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                                modifier = Modifier.size(78.dp)
-                            )
-                        }
-                    }
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(90.dp)
-                            .align(Alignment.BottomCenter)
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.74f))
-                                )
-                            )
-                    )
-                }
-
-                Spacer(Modifier.width(54.dp))
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 12.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(0.55f) // Take up 55% of the screen width
+                            .align(Alignment.CenterEnd) // CenterEnd in RTL means Left side
+                            .padding(top = 12.dp),
+                        horizontalAlignment = Alignment.Start // Start in RTL means Right-aligned text
+                    ) {
                     // Everything descriptive lives in this flexible block. A long title,
                     // wrapped metadata chips, a resume bar, a synopsis and a credits list
                     // can together outgrow a 1080p screen; when they do, this block gives
@@ -327,11 +377,12 @@ fun SpotlightScreen(
                             },
                             onClick = onToggleFavorite
                         )
-                    }
                 }
+            }
             }
         }
     }
+}
 }
 
 @Composable
@@ -453,25 +504,25 @@ private fun SpotlightButton(
                 .fillMaxHeight()
                 .background(
                     when {
-                        primary && focused -> Color(0xFFFF2631)
-                        primary -> CinemaRed
-                        focused -> Color.White
-                        else -> Color.White.copy(alpha = 0.90f)
+                        primary && focused -> CinemaRed
+                        primary -> Color.White.copy(alpha = 0.15f)
+                        focused -> Color.White.copy(alpha = 0.85f)
+                        else -> Color.White.copy(alpha = 0.08f)
                     },
-                    RoundedCornerShape(16.dp)
+                    RoundedCornerShape(50)
                 )
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 26.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CompositionLocalProvider(
                 androidx.compose.material3.LocalContentColor provides
-                    if (primary) Color.White else Ink
+                    if (primary && focused) Color.White else if (primary) Color.White else if (focused) Ink else Color.White
             ) {
                 icon()
-                Spacer(Modifier.width(9.dp))
+                Spacer(Modifier.width(12.dp))
                 Text(
                     text,
-                    color = if (primary) Color.White else Ink,
+                    color = if (primary && focused) Color.White else if (primary) Color.White else if (focused) Ink else Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

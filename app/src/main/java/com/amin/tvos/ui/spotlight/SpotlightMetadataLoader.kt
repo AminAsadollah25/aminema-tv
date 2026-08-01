@@ -352,12 +352,19 @@ class SpotlightMetadataLoader(
                 var visible = document.querySelector(
                   '.text-justify.mt-2.p-2,.postExcerpt,.excerpt,.summary,' +
                   '[class*="synopsis" i],[class*="plot" i],main [class*="summary" i],' +
-                  'main [class*="description" i]'
+                  'main [class*="description" i],.story,.movie-story'
                 );
                 if (visible) candidates.unshift(visible.textContent);
+                
+                if (!candidates.find(Boolean)) {
+                   var paragraphs = Array.from(document.querySelectorAll('article p, main p'));
+                   var longestP = paragraphs.sort(function(a, b) { return clean(b.textContent).length - clean(a.textContent).length; })[0];
+                   if (longestP) candidates.push(longestP.textContent);
+                }
+
                 return clean(candidates.find(function(value) {
                   var text = clean(value);
-                  return text.length >= 35 &&
+                  return text.length >= 10 &&
                     !/تماشای آنلاین فیلم و سریال|دانلود فیلم و سریال رایگان/i.test(text);
                 }) || '').slice(0, 520);
               }
