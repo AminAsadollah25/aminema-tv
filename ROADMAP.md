@@ -1,9 +1,10 @@
 # نقشه توسعه Aminema
 
-نسخه عمومی فعلی `0.15.1 / code 32 — Cinematic Home` است؛ روی GitHub
-به‌عنوان Latest منتشر و Asset دانلودشده با SHA رسمی راستی‌آزمایی شده است.
-مرجع نسخه فایل‌های `DEVELOPMENT_LOG_0.15.1.md`،
-`TEST_REPORT_0.15.1.md` و `RELEASE_NOTES_0.15.1.md` است.
+Candidate فعلی `0.16.2 / code 34 — Cinematic Hero, Complete Metadata & Search Polish` است.
+Build و QA امولاتور موفق‌اند و مرجع آن فایل‌های
+`DEVELOPMENT_LOG_0.16.2.md`، `TEST_REPORT_0.16.2.md` و
+`RELEASE_NOTES_0.16.2.md` است. GitHub Latest فعلاً `v0.16.1` است اما Asset
+دانلود ندارد؛ انتشار 0.16.2 باید APK و SHA-256 را با هم جایگزین کند.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -57,12 +58,24 @@
 - Focus ریموت و Hover موس همان Scale، Lift و Brightness نرم را دارند؛
   Border قرمز برنگشته است.
 
+## 0.16.0 تا 0.16.2 — Hero، Artwork و Search Polish
+
+- 0.16.0 جداسازی قطعی پوستر عمودی و تصویر عریض، Hero تازه و ردیف‌های بنر
+  برگزیده را اضافه کرد.
+- 0.16.1 ظاهر Hero/Spotlight و fallback خلاصه را اصلاح کرد، اما مشخصات داخلی
+  APK به‌اشتباه روی 0.16.0/code 33 باقی ماند و GitHub Release آن Asset ندارد.
+- 0.16.2 شناسه داخلی را به code 34 می‌برد، Decode و Motion اضافه Hero را حذف
+  می‌کند، پوستر واقعی منتخب را از بنر پس‌زمینه جدا می‌کند و RTL کامل Hero را
+  می‌سازد. خلاصه سریال‌های ایرانی/خارجی با Merge غیرمخرب بازیابی می‌شود و
+  Spotlight فقط فیلدهای خالی را با Wikipedia/Wikidata معتبر و نام فارسی عوامل
+  تکمیل می‌کند. بنرها خواناتر و Back جستجو قابل‌دیدن و مطمئن شده‌اند.
+
 ## صف نسخه‌های قطعی بعدی — اولویت بازطراحی‌شده پس از بررسی منبع سوم
 
 جزئیات Probe و تصمیم معماری MyMoviz در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` ثبت شده است.
 
-### 0.15.2 — Episode Navigator
+### 0.16.3 — Episode Navigator
 
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
@@ -73,7 +86,7 @@
 - واژه `دیده‌نشده` فقط با Evidence دقیق؛ در غیر این صورت
   `قسمت جدید از آخرین وضعیت ثبت‌شده`.
 
-### 0.15.3 — Canonical Library, Dedupe & Smart Search
+### 0.16.4 — Canonical Library, Dedupe & Smart Search
 
 - مدل `CanonicalMedia + SourceVariant`؛ یک عنوان، یک کارت، چند نسخه.
 - حذف تکراری ParsiFlix/FilmRooz با پذیرش اولیه Query فارسی `لیسانسه`.
@@ -84,7 +97,7 @@
 - انتقال Continue/Favorite/Recent از Provider card به CanonicalMedia.
 - بخش کم‌حجم `نسخه‌های موجود` در Spotlight بدون شلوغ‌کردن Home.
 
-### 0.15.4 — My Series
+### 0.16.5 — My Series
 
 - Follow دستی سریال و Baseline `تا فصل/قسمت دیدم` به‌عنوان مسیر سریع.
 - Rail/صفحه `سریال‌های من`: `قسمت بعدی`، `۲ قسمت جدید`، `فصل جدید`،
@@ -94,7 +107,7 @@
 - بررسی مسیر ایرانی پس از تثبیت سریال خارجی.
 - اعلان داخل اپ فقط برای Episode/Season واقعاً جدید؛ بدون Spam.
 
-### 0.15.5 — Cinematic Promo Feed
+### 0.16.6 — Cinematic Promo Feed
 
 - Promo/Carousel عادی ParsiFlix و FilmRooz به Hero واحد 0.15.1 اضافه می‌شود.
 - چرخش آرام، توقف روی Focus/Hover و بدون دزدیدن Focus.
@@ -102,14 +115,14 @@
 - حذف Banner تکراری با Canonical ID.
 - Action دستی Refresh برای هر Provider و Sync پس‌زمینه بدون قفل‌کردن اپ.
 
-### دروازه تحقیق قبل از 0.16.0 — Third Source Coverage Lab
+### دروازه تحقیق قبل از 0.17.0 — Third Source Coverage Lab
 
 - نمونه حداقل 100 عنوان برای اندازه‌گیری هم‌پوشانی واقعی.
 - گزارش Match قطعی IMDb، Match عنوان/سال، عنوان فقط MyMoviz و مزیت دوبله.
 - تست Login/session، سرعت Catalog/Detail و Normal Watch route.
 - هیچ درصدی بدون گزارش نمونه اعلام نمی‌شود.
 
-### 0.16.0 — MyMoviz Provider
+### 0.17.0 — MyMoviz Provider
 
 - Adapter مستقل برای Catalog، Search، Detail metadata و Normal Watch.
 - ورود فقط Coverage Gap و نسخه دوبله بهتر؛ نه ساخت Rail تکراری سوم.
@@ -117,7 +130,7 @@
 - پشتیبانی از آخرین فصل/قسمت، Progress عادی حساب و `قسمت بعدی شما`.
 - حفظ کامل مرز امنیتی: فقط صفحه عادی سایت، بدون Media URL/Token/DRM.
 
-### 0.16.1 — Best Source Resolver
+### 0.17.1 — Best Source Resolver
 
 - تنظیم `دوبله اول | زبان اصلی اول | هر بار بپرس`.
 - انتخاب نسخه با اولویت زبان، سلامت Provider و موجودبودن.
@@ -125,14 +138,14 @@
 - ممنوعیت تعویض خودکار Source وسط پخش.
 - زیرساخت آماده برای منبع ایرانی چهارم با همان Adapter contract.
 
-### 0.16.2 — People, Filmography & Alerts
+### 0.17.2 — People, Filmography & Alerts
 
 - کلیک روی بازیگر/کارگردان و Filmography ادغام‌شده.
 - Follow محلی Person.
 - اعلان کم‌تعداد هنگام پیدا شدن اثر جدید در Catalog Sync.
 - `افزودن فیلم‌های این شخص به Home` به‌صورت Rail قابل‌حذف.
 
-### 0.17.0 — Cinema Library & Personal Home
+### 0.18.0 — Cinema Library & Personal Home
 
 - View All برای Latest/Continue/Recent/Favorites/My Series.
 - Grid و Filter فیلم/سریال، دوبله، ژانر، سال و وضعیت پخش.
@@ -140,7 +153,7 @@
 - `سنجاق به Home` برای Search، Person، Genre و Collection.
 - ترتیب و مخفی‌کردن Railها با محدودیت مناسب TV.
 
-### 0.17.1 — Reliability, Keyboard & Provider Health
+### 0.18.1 — Reliability, Keyboard & Provider Health
 
 - وضعیت Login هر سرویس و تفکیک Internet/DNS/Login/Unavailable.
 - Cache آفلاین، Health check سبک و حفظ داده آخرین Sync.
@@ -148,7 +161,7 @@
 - Back بهتر FilmRooz بر اساس KeyCode واقعی Android Box.
 - مهاجرت Home عمودی به LazyColumn اگر تعداد Railها از بودجه Performance عبور کرد.
 
-### 0.18.0 — Geek Mode
+### 0.19.0 — Geek Mode
 
 - Collectionهای نسخه‌بندی‌شده: MCU، Star Wars، Lord of the Rings و Harry Potter.
 - ترتیب اکران، ترتیب زمانی، `از اول ببین` و `خفن‌ها را ببین`.

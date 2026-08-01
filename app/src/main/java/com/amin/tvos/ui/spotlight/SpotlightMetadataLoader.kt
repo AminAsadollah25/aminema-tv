@@ -39,6 +39,7 @@ class SpotlightMetadataLoader(
     private var expectedUrl = ""
     private var expectedHost = ""
     private var delivered = false
+    private var extractionAttempts = 0
     private val timeout = Runnable { finish(null) }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -61,6 +62,7 @@ class SpotlightMetadataLoader(
         expectedUrl = item.contentUrl
         expectedHost = serviceHost
         delivered = false
+        extractionAttempts = 0
 
         val view = WebView(activity).apply {
             alpha = 0.01f
@@ -101,7 +103,7 @@ class SpotlightMetadataLoader(
                 source.postDelayed(
                     {
                         if (source === webView && !delivered) {
-                            source.evaluateJavascript(EXTRACT_SCRIPT, null)
+                            requestExtraction(source)
                         }
                     },
                     if (item.serviceId == "parsiflix") 2_200L else 1_350L
@@ -121,9 +123,25 @@ class SpotlightMetadataLoader(
         fun result(payload: String?) {
             handler.post {
                 if (source !== webView || delivered) return@post
-                finish(parse(payload.orEmpty()))
+                val metadata = parse(payload.orEmpty())
+                // Client-rendered series pages can expose the title shell before their
+                // synopsis arrives. Retry the ordinary visible DOM twice before falling
+                // through to the public metadata fallback.
+                if (metadata?.summary.isNullOrBlank() && extractionAttempts < 3) {
+                    handler.postDelayed(
+                        { if (source === webView && !delivered) requestExtraction(source) },
+                        1_500L
+                    )
+                } else {
+                    finish(metadata)
+                }
             }
         }
+    }
+
+    private fun requestExtraction(source: WebView) {
+        extractionAttempts += 1
+        source.evaluateJavascript(EXTRACT_SCRIPT, null)
     }
 
     private fun parse(payload: String): TitleMetadata? {
@@ -180,7 +198,9 @@ class SpotlightMetadataLoader(
             hasPersianDub = root.optBoolean("hasPersianDub"),
             hasPersianSubtitle = root.optBoolean("hasPersianSubtitle"),
             directors = people("directors"),
-            cast = people("cast")
+            cast = people("cast"),
+            imdbId = root.optString("imdbId")
+                .let { Regex("""tt\d{5,12}""").find(it)?.value.orEmpty() }
         )
         return metadata.takeIf {
             it.summary.isNotBlank() ||
@@ -259,6 +279,49 @@ class SpotlightMetadataLoader(
                     profileUrl: rawUrl
                   };
                 }).filter(Boolean);
+              }
+              function joined(value) {
+                return array(value).map(function(entry) {
+                  if (entry == null) return '';
+                  if (typeof entry === 'string' || typeof entry === 'number') {
+                    return clean(entry);
+                  }
+                  return clean(entry.name || entry.title || entry.label || entry.value);
+                }).filter(Boolean).join('، ');
+              }
+              // Parsiflix's normal title page already owns an authenticated metadata request.
+              // Reuse the same user session to read only ordinary title fields (never episode,
+              // player, stream or download payloads). This is much more reliable than trying
+              // to infer Persian credits from the rendered SPA shell.
+              async function parsiflixDetails() {
+                if (!/^(?:app\.)?parsiflix\.com$/i.test(location.hostname)) return null;
+                var match = location.pathname.match(/^\/medias\/(?:movies|series)\/(\d+)/i);
+                if (!match) return null;
+                var token = localStorage.getItem('accessToken');
+                if (!token) return null;
+                try { token = JSON.parse(token); } catch (_) {}
+                if (token && typeof token === 'object') {
+                  token = token.accessToken || token.token || token.value || '';
+                }
+                if (!token) return null;
+                try {
+                  var response = await fetch('https://api.parsiflix.com/medias/' + match[1], {
+                    headers: {
+                      Authorization: 'Bearer ' + token,
+                      appVersion: '1.0.0',
+                      Accept: 'application/json, text/plain, */*'
+                    }
+                  });
+                  if (!response.ok) return null;
+                  var payload = await response.json();
+                  var detail = payload && (
+                    payload.media || payload.element || payload.data || payload.result || payload
+                  );
+                  if (detail && detail.media) detail = detail.media;
+                  return detail && typeof detail === 'object' ? detail : null;
+                } catch (_) {
+                  return null;
+                }
               }
               function schemaObjects() {
                 var found = [];
@@ -342,45 +405,71 @@ class SpotlightMetadataLoader(
                 return values.join(' ').slice(0, 12000);
               }
               function summary(schema) {
-                var candidates = [
-                  schema && schema.description,
-                  document.querySelector('meta[name="description"]') &&
-                    document.querySelector('meta[name="description"]').content,
-                  document.querySelector('meta[property="og:description"]') &&
-                    document.querySelector('meta[property="og:description"]').content
-                ];
+                var candidates = [];
                 var visible = document.querySelector(
                   '.text-justify.mt-2.p-2,.postExcerpt,.excerpt,.summary,' +
                   '[class*="synopsis" i],[class*="plot" i],main [class*="summary" i],' +
-                  'main [class*="description" i],.story,.movie-story'
+                  'main [class*="description" i],.story,.movie-story,' +
+                  '[data-testid*="description" i],[data-testid*="overview" i]'
                 );
-                if (visible) candidates.unshift(visible.textContent);
-                
-                if (!candidates.find(Boolean)) {
-                   var paragraphs = Array.from(document.querySelectorAll('article p, main p'));
-                   var longestP = paragraphs.sort(function(a, b) { return clean(b.textContent).length - clean(a.textContent).length; })[0];
-                   if (longestP) candidates.push(longestP.textContent);
-                }
-
+                if (visible) candidates.push(visible.textContent);
+                candidates.push(
+                  schema && schema.description,
+                  document.querySelector('meta[property="og:description"]') &&
+                    document.querySelector('meta[property="og:description"]').content,
+                  document.querySelector('meta[name="description"]') &&
+                    document.querySelector('meta[name="description"]').content
+                );
+                Array.from(document.querySelectorAll(
+                  'article p,main p,.post-content p,.entry-content p,' +
+                  '[class*="description" i] p,[class*="overview" i] p'
+                )).filter(function(node) {
+                  return !node.closest('header,nav,footer,[class*="download" i]');
+                }).sort(function(a, b) {
+                  return clean(b.textContent).length - clean(a.textContent).length;
+                }).slice(0, 6).forEach(function(node) {
+                  candidates.push(node.textContent);
+                });
                 return clean(candidates.find(function(value) {
                   var text = clean(value);
                   return text.length >= 10 &&
-                    !/تماشای آنلاین فیلم و سریال|دانلود فیلم و سریال رایگان/i.test(text);
+                    !/تماشای آنلاین فیلم و سریال|دانلود فیلم و سریال رایگان|لینک.{0,20}دانلود|برای دانلود|عضویت در سایت/i.test(text);
                 }) || '').slice(0, 520);
+              }
+              function imdbId(schema) {
+                var values = [];
+                array(schema && schema.sameAs).forEach(function(value) {
+                  values.push(typeof value === 'string' ? value : (value && value.url));
+                });
+                array(schema && schema.identifier).forEach(function(value) {
+                  values.push(typeof value === 'string' ? value :
+                    (value && (value.value || value.propertyID || value.name)));
+                });
+                document.querySelectorAll('a[href*="imdb.com/title/tt"]').forEach(
+                  function(link) { values.push(link.href); }
+                );
+                var match = clean(values.filter(Boolean).join(' ')).match(/tt\d{5,12}/i);
+                return match ? match[0].toLowerCase() : '';
               }
 
               // Give client-rendered title pages one final short hydration window.
               await new Promise(function(resolve) { setTimeout(resolve, 650); });
               var schema = schemaObjects()[0] || {};
+              var provider = await parsiflixDetails();
               var titleText = clean(
                 (document.querySelector('main h1,main h2,.postMeta h1,.postMeta h2') || {}).textContent
               ) || clean(document.title);
               var publishedText = clean(
-                schema.datePublished || schema.dateCreated || titleText
+                (provider && (
+                  provider.productionYear || provider.releaseYear || provider.year ||
+                  provider.releaseDate || provider.createdAt
+                )) || schema.datePublished || schema.dateCreated || titleText
               );
-              var yearMatch = publishedText.match(/(?:19|20)\d{2}/);
+              var yearMatch = publishedText.match(/(?:13|14|19|20)[0-9۰-۹]{2}/);
               var rating = clean(
-                schema.aggregateRating && schema.aggregateRating.ratingValue
+                (provider && (
+                  provider.imdbRating || provider.rating || provider.rate
+                )) || (schema.aggregateRating && schema.aggregateRating.ratingValue)
               );
               if (!rating) {
                 var ratingNode = smallestField(/امتیاز.*از\s*۱۰|IMDb/i);
@@ -391,7 +480,9 @@ class SpotlightMetadataLoader(
                   : null;
                 rating = ratingMatch ? ratingMatch[1] : '';
               }
-              var runtime = clean(schema.duration);
+              var runtime = clean(
+                (provider && (provider.runtime || provider.duration)) || schema.duration
+              );
               if (/^PT/i.test(runtime)) {
                 var hours = Number((runtime.match(/(\d+)H/i) || [0, 0])[1]);
                 var minutes = Number((runtime.match(/(\d+)M/i) || [0, 0])[1]);
@@ -406,7 +497,10 @@ class SpotlightMetadataLoader(
                   : null;
                 runtime = runtimeMatch ? runtimeMatch[1] + ' دقیقه' : '';
               }
-              var genres = array(schema.genre).map(function(value) {
+              var genres = array(
+                (provider && (provider.genres || provider.genre || provider.categories)) ||
+                schema.genre
+              ).map(function(value) {
                 return clean(typeof value === 'string' ? value : value.name);
               }).filter(Boolean);
               if (!genres.length) {
@@ -417,7 +511,11 @@ class SpotlightMetadataLoader(
                   }).filter(Boolean);
                 }
               }
-              var country = clean(
+              var country = joined(provider && (
+                provider.countries || provider.country || provider.countryOfOrigin ||
+                provider.productionCountries
+              ));
+              if (!country) country = clean(
                 person(schema.countryOfOrigin || schema.contentLocation)
                   .map(function(value) { return value.name; }).join('، ')
               );
@@ -426,7 +524,10 @@ class SpotlightMetadataLoader(
                   /^(?:کشور|محصول|Country)\s*[:：]\s*/i
                 ]);
               }
-              var language = clean(array(schema.inLanguage).map(function(value) {
+              var language = joined(provider && (
+                provider.languages || provider.language || provider.originalLanguage
+              ));
+              if (!language) language = clean(array(schema.inLanguage).map(function(value) {
                 return typeof value === 'string' ? value : (value.name || '');
               }).join('، '));
               if (!language) {
@@ -434,21 +535,38 @@ class SpotlightMetadataLoader(
                   /^(?:زبان|Language)\s*[:：]\s*/i
                 ]);
               }
-              var directors = person(schema.director);
+              var directors = person(provider && (
+                provider.directors || provider.director || provider.directorList ||
+                provider.creators
+              ));
+              if (!directors.length) directors = person(schema.director);
               if (!directors.length) {
                 directors = peopleField(/^(?:کارگردان|Director)\s*[:：]/i, [
                   /^(?:کارگردان|Director)\s*[:：]\s*/i
                 ]);
               }
-              var cast = person(schema.actor);
+              var cast = person(provider && (
+                provider.actors || provider.cast || provider.casts || provider.stars ||
+                provider.performers
+              ));
+              if (!cast.length) cast = person(schema.actor);
               if (!cast.length) {
                 cast = peopleField(/^(?:بازیگران|ستارگان|Cast|Actors)\s*[:：]/i, [
                   /^(?:بازیگران|ستارگان|Cast|Actors)\s*[:：]\s*/i
                 ]);
               }
-              var audioText = localAudioText();
+              var audioText = localAudioText() + ' ' + joined(provider && [
+                provider.audioType, provider.audio, provider.dubbedLanguage,
+                provider.subtitle, provider.availability
+              ]);
+              var providerSummary = clean(provider && (
+                provider.description || provider.summary || provider.overview || provider.plot
+              ));
+              var providerImdb = clean(provider && (
+                provider.imdbId || provider.imdbID || provider.imdbLink
+              ));
               AminSpotlight.result(JSON.stringify({
-                summary: summary(schema),
+                summary: (providerSummary || summary(schema)).slice(0, 520),
                 year: yearMatch ? yearMatch[0] : '',
                 genres: genres.slice(0, 4),
                 rating: rating.replace(/[^0-9۰-۹.٫]/g, '').slice(0, 5),
@@ -459,7 +577,8 @@ class SpotlightMetadataLoader(
                 hasPersianSubtitle:
                   /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i.test(audioText),
                 directors: directors.slice(0, 3),
-                cast: cast.slice(0, 8)
+                cast: cast.slice(0, 8),
+                imdbId: providerImdb || imdbId(schema)
               }));
             })();
         """.trimIndent()

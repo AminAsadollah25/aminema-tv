@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.ContentMetadataPolicy
+import com.amin.tvos.data.PublicTitleMetadataEnricher
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -15,6 +16,8 @@ import com.amin.tvos.data.model.catalogKindFromUrl
 import com.amin.tvos.data.model.MovieItem
 import com.amin.tvos.data.model.PlaybackSession
 import com.amin.tvos.data.model.StreamingService
+import com.amin.tvos.data.model.SpotlightItem
+import com.amin.tvos.data.model.TitleMetadata
 import com.amin.tvos.update.ReleaseInfo
 import com.amin.tvos.update.UpdateState
 import java.io.File
@@ -36,6 +39,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val catalogRepo = tvApp.catalogRepository
     private val settingsRepo = tvApp.settingsRepository
     private val updateRepo = tvApp.updateRepository
+    private val metadataEnricher = PublicTitleMetadataEnricher()
+    private val metadataEnrichmentInFlight = mutableSetOf<String>()
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
@@ -74,6 +79,29 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     /** One random title from the cached rows, for the greeting's "surprise me". */
     fun randomCatalogItem(): CatalogItem? =
         catalogSections.value.flatMap { it.all }.randomOrNull()
+
+    /**
+     * Enrich only the currently visible Hero title. Results are cached in the same title
+     * repository used by Spotlight, so carousel motion never starts duplicate requests.
+     */
+    fun enrichHeroMetadata(item: SpotlightItem) {
+        val key = ContentMetadataPolicy.canonicalContentUrl(item.contentUrl)
+        if (!metadataEnrichmentInFlight.add(key)) return
+        viewModelScope.launch {
+            try {
+                val known = catalogRepo.metadataFor(item.contentUrl)
+                if (!PublicTitleMetadataEnricher.shouldLookup(known, item)) return@launch
+                val enriched = metadataEnricher.lookup(item, known) ?: TitleMetadata(
+                    contentUrl = item.contentUrl,
+                    externalLookupAt = System.currentTimeMillis(),
+                    externalLookupVersion = PublicTitleMetadataEnricher.LOOKUP_VERSION
+                )
+                catalogRepo.saveTitleMetadata(enriched)
+            } finally {
+                metadataEnrichmentInFlight.remove(key)
+            }
+        }
+    }
 
     val continueWatching: StateFlow<List<PlaybackSession>> =
         libraryRepo.playbackSessions

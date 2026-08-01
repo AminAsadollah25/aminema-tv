@@ -46,7 +46,9 @@ fun CinematicBackground(
                 val request = remember(url, pageUrl) {
                     ImageRequest.Builder(context)
                         .data(url)
-                        .crossfade(true)
+                        // 960×540 stays clean behind the heavy scrim/blur on a 1080p TV,
+                        // while avoiding a full 2K/4K decode for every DPAD focus change.
+                        .size(960, 540)
                         .apply {
                             val posterHost = runCatching { Uri.parse(url).host }.getOrNull()
                             val pageHost = runCatching { Uri.parse(pageUrl).host }.getOrNull()

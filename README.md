@@ -2,18 +2,22 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Current release
+## Current candidate
 
-**Aminema 0.15.0 — Aminema Spotlight** (`versionCode 31`)
+**Aminema 0.16.2 — Cinematic Hero, Complete Metadata & Search Polish** (`versionCode 34`)
 
-- First click on a movie or series opens a cinematic native title page
-- Watch/Continue and My List are available without entering the provider page first
-- Old Recent/Continue titles enrich themselves from the normal signed-in detail page
-- Year, rating, runtime, genre, country, synopsis, director and principal cast are cached locally
-- A green `دوبله فارسی` badge and a blue `زیرنویس فارسی` badge appear only when the title page confirms them
-- Live TV remains direct one-click and never opens Spotlight
+- Featured Hero titles use a genuine portrait poster; wide artwork stays an ambient backdrop
+- Explicit RTL geometry and navigation, including the correct «بعدی» action direction
+- Provider-first Iranian/foreign series summaries with a safe Wikipedia/Wikidata fill-only fallback
+- Rich metadata is merged non-destructively, with Persian director/cast labels when available
+- Auto rotation stops after the user starts browsing the content rails
+- Featured provider banners are larger, cleaner and TV-focus friendly
+- Search has a visible mouse/DPAD Back button and a reliable remote-Back Home fallback
+- Unit tests, Lint, APK build and 1920×1080 emulator QA pass
 
-[Download Aminema 0.15.0 from GitHub Releases](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0)
+The candidate is ready locally and will replace the current GitHub Latest entry
+after owner approval. The `v0.16.1` GitHub entry has no downloadable APK asset;
+`v0.16.2` must therefore be published with both APK and SHA-256 assets.
 
 The release status and next milestone below are updated as part of every
 version's release checklist, together with `CLOUD-HANDOFF-LATEST.md`.
@@ -229,22 +233,36 @@ run). Greeting, header, mouse hover and DPAD focus use one restrained cinematic
 motion language, while 220 ms backdrop dwell avoids image churn on fast remote
 navigation.
 
-## Next update queue — after v0.15.1
+Version 0.16.0 adds correct portrait/backdrop image separation, a redesigned
+Hero and two provider-featured wide banner rails. Version 0.16.1 refines the
+visual shell and Spotlight metadata fallback. Version 0.16.2 removes the
+remaining hidden Hero work: background images are decoded at TV-appropriate
+sizes, only the active slide is composed, rotation stops after rail interaction
+and no hidden metadata WebView is started during carousel motion. A selected
+title now uses a real portrait poster over its separate cinematic backdrop.
+Duplicate catalog variants are merged instead of losing summaries. Spotlight
+keeps provider data authoritative and fills only missing synopsis/year/credits
+from public Wikipedia/Wikidata with identity validation and Persian labels when
+available. It also adds a visible Search Back action whose remote and pointer
+paths always return to Aminema Home, even if Android restored Search as the
+task root.
 
-1. **0.15.2 — Episode Navigator:** season/episode selection, separate
+## Next update queue — after v0.16.2
+
+1. **0.16.3 — Episode Navigator:** season/episode selection, separate
    next-episode and latest-release actions, and evidence-based progress.
-2. **0.15.3 — Canonical Library & Dedupe:** one card per title across
+2. **0.16.4 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as
    `spiderman` / `spider man` / `spider-man`.
-3. **0.15.4 — My Series:** followed shows, manual watched baseline, new episode
+3. **0.16.5 — My Series:** followed shows, manual watched baseline, new episode
    and new season indicators, then provider-account progress where reliable.
-4. **0.15.5 — Cinematic Promo Feed:** provider carousels join the new Hero;
+4. **0.16.6 — Cinematic Promo Feed:** provider carousels join the new Hero;
    title promos open Spotlight and Live TV promos stay direct.
-5. **0.16.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
+5. **0.17.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
    variant after a 100-title overlap/coverage report.
-6. **0.16.1 — Best Source Resolver:** dub-first/original-first/ask preferences
+6. **0.17.1 — Best Source Resolver:** dub-first/original-first/ask preferences
    while keeping one canonical card and never switching sources mid-play.
-7. **0.16.2+ — People, Personal Home, Reliability and Geek Mode:** merged
+7. **0.17.2+ — People, Personal Home, Reliability and Geek Mode:** merged
    filmographies, person alerts, pinnable rails, provider health, and curated
    MCU/Star Wars/LOTR/Harry Potter collections.
 

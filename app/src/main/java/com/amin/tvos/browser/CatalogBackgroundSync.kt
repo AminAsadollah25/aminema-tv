@@ -556,6 +556,23 @@ class CatalogBackgroundSync(
                     };
                   });
 
+                // Slider JSON intentionally contains only a wide cover. Rejoin it with the
+                // typed catalog response by the same normal content URL so Spotlight/Hero
+                // always receive the title's real portrait poster and full synopsis.
+                var portraitByUrl = {};
+                all.concat(movies).concat(series).forEach(function(item) {
+                  portraitByUrl[item.contentUrl] = item;
+                });
+                featured = featured.map(function(slide) {
+                  var titleItem = portraitByUrl[slide.contentUrl];
+                  if (!titleItem || !titleItem.posterUrl) return slide;
+                  return Object.assign({}, titleItem, {
+                    title: slide.title || titleItem.title,
+                    backdropUrl: slide.backdropUrl,
+                    summary: titleItem.summary || slide.summary
+                  });
+                });
+
                 AminCatalog.section('parsiflix', JSON.stringify({
                   all: all,
                   movies: movies,
@@ -810,7 +827,135 @@ class CatalogBackgroundSync(
                       });
                     }
                   );
-                  return items.slice(0, 14);
+                  var selected = items.slice(0, 14);
+                  // Carousel slides expose only 16:9 art. Resolve each selected title's
+                  // ordinary detail page once during background sync and keep the 2:3 image
+                  // separate; the banner remains backdrop-only.
+                  return await Promise.all(selected.map(async function(item) {
+                    try {
+                      var detailResponse = await fetch(item.contentUrl, {
+                        credentials: 'include'
+                      });
+                      if (!detailResponse.ok) return item;
+                      var detailHtml = await detailResponse.text();
+                      var detail = new DOMParser().parseFromString(
+                        detailHtml, 'text/html'
+                      );
+
+                      // Reuse the same proven detail parser used by the normal catalog.
+                      // Featured slides used to keep only poster+summary, which is why a
+                      // title such as The Sheep Detectives lost its dub/year/credits chips.
+                      var parsedDetail = parse(detailHtml, item.kind).find(function(value) {
+                        return value.contentUrl.replace(/\/$/, '') ===
+                          item.contentUrl.replace(/\/$/, '');
+                      });
+                      if (parsedDetail) {
+                        item = Object.assign({}, parsedDetail, {
+                          title: item.title || parsedDetail.title,
+                          posterUrl: parsedDetail.posterUrl || item.posterUrl,
+                          backdropUrl: item.backdropUrl,
+                          summary: parsedDetail.summary || item.summary
+                        });
+                      }
+
+                      var portrait = detail.querySelector(
+                        'img[src*="/img/170-256/"],img[data-src*="/img/170-256/"],' +
+                        '.postMeta img,.single-post img[class*="poster" i]'
+                      );
+                      var rawPoster = portrait ? (
+                        portrait.getAttribute('data-src') ||
+                        portrait.getAttribute('src') || ''
+                      ) : '';
+                      var poster = rawPoster ? new URL(rawPoster, location.origin) : null;
+                      if (poster && poster.origin === location.origin) {
+                        item.posterUrl = poster.href;
+                      }
+                      var summaryNode = detail.querySelector(
+                        '.text-justify.mt-2.p-2,.postExcerpt,.excerpt,.summary,' +
+                        '[class*="synopsis" i],[class*="plot" i]'
+                      );
+                      var summary = summaryNode
+                        ? (summaryNode.textContent || '').replace(/\s+/g, ' ').trim()
+                        : '';
+                      if (summary.length >= 10) item.summary = summary.slice(0, 420);
+
+                      // JSON-LD is the least brittle source when the provider publishes it.
+                      // Only ordinary public title metadata is read — never player/download
+                      // links. DOM-labelled fields below remain the fallback.
+                      var schemas = [];
+                      Array.from(detail.querySelectorAll('script[type="application/ld+json"]'))
+                        .forEach(function(node) {
+                          try {
+                            var value = JSON.parse(node.textContent || '{}');
+                            if (Array.isArray(value)) schemas = schemas.concat(value);
+                            else if (value && Array.isArray(value['@graph'])) {
+                              schemas = schemas.concat(value['@graph']);
+                            } else schemas.push(value);
+                          } catch (_) {}
+                        });
+                      var schema = schemas.find(function(value) {
+                        var type = String(value && value['@type'] || '');
+                        return /Movie|TVSeries|TVShow|CreativeWork/i.test(type);
+                      });
+                      function schemaPeople(value) {
+                        if (!value) return [];
+                        if (!Array.isArray(value)) value = [value];
+                        return value.map(function(person) {
+                          var name = typeof person === 'string'
+                            ? person : String(person.name || '');
+                          name = name.replace(/\s+/g, ' ').trim();
+                          return name ? {name: name.slice(0, 80)} : null;
+                        }).filter(Boolean).slice(0, 8);
+                      }
+                      if (schema) {
+                        var schemaYear = String(
+                          schema.datePublished || schema.dateCreated || ''
+                        ).match(/(?:19|20)\d{2}/);
+                        if (!item.year && schemaYear) item.year = schemaYear[0];
+                        if (!item.directors || !item.directors.length) {
+                          item.directors = schemaPeople(schema.director || schema.creator);
+                        }
+                        if (!item.cast || !item.cast.length) {
+                          item.cast = schemaPeople(schema.actor || schema.actors);
+                        }
+                        if (!item.genres || !item.genres.length) {
+                          var rawGenre = schema.genre || [];
+                          if (!Array.isArray(rawGenre)) rawGenre = [rawGenre];
+                          item.genres = rawGenre.map(String).filter(Boolean).slice(0, 4);
+                        }
+                        if (!item.runtime && schema.duration) {
+                          var duration = String(schema.duration).match(/PT(?:(\d+)H)?(?:(\d+)M)?/i);
+                          if (duration) {
+                            item.runtime = String(
+                              Number(duration[1] || 0) * 60 + Number(duration[2] || 0)
+                            ) + ' دقیقه';
+                          }
+                        }
+                      }
+
+                      // Audio badges can live in the download/quality accordion outside
+                      // `.postMeta`; use the whole ordinary detail document after removing
+                      // navigation and recommendation rails. This is the real Sheep
+                      // Detectives case where poster/summary were inside postMeta but the
+                      // «دوبله فارسی» label was lower in the page.
+                      var detailRoot = detail.body;
+                      var detailClone = detailRoot ? detailRoot.cloneNode(true) : null;
+                      if (detailClone) {
+                        detailClone.querySelectorAll(
+                          'header,nav,footer,[class*="related" i],[class*="similar" i],' +
+                          '[class*="recommend" i],[class*="carousel" i]'
+                        ).forEach(function(node) { node.remove(); });
+                      }
+                      var detailText = detailClone
+                        ? (detailClone.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                      item.hasPersianDub = Boolean(item.hasPersianDub) ||
+                        /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(detailText);
+                      item.hasPersianSubtitle = Boolean(item.hasPersianSubtitle) ||
+                        /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i
+                          .test(detailText);
+                    } catch (_) {}
+                    return item;
+                  }));
                 } catch (_) { return []; }
               }
               async function recentAccountItems() {

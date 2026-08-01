@@ -51,6 +51,7 @@ import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
+import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.catalogKindFromUrl
 import com.amin.tvos.data.model.LiveChannel
 import com.amin.tvos.data.model.MovieItem
@@ -90,14 +91,12 @@ fun HomeScreen(
     val catalogSections by viewModel.catalogSections.collectAsState()
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val titleMetadata by viewModel.titleMetadata.collectAsState()
-    val iranianFilter by viewModel.iranianFilter.collectAsState()
-    val internationalFilter by viewModel.internationalFilter.collectAsState()
     val catalogItems = remember(catalogSections) {
         catalogSections
-            .flatMap { it.all + it.movies + it.series + it.popularSeries }
-            .distinctBy {
-                ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
-            }
+            .flatMap { it.all + it.movies + it.series + it.popularSeries + it.featured }
+            .groupBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+            .values
+            .map { variants -> variants.reduce(::mergeCatalogVariants) }
     }
     val catalogByUrl = remember(catalogItems) {
         catalogItems.associateBy {
@@ -127,8 +126,8 @@ fun HomeScreen(
             title = item.title,
             kind = item.kind,
             contentUrl = item.contentUrl,
-            posterUrl = item.posterUrl,
-            backdropUrl = item.backdropUrl,
+            posterUrl = item.posterUrl.ifBlank { meta?.posterUrl.orEmpty() },
+            backdropUrl = item.backdropUrl.ifBlank { meta?.backdropUrl.orEmpty() },
             serviceId = item.serviceId,
             serviceName = serviceName(item.serviceId),
             summary = meta?.summary?.takeIf { it.isNotBlank() } ?: item.summary,
@@ -139,8 +138,8 @@ fun HomeScreen(
             episodeLabel = item.episodeLabel,
             country = meta?.country?.takeIf { it.isNotBlank() } ?: item.country,
             language = meta?.language?.takeIf { it.isNotBlank() } ?: item.language,
-            hasPersianDub = meta?.hasPersianDub ?: item.hasPersianDub,
-            hasPersianSubtitle = meta?.hasPersianSubtitle ?: item.hasPersianSubtitle,
+            hasPersianDub = meta?.hasPersianDub == true || item.hasPersianDub,
+            hasPersianSubtitle = meta?.hasPersianSubtitle == true || item.hasPersianSubtitle,
             directors = meta?.directors?.takeIf { it.isNotEmpty() } ?: item.directors,
             cast = meta?.cast?.takeIf { it.isNotEmpty() } ?: item.cast,
             directPlay = item.kind == CatalogKind.MOVIE
@@ -154,7 +153,12 @@ fun HomeScreen(
             title = item.title,
             kind = baseMeta.kind,
             contentUrl = item.url,
-            posterUrl = item.posterUrl.ifBlank { baseMeta.posterUrl },
+            posterUrl = item.posterUrl.ifBlank {
+                baseMeta.posterUrl.ifBlank { fetchedMeta?.posterUrl.orEmpty() }
+            },
+            backdropUrl = baseMeta.backdropUrl.ifBlank {
+                fetchedMeta?.backdropUrl.orEmpty()
+            },
             serviceId = item.serviceId,
             serviceName = item.serviceName.ifBlank { serviceName(item.serviceId) },
             summary = fetchedMeta?.summary?.takeIf { it.isNotBlank() } ?: baseMeta.summary,
@@ -240,26 +244,47 @@ fun HomeScreen(
         val metadata = releaseOverride ?: catalogByUrl[
             ContentMetadataPolicy.canonicalContentUrl(session.contentUrl)
         ]
+        val fetchedMetadata = titleMetadata[
+            ContentMetadataPolicy.canonicalContentUrl(session.contentUrl)
+        ]
         return SpotlightItem(
             title = session.title,
             kind = metadata?.kind ?: catalogKindFromUrl(session.contentUrl)
                 ?: CatalogKind.MOVIE,
             contentUrl = session.contentUrl,
-            posterUrl = session.posterUrl.ifBlank { metadata?.posterUrl.orEmpty() },
+            posterUrl = session.posterUrl.ifBlank {
+                metadata?.posterUrl.orEmpty().ifBlank {
+                    fetchedMetadata?.posterUrl.orEmpty()
+                }
+            },
+            backdropUrl = metadata?.backdropUrl.orEmpty().ifBlank {
+                fetchedMetadata?.backdropUrl.orEmpty()
+            },
             serviceId = session.serviceId,
             serviceName = session.serviceName.ifBlank { serviceName(session.serviceId) },
-            summary = metadata?.summary.orEmpty(),
-            year = metadata?.year.orEmpty(),
-            genres = metadata?.genres.orEmpty(),
-            rating = metadata?.rating.orEmpty(),
-            runtime = metadata?.runtime.orEmpty(),
+            summary = fetchedMetadata?.summary?.takeIf { it.isNotBlank() }
+                ?: metadata?.summary.orEmpty(),
+            year = fetchedMetadata?.year?.takeIf { it.isNotBlank() }
+                ?: metadata?.year.orEmpty(),
+            genres = fetchedMetadata?.genres?.takeIf { it.isNotEmpty() }
+                ?: metadata?.genres.orEmpty(),
+            rating = fetchedMetadata?.rating?.takeIf { it.isNotBlank() }
+                ?: metadata?.rating.orEmpty(),
+            runtime = fetchedMetadata?.runtime?.takeIf { it.isNotBlank() }
+                ?: metadata?.runtime.orEmpty(),
             episodeLabel = metadata?.episodeLabel.orEmpty(),
-            country = metadata?.country.orEmpty(),
-            language = metadata?.language.orEmpty(),
-            hasPersianDub = metadata?.hasPersianDub == true,
-            hasPersianSubtitle = metadata?.hasPersianSubtitle == true,
-            directors = metadata?.directors.orEmpty(),
-            cast = metadata?.cast.orEmpty(),
+            country = fetchedMetadata?.country?.takeIf { it.isNotBlank() }
+                ?: metadata?.country.orEmpty(),
+            language = fetchedMetadata?.language?.takeIf { it.isNotBlank() }
+                ?: metadata?.language.orEmpty(),
+            hasPersianDub = fetchedMetadata?.hasPersianDub == true ||
+                metadata?.hasPersianDub == true,
+            hasPersianSubtitle = fetchedMetadata?.hasPersianSubtitle == true ||
+                metadata?.hasPersianSubtitle == true,
+            directors = fetchedMetadata?.directors?.takeIf { it.isNotEmpty() }
+                ?: metadata?.directors.orEmpty(),
+            cast = fetchedMetadata?.cast?.takeIf { it.isNotEmpty() }
+                ?: metadata?.cast.orEmpty(),
             primaryAction = SpotlightAction.CONTINUE,
             browserStartUrl = startUrl,
             resumePosition = session.resumePosition,
@@ -280,6 +305,33 @@ fun HomeScreen(
         it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
     }
 
+    /**
+     * Slider entries are allowed to contain only a 16:9 banner. A Hero title is eligible
+     * only when the same normal content URL also resolves to a genuine portrait poster.
+     * The banner stays as ambient key art and is never stretched into the poster slot.
+     */
+    fun featuredWithPortrait(section: CatalogSection?): CatalogItem? {
+        if (section == null) return null
+        val portraitByUrl = (
+            section.all + section.movies + section.series + section.popularSeries
+            ).associateBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+        return section.featured.firstNotNullOfOrNull { featured ->
+            (
+                portraitByUrl[ContentMetadataPolicy.canonicalContentUrl(featured.contentUrl)]
+                    ?: featured.takeIf {
+                        it.posterUrl.isNotBlank() && it.posterUrl != it.backdropUrl
+                    }
+                )
+                ?.takeIf { it.posterUrl.isNotBlank() }
+                ?.let { portrait ->
+                    portrait.copy(
+                        backdropUrl = featured.backdropUrl.ifBlank { portrait.backdropUrl },
+                        summary = portrait.summary.ifBlank { featured.summary }
+                    )
+                }
+        }
+    }
+
     // Home is content-first: Continue, a followed series and fresh titles become one
     // rotating cinematic moment. Provider doorways stay available near the bottom.
     val heroSlides = remember(
@@ -288,7 +340,8 @@ fun HomeScreen(
         iranianSection,
         internationalSection,
         services,
-        catalogItems
+        catalogItems,
+        titleMetadata
     ) {
         buildList {
             continueWatching.firstOrNull()?.let { session ->
@@ -314,11 +367,16 @@ fun HomeScreen(
                     )
                 )
             }
-            iranianSection?.all?.firstOrNull()?.let { item ->
+            (featuredWithPortrait(iranianSection)
+                ?: iranianSection?.all?.firstOrNull())?.let { item ->
                 add(
                     HomeHeroSlide(
                         id = "iranian:${item.contentUrl}",
-                        eyebrow = "تازه از سینمای ایران",
+                        eyebrow = if (item.backdropUrl.isNotBlank()) {
+                            "برگزیده سینمای ایران"
+                        } else {
+                            "تازه از سینمای ایران"
+                        },
                         actionLabel = if (item.kind == CatalogKind.SERIES) {
                             "مشاهده سریال"
                         } else {
@@ -328,11 +386,16 @@ fun HomeScreen(
                     )
                 )
             }
-            internationalSection?.all?.firstOrNull()?.let { item ->
+            (featuredWithPortrait(internationalSection)
+                ?: internationalSection?.all?.firstOrNull())?.let { item ->
                 add(
                     HomeHeroSlide(
                         id = "international:${item.contentUrl}",
-                        eyebrow = "تازه از جهان",
+                        eyebrow = if (item.backdropUrl.isNotBlank()) {
+                            "برگزیده سینمای جهان"
+                        } else {
+                            "تازه از جهان"
+                        },
                         actionLabel = if (item.kind == CatalogKind.SERIES) {
                             "مشاهده سریال"
                         } else {
@@ -358,7 +421,9 @@ fun HomeScreen(
     }
 
     val fallbackBackdrop = remember(heroSlides, continueWatching, recents) {
-        heroSlides.firstOrNull()?.item?.let { it.posterUrl to it.contentUrl }
+        heroSlides.firstOrNull()?.item?.let {
+            it.backdropUrl.ifBlank { it.posterUrl } to it.contentUrl
+        }
             ?: continueWatching.firstOrNull()?.let { it.posterUrl to it.contentUrl }
             ?: recents.firstOrNull()?.let { it.posterUrl to it.url }
             ?: ("" to "")
@@ -418,8 +483,6 @@ fun HomeScreen(
         delay(120L)
         heroEntered = true
     }
-
-    var activeLoader by remember { mutableStateOf<com.amin.tvos.ui.spotlight.SpotlightMetadataLoader?>(null) }
 
     Box(Modifier.fillMaxSize()) {
     CinematicBackground(posterUrl = visibleBackdrop.first, pageUrl = visibleBackdrop.second)
@@ -580,28 +643,16 @@ fun HomeScreen(
                     }
                 },
                 onVisibleSlideChanged = { slide ->
+                    viewModel.enrichHeroMetadata(slide.item)
                     if (heroOwnsBackdrop) {
-                        previewBackdrop(slide.item.posterUrl, slide.item.contentUrl)
-                    }
-                    val url = slide.item.contentUrl
-                    val canonical = ContentMetadataPolicy.canonicalContentUrl(url)
-                    // If the current slide's summary is completely blank and we don't have it cached, fetch it
-                    if (slide.item.summary.isBlank() && titleMetadata[canonical] == null) {
-                        val app = context.applicationContext as com.amin.tvos.AminTvApp
-                        activeLoader?.destroy()
-                        activeLoader = com.amin.tvos.ui.spotlight.SpotlightMetadataLoader(
-                            activity = context as androidx.activity.ComponentActivity,
-                            app = app,
-                            onLoaded = { meta ->
-                                coroutineScope.launch {
-                                    app.catalogRepository.saveTitleMetadata(meta)
-                                }
-                            },
-                            onFailed = {}
-                        ).apply { load(slide.item) }
+                        previewBackdrop(
+                            slide.item.backdropUrl.ifBlank { slide.item.posterUrl },
+                            slide.item.contentUrl
+                        )
                     }
                 },
-                onHeroFocused = { focused -> if (focused) heroOwnsBackdrop = true }
+                onHeroFocused = { focused -> if (focused) heroOwnsBackdrop = true },
+                allowAutoAdvance = heroOwnsBackdrop
             )
         }
         if (heroSlides.isNotEmpty()) {
@@ -730,38 +781,43 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
         }
 
-        // ---------- Latest Iranian / International ----------
-        CatalogSectionRow(
-            title = "تازه‌های ایرانی",
-            section = catalogSections.firstOrNull {
-                it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
-            },
-            filter = iranianFilter,
-            onFilterChange = {
-                viewModel.setCatalogFilter(HomeViewModel.IRANIAN_SERVICE_ID, it)
-            },
-            onRefresh = { onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID) },
-            onOpen = { openSpotlight(spotlightForCatalog(it)) },
-            onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
-            isRefreshing = HomeViewModel.IRANIAN_SERVICE_ID in refreshingCatalogServices
-        )
-        Spacer(Modifier.height(16.dp))
-
-        CatalogSectionRow(
-            title = "تازه‌های خارجی",
-            section = catalogSections.firstOrNull {
-                it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
-            },
-            filter = internationalFilter,
-            onFilterChange = {
-                viewModel.setCatalogFilter(HomeViewModel.INTERNATIONAL_SERVICE_ID, it)
-            },
-            onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
-            onOpen = { openSpotlight(spotlightForCatalog(it)) },
-            onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
-            isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
-        )
-        Spacer(Modifier.height(16.dp))
+        // ---------- Four explicit cinema categories ----------
+        // TV users should not have to open a tiny filter and remember its state. Each
+        // destination is now a first-class rail and is rendered only when it has content.
+        listOf(
+            Triple("سریال ایرانی", iranianSection, CatalogKind.SERIES),
+            Triple("سریال خارجی", internationalSection, CatalogKind.SERIES),
+            Triple("فیلم ایرانی", iranianSection, CatalogKind.MOVIE),
+            Triple("فیلم خارجی", internationalSection, CatalogKind.MOVIE)
+        ).forEach { (title, section, kind) ->
+            val items = when (kind) {
+                CatalogKind.MOVIE -> section?.movies.orEmpty()
+                CatalogKind.SERIES -> section?.series.orEmpty()
+            }
+            if (items.isNotEmpty()) {
+                CatalogSectionRow(
+                    title = title,
+                    section = section,
+                    filter = if (kind == CatalogKind.MOVIE) {
+                        CatalogFilter.MOVIE
+                    } else {
+                        CatalogFilter.SERIES
+                    },
+                    onFilterChange = {},
+                    onRefresh = {
+                        section?.serviceId?.let(onRefreshCatalog)
+                    },
+                    onOpen = { openSpotlight(spotlightForCatalog(it)) },
+                    onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
+                    itemsOverride = items,
+                    showFilters = false,
+                    isRefreshing = section?.serviceId?.let {
+                        it in refreshingCatalogServices
+                    } == true
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+        }
 
         // Kept separate from episode-release ordering: these are provider-curated titles,
         // not necessarily recently updated shows.
@@ -919,3 +975,26 @@ fun HomeScreen(
     }
     }
 }
+
+/**
+ * The same title can be present in `all`, release-ordered series and curated series. One
+ * list may carry the episode label while another carries synopsis/credits; keeping only
+ * the first one silently erased that richer metadata (the real The Hawk bug).
+ */
+private fun mergeCatalogVariants(base: CatalogItem, richer: CatalogItem): CatalogItem =
+    base.copy(
+        posterUrl = base.posterUrl.ifBlank { richer.posterUrl },
+        backdropUrl = base.backdropUrl.ifBlank { richer.backdropUrl },
+        episodeLabel = base.episodeLabel.ifBlank { richer.episodeLabel },
+        summary = listOf(base.summary, richer.summary).maxByOrNull { it.length }.orEmpty(),
+        year = base.year.ifBlank { richer.year },
+        genres = base.genres.ifEmpty { richer.genres },
+        rating = base.rating.ifBlank { richer.rating },
+        runtime = base.runtime.ifBlank { richer.runtime },
+        country = base.country.ifBlank { richer.country },
+        language = base.language.ifBlank { richer.language },
+        hasPersianDub = base.hasPersianDub || richer.hasPersianDub,
+        hasPersianSubtitle = base.hasPersianSubtitle || richer.hasPersianSubtitle,
+        directors = base.directors.ifEmpty { richer.directors },
+        cast = base.cast.ifEmpty { richer.cast }
+    )

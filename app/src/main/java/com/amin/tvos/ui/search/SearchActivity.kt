@@ -1,9 +1,11 @@
 package com.amin.tvos.ui.search
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -21,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -33,12 +36,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.amin.tvos.AminTvApp
+import com.amin.tvos.MainActivity
 import com.amin.tvos.browser.SiteSearchEngine
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -110,7 +117,23 @@ class SearchActivity : ComponentActivity() {
         )
         setContentView(root)
 
+        // Search may be restored by Android as the root of its task after process reclaim.
+        // In that case a plain finish() returns to the TV launcher. Both remote Back and the
+        // visible button therefore use the same guaranteed Home fallback.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = returnToHome()
+        })
+
         lifecycleScope.launch { app.servicesRepository.load() }
+    }
+
+    private fun returnToHome() {
+        startActivity(
+            Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
+        )
+        finish()
     }
 
     private fun applyResults(serviceId: String, results: List<SearchResult>) {
@@ -166,12 +189,46 @@ class SearchActivity : ComponentActivity() {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 48.dp, vertical = 20.dp)
         ) {
-            Text("جستجو", style = MaterialTheme.typography.displayMedium)
-            Text(
-                "یک جستجو، هر دو آرشیو",
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextSecondary
-            )
+            androidx.compose.runtime.CompositionLocalProvider(
+                LocalLayoutDirection provides LayoutDirection.Rtl
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    FocusableCard(
+                        shape = RoundedCornerShape(50),
+                        onClick = { returnToHome() }
+                    ) { focused ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    if (focused) Color.White.copy(alpha = 0.16f)
+                                    else SurfaceDark,
+                                    RoundedCornerShape(50)
+                                )
+                                .padding(horizontal = 17.dp, vertical = 11.dp)
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("بازگشت", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                    Spacer(Modifier.width(18.dp))
+                    Column {
+                        Text("جستجو", style = MaterialTheme.typography.displayMedium)
+                        Text(
+                            "یک جستجو، هر دو آرشیو",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
 
             // The keyboard owns the screen until there is something to show, then folds

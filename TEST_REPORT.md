@@ -1,14 +1,14 @@
 # Aminema — current test status
 
-Latest published release: **0.14.6 / versionCode 30 — Pointer & Playback
-Polish**. The complete current evidence is in `TEST_REPORT_0.14.6.md`;
-implementation decisions are in `DEVELOPMENT_LOG_0.14.6.md`.
+Current candidate: **0.16.2 / versionCode 34 — Cinematic Hero & Search
+Polish**. The complete current evidence is in `TEST_REPORT_0.16.2.md`;
+implementation decisions are in `DEVELOPMENT_LOG_0.16.2.md`.
 
-Current gates: 0.14.6 compiles, six unit tests pass, `adb install -r`
-preserved app data, physical-mouse hover opened and dismissed Quick Glance,
-and a real FilmRooz movie advanced to 20,438 ms without a second click or a
-FATAL EXCEPTION. Final clean Build/Lint/assembly passed with zero Lint errors;
-the APK is 22,232,968 bytes.
+Current gates: unit tests, Lint and assembly pass; `adb install -r` preserved
+app data; Hero, Featured banners and Search were visually checked at 1920×1080;
+both the visible Search Back action and remote Back return to `MainActivity`;
+FATAL EXCEPTION count is zero. The APK is 22,626,220 bytes with SHA-256
+`b753184121d71b8548d4ee2f673bc68bc4770c5615ba54869f525b88b4d8224f`.
 
 ---
 

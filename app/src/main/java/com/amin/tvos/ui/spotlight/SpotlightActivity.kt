@@ -16,7 +16,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.data.ContentMetadataPolicy
+import com.amin.tvos.data.PublicTitleMetadataEnricher
 import com.amin.tvos.data.model.SpotlightItem
+import com.amin.tvos.data.model.TitleMetadata
+import com.amin.tvos.data.model.isDecisionComplete
 import com.amin.tvos.data.model.withMetadata
 import com.amin.tvos.ui.theme.AminTvTheme
 import kotlinx.coroutines.launch
@@ -33,6 +36,8 @@ class SpotlightActivity : ComponentActivity() {
     private var spotlightItem by mutableStateOf<SpotlightItem?>(null)
     private var metadataLoading by mutableStateOf(false)
     private var metadataLoader: SpotlightMetadataLoader? = null
+    private var sheydaMetadataLoader: SheydaMetadataLoader? = null
+    private val publicMetadataEnricher = PublicTitleMetadataEnricher()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,27 +81,106 @@ class SpotlightActivity : ComponentActivity() {
             if (cached != null) {
                 spotlightItem = (spotlightItem ?: initial).withMetadata(cached)
             }
-            val cacheIsFresh = cached != null &&
+            // A fresh synopsis-only record is not complete. Retry the provider's ordinary
+            // title metadata so newly supported credits can appear without clearing app data.
+            val cacheIsFresh = cached?.isDecisionComplete() == true &&
                 System.currentTimeMillis() - cached.fetchedAt < METADATA_MAX_AGE_MS
-            if (cacheIsFresh || isFinishing || isDestroyed) return@launch
+            if (isFinishing || isDestroyed) return@launch
+            if (cacheIsFresh) {
+                if (PublicTitleMetadataEnricher.shouldLookup(cached, initial)) {
+                    completeFromPublicSource(initial, cached)
+                }
+                return@launch
+            }
 
             metadataLoading = true
             metadataLoader = SpotlightMetadataLoader(
                 activity = this@SpotlightActivity,
                 app = app,
                 onLoaded = { metadata ->
-                    spotlightItem = (spotlightItem ?: initial).withMetadata(metadata)
-                    metadataLoading = false
                     lifecycleScope.launch {
                         app.catalogRepository.saveTitleMetadata(metadata)
+                        val merged = app.catalogRepository.metadataFor(initial.contentUrl)
+                            ?: metadata
+                        spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
+                        if (!PublicTitleMetadataEnricher.shouldLookup(merged, initial)) {
+                            metadataLoading = false
+                        } else {
+                            completeFromPublicSource(initial, merged)
+                        }
                     }
                 },
                 onFailed = {
-                    metadataLoading = false
+                    lifecycleScope.launch {
+                        completeFromPublicSource(initial, cached)
+                    }
                 }
             ).also { it.load(initial) }
         }
     }
+
+    /** Provider-first; public metadata fills only fields that are still absent. */
+    private suspend fun completeFromPublicSource(
+        initial: SpotlightItem,
+        known: TitleMetadata?
+    ) {
+        if (isFinishing || isDestroyed) return
+        if (!PublicTitleMetadataEnricher.shouldLookup(known, initial)) {
+            metadataLoading = false
+            return
+        }
+        metadataLoading = true
+        val external = publicMetadataEnricher.lookup(initial, known)
+        val attempted = external ?: TitleMetadata(
+            contentUrl = initial.contentUrl,
+            externalLookupAt = System.currentTimeMillis(),
+            externalLookupVersion = PublicTitleMetadataEnricher.LOOKUP_VERSION
+        )
+        val app = application as AminTvApp
+        app.catalogRepository.saveTitleMetadata(attempted)
+        val merged = app.catalogRepository.metadataFor(initial.contentUrl) ?: known
+        if (merged != null && !isFinishing && !isDestroyed) {
+            spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
+        }
+        if (needsIranianCompletion(initial, merged)) {
+            completeFromSheyda(initial)
+        } else {
+            metadataLoading = false
+        }
+    }
+
+    /**
+     * Iranian provider pages are often synopsis-only. Sheyda's public title UI is a second,
+     * exact-match source for Persian directors/cast and never affects the watch destination.
+     */
+    private fun completeFromSheyda(initial: SpotlightItem) {
+        sheydaMetadataLoader?.destroy()
+        sheydaMetadataLoader = SheydaMetadataLoader(
+            activity = this,
+            onLoaded = { metadata ->
+                lifecycleScope.launch {
+                    val app = application as AminTvApp
+                    app.catalogRepository.saveTitleMetadata(metadata)
+                    app.catalogRepository.metadataFor(initial.contentUrl)?.let { merged ->
+                        spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
+                    }
+                    metadataLoading = false
+                }
+            },
+            onFailed = { metadataLoading = false }
+        ).also { it.load(initial) }
+    }
+
+    private fun needsIranianCompletion(
+        initial: SpotlightItem,
+        metadata: TitleMetadata?
+    ): Boolean = (
+        initial.serviceId.equals("parsiflix", true) ||
+            initial.country.contains("ایران") || initial.country.contains("Iran", true)
+        ) && (
+        metadata?.summary.isNullOrBlank() ||
+            metadata?.directors.isNullOrEmpty() || metadata?.cast.isNullOrEmpty()
+        )
 
     private fun openBrowser(item: SpotlightItem) {
         startActivity(
@@ -132,6 +216,8 @@ class SpotlightActivity : ComponentActivity() {
     override fun onDestroy() {
         metadataLoader?.destroy()
         metadataLoader = null
+        sheydaMetadataLoader?.destroy()
+        sheydaMetadataLoader = null
         super.onDestroy()
     }
 

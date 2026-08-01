@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Candidate جدید،
-فایل‌های `DEVELOPMENT_LOG_0.15.1.md`، `TEST_REPORT_0.15.1.md` و
-`RELEASE_NOTES_0.15.1.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.16.2.md`، `TEST_REPORT_0.16.2.md` و
+`RELEASE_NOTES_0.16.2.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,18 +21,77 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.15.1 / versionCode 32 — Cinematic Home**
-- وضعیت در این لحظه: **Candidate نهایی؛ Build و Emulator QA موفق**
-- Commit کد انتشار: پس از Release ثبت شود
-- Tag هدف: `v0.15.1`
-- نسخه عمومی فعلی تا Push نهایی: **0.15.0 / code 31**
-- Release هدف: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.1`
+- نسخه کد: **0.16.2 / versionCode 34 — Cinematic Hero, Complete Metadata & Search Polish**
+- وضعیت در این لحظه: **Candidate نهایی؛ Build، Unit، Lint و Emulator QA موفق**
+- Commit کد انتشار: هنوز ساخته نشده
+- Tag هدف: `v0.16.2`
+- GitHub Latest فعلی: **v0.16.1؛ بدون Asset دانلود**
+- Release هدف: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.2`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
+
+## 0.16.2 چه چیزی را حل می‌کند
+
+### 1. Hero پوسترمحور، RTL و بنرهای سبک‌تر
+
+- Featured title با پوستر واقعی عمودی در foreground دیده می‌شود؛ Wide art
+  فقط backdrop سینمایی است و هرگز داخل قاب پوستر Stretch نمی‌شود.
+- فقط اسلاید فعال Compose می‌شود؛ Background حداکثر 1280×720 و پوستر حداکثر
+  420×630 Decode می‌شوند و Motion بی‌نهایت حذف شده است.
+- Hero صریحاً RTL است: متن راست‌چین، اکشن اصلی سمت راست، «بعدی» سمت چپ و جهت
+  فلش درست.
+- بعد از تعامل کاربر با Railها، Auto advance متوقف می‌شود.
+- Hero دیگر برای هر اسلاید WebView مخفی Metadata نمی‌سازد؛ Enrichment هنگام
+  ورود واقعی به Spotlight انجام می‌شود.
+- بنرهای Featured بزرگ‌تر و خواناتر شدند و Focus treatment ظریف دارند.
+
+### 2. Metadata کامل‌تر و غیرمخرب
+
+- Featuredهای ParsiFlix/FilmRooz در Sync با Detail page به پوستر واقعی و
+  خلاصه Hydrate می‌شوند؛ banner در `backdropUrl` باقی می‌ماند.
+- variantهای تکراری all/series/popular/featured بر اساس URL canonical Merge
+  می‌شوند؛ رکورد ناقص خلاصه و عوامل رکورد کامل را پاک نمی‌کند.
+- `SpotlightMetadataLoader` برای SPA Retry دارد و Summary selectorهای schema,
+  meta و DOM را با فیلتر متن منو/دانلود ترکیب می‌کند.
+- `PublicTitleMetadataEnricher` فقط فیلدهای خالی Provider را از Wikipedia/
+  Wikidata تکمیل می‌کند. Persian-first، English fallback، تطبیق IMDb ID عمومی
+  یا عنوان+سال+نوع و نام فارسی عوامل.
+- IMDb Scrape نمی‌شود. Cookie، Token، Password، DRM و media URL به منبع عمومی
+  ارسال نمی‌شود. نتیجه نامطمئن ساخته نمی‌شود و miss به‌مدت ۳۰ روز Cache است.
+
+### 3. Back جستجو
+
+- دکمه واضح «بازگشت» با پشتیبانی DPAD و Mouse به Header جستجو اضافه شد.
+- Back ریموت و دکمه روی صفحه هر دو به `returnToHome()` می‌روند.
+- در حالت Task-root restore، مسیر `CLEAR_TOP | SINGLE_TOP` Home را باز می‌کند
+  و از برگشت اشتباه به Launcher جلوگیری می‌کند.
+
+### 4. تست و خروجی
+
+- `testDebugUnitTest lintDebug assembleDebug`: موفق
+- Lint blocking error: صفر
+- نصب درجا روی `Television_1080p`: موفق؛ نشست‌ها حفظ شد
+- QA واقعی: `Tuner` و `Michael` در Hero، `House of the Dragon` و `The Hawk`
+  خارجی، `کوری` ایرانی؛ پوستر/خلاصه/RTL و Metadata صحیح.
+- دکمه Back تصویری و Back ریموت از Search: هر دو به MainActivity برگشتند.
+- FATAL EXCEPTION: صفر
+- APK تمیز نهایی: `22,691,756` بایت
+- SHA-256:
+  `0724de50be9af4a65b1098a88154a95db45fd91cb2abd511ce4e9ac3355443aa`
+- تغییرات هنوز Commit/Push/Tag/Release نشده‌اند و قبل از انتشار باید از مالک
+  تأیید گرفته شود.
+
+## قدم بعد از پذیرش 0.16.2
+
+1. `0.16.3 — Episode Navigator`
+2. `0.16.4 — Canonical Library, Dedupe & Smart Search`
+3. `0.16.5 — My Series`
+4. `0.16.6 — Cinematic Promo Feed`
+5. سپس MyMoviz/Best Source/People طبق `ROADMAP.md`
 
 ## 0.15.1 چه چیزی را حل می‌کند
 
@@ -155,15 +214,6 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - فقط Normal same-host title page و Person profile URL عادی پذیرفته می‌شود.
 - هیچ Media/Stream URL، Network request، Cookie، Token، Password، Auth header
   یا DRM value خوانده، ذخیره یا Log نمی‌شود.
-
-## صف بعد از پذیرش 0.15.1
-
-1. `0.15.2 — Episode Navigator`: انتخاب فصل/قسمت، Latest published و
-   Continue صادقانه.
-2. `0.15.3 — Canonical Library, Dedupe & Smart Search`.
-3. `0.15.4 — My Series`.
-4. `0.15.5 — Cinematic Promo Feed` داخل Hero موجود.
-5. سپس MyMoviz/Best Source/People و Reliability track طبق `ROADMAP.md`.
 
 ## 0.14.6 چه چیزی را حل می‌کند
 
@@ -316,22 +366,22 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 تحلیل کامل MyMoviz، Dedupe، Series Progress، Promo Banner و Geek Mode در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` و نسخه اولویت‌بندی‌شده در `ROADMAP.md` ثبت شد.
 
-1. **0.15.2 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
+1. **0.16.3 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
    `آخرین قسمت منتشرشده` و Progress صادقانه.
-2. **0.15.3 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
+2. **0.16.4 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
    چند SourceVariant؛ پذیرش اولیه با `لیسانسه`؛ Query variant برای
    `spiderman`، `spider man` و `spider-man`.
-3. **0.15.4 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
+3. **0.16.5 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
    Account progress در Providerهایی که شاهد قابل‌اعتماد دارند.
-4. **0.15.5 — Cinematic Promo Feed:** تغذیه Hero موجود، توقف روی Focus و
+4. **0.16.6 — Cinematic Promo Feed:** تغذیه Hero موجود، توقف روی Focus و
    Title→Spotlight / Live→Direct.
 5. **Coverage Lab:** گزارش حداقل 100 عنوان پیش از ادعای درصد هم‌پوشانی.
-6. **0.16.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
-7. **0.16.1 — Best Source Resolver:** Dub-first/original-first/ask.
-8. **0.16.2 — People & Alerts**
-9. **0.17.0 — Cinema Library & Personal Home**
-10. **0.17.1 — Reliability, Keyboard & Provider Health**
-11. **0.18.0 — Geek Mode**
+6. **0.17.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
+7. **0.17.1 — Best Source Resolver:** Dub-first/original-first/ask.
+8. **0.17.2 — People & Alerts**
+9. **0.18.0 — Cinema Library & Personal Home**
+10. **0.18.1 — Reliability, Keyboard & Provider Health**
+11. **0.19.0 — Geek Mode**
 
 یافته عملی MyMoviz: صفحه عادی سریال فصل‌ها، تعداد قسمت، آخرین انتشار،
 Progress، `قسمت بعدی شما` و علامت‌گذاری قسمت/فصل را دارد؛ صفحه `من` نیز
@@ -344,15 +394,32 @@ Release delta؛ واژه `دیده‌نشده` فقط با شاهد دقیق. ب
 ابتدا KeyCode واقعی Android Box ثبت می‌شود، سپس Short Back = history و Long
 Back/Menu = Home طراحی خواهد شد.
 
-## آخرین Release عمومی پیش از Candidate 0.15.1
+## وضعیت GitHub پیش از انتشار Candidate 0.16.2
 
-- Commit کد: `dc39cbc`
-- Commit انتشار مستندات 0.15.0: `7a54238`
-- Tag و Latest API: `v0.15.0`
-- Release عمومی:
-  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.15.0`
-- APK: `Aminema-v0.15.0-debug.apk` — `22,462,380` بایت — state `uploaded`
-- SHA-256:
-  `0cc3742aa1b3de12e0681ed61a61a781f0f9c49a6e647c660a50102dec2ae6ee`
-- Release عمومی، `draft=false` و `prerelease=false` است و
-  `/releases/latest` همین Tag را برمی‌گرداند.
+- HEAD/Tag فعلی: `7c3ef90 / v0.16.1`
+- `/releases/latest` برابر `v0.16.1` است، اما این Release هیچ Asset دانلودی
+  ندارد.
+- آخرین Release دارای APK تأییدشده: `v0.16.0`.
+- اقدام لازم پس از تأیید مالک: Commit تغییرات، Tag `v0.16.2`، Push و Release
+  همراه هر دو Asset یعنی APK و فایل SHA-256؛ سپس دانلود مجدد Asset و تطبیق
+  Digest.
+
+## آخرین تکمیل محلی 0.16.2 — Codex، ۱ اوت ۲۰۲۶
+
+- Hero: سال بدون «شمسی/میلادی»، حذف Country chip، کنترل قبلی/بعدی در پایینِ
+  چپ و بدون هم‌پوشانی متن.
+- Spotlight: حذف سال تکراری از عنوان، Synopsis چهارخطی، کشور/زبان/ژانر/مدت/
+  دوبله/زیرنویس و Credits کامل‌تر.
+- IMDb خارجی: چهار سطح رنگی `<5`، `5–7`، `7–9` و `9+` همراه برچسب کیفیت.
+- fallback تازه `SheydaMetadataLoader.kt`: WebView عمومی بدون Login، تطبیق
+  دقیق Title+Kind و استخراج فقط Metadata قابل‌مشاهده شیدا برای آثار ایرانی.
+- `PublicTitleMetadataEnricher.LOOKUP_VERSION = 5` تا Negative cache قدیمی
+  یک‌بار Retry شود.
+- پذیرش واقعی «بامداد خمار» موفق: ۱۴۰۳، نرگس آبیار، علی مصفا، رضا کیانیان،
+  لاله اسکندری، گلاره عباسی، ژانرها و Backdrop رسمی.
+- گیت نهایی `clean + testDebugUnitTest + assembleDebug` موفق و
+  `adb install -r` موفق بود. APK نهایی `22,708,140` بایت با SHA-256
+  `7e434aea4f5aa5b81d238eac33e63adf107ced420149a58b1b5d5f552e81580f`
+  است. `SpotlightActivity` در APK نهایی
+  `android:exported="false"` است.
+- هنوز Commit/Push/Tag/Release انجام نشده؛ فقط پس از تأیید مالک منتشر شود.

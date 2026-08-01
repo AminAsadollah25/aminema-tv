@@ -73,9 +73,11 @@ app/src/main/java/com/amin/tvos/
 │   ├── HomeScreen.kt               صفحه اصلی؛ Scroll عمودی + Railهای Lazy (0.14.5)
 │   ├── HomeViewModel.kt            State تمام ردیف‌های Home + Update state
 │   ├── SmartGreeting.kt            سلام هوشمند + تبدیل جلالی (0.8.1)
-│   ├── CinematicBackground.kt      پس‌زمینه محو از آخرین پوستر
+│   ├── CinematicBackground.kt      پس‌زمینه محو 960×540 با Dwell و Crossfade
+│   ├── CinematicHero.kt            Hero ثابت Copy/Art + Motion و Auto-advance کنترل‌شده
 │   ├── CinematicHoverPreview.kt    Quick Glance بدون اسپویل (0.14.5)
 │   ├── CatalogSectionRow.kt        ردیف «تازه‌ها» با فیلتر همه/فیلم/سریال
+│   ├── FeaturedBannerCard.kt       بنر عریض برگزیده Providerها
 │   ├── LiveTvSectionRow.kt         ردیف بومی شبکه‌ها و کارت‌های LIVE (0.12.0)
 │   └── UpdateBanner.kt             بنر بروزرسانی خودکار (0.10.0)
 ├── ui/search/SearchActivity.kt     صفحه جستجو + کیبورد فارسی/انگلیسی روی صفحه
@@ -117,9 +119,35 @@ app/src/main/java/com/amin/tvos/
 | **0.14.6** | Pointer & Playback Polish: Hover واقعی موس، Focus بدون Border قرمز، Autoplay صفحه پلیر FilmRooz |
 | **0.15.0/0.15.1** | Spotlight و Cinematic Home |
 | **0.16.0** | رفع باگ «تصویر عریض در کارت عمودی» (۴ جا)، بازطراحی Hero با رنگ استخراج‌شده از پوستر و اسکلت ثابت، رفع بریدگی دکمه‌ها در Hero و Spotlight، فیلد `backdropUrl`، دو ردیف «برگزیده‌ها» با بنر عریض خود سایت‌ها، انتقال خروجی بیلد به بیرون از iCloud |
+| **0.16.1** | Visual polish و اصلاح fallback خلاصه Spotlight؛ Tag/Release ساخته شد اما APK داخلی روی 0.16.0/code33 ماند و GitHub Asset ندارد |
+| **0.16.2** | Hero کم‌حافظه با پوستر واقعی و backdrop جدا، RTL کامل، Merge غیرمخرب Metadata، خلاصه سریال ایرانی/خارجی، fallback عمومی Wikipedia/Wikidata و Back مطمئن Search |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
+
+### ۳.۱ تصمیم‌های Performance و Navigation نسخه 0.16.2
+
+- Blur کردن یک تصویر به رزولوشن اصلی نیازی ندارد. `CinematicBackground`
+  تصویر را در 960×540 می‌گیرد و Hero تصویر عریض را حداکثر 1280×720؛ این
+  کیفیت لازم برای صفحه 1080p را حفظ می‌کند و از Decode فایل 2K/4K جلوگیری
+  می‌کند.
+- فقط اسلاید فعال Compose می‌شود. `backdropUrl` حداکثر 1280×720 و پوستر واقعی
+  foreground حداکثر 420×630 درخواست می‌شود؛ بنر هیچ‌وقت داخل قاب پوستر کشیده
+  نمی‌شود.
+- Hero فقط یک حرکت کوتاه scale دارد، نه InfiniteTransition. پس از Focus/Hover
+  روی Railها `allowAutoAdvance=false` می‌شود تا کار خارج Viewport ادامه پیدا
+  نکند.
+- تکمیل Metadata با `SpotlightMetadataLoader` فقط هنگام بازشدن Spotlight
+  انجام می‌شود؛ چرخش Home نباید WebView مخفی بسازد.
+- رکوردهای یک URL canonical در ردیف‌های مختلف با `mergeCatalogVariants`
+  ادغام می‌شوند؛ first-wins نباید خلاصه کامل یک variant را پاک کند.
+- `PublicTitleMetadataEnricher` فقط پس از Provider و فقط برای فیلدهای خالی
+  اجرا می‌شود. جستجوی فارسی Wikipedia اول است، English fallback دوم؛ تطبیق
+  با IMDb ID عمومی یا عنوان+سال+نوع محتوا اعتبارسنجی می‌شود. هیچ Cookie/Token/
+  media URL ارسال و هیچ داده‌ای حدس زده نمی‌شود.
+- `SearchActivity.returnToHome()` مسیر مشترک دکمه روی صفحه و Back سخت‌افزاری
+  است. با `CLEAR_TOP | SINGLE_TOP`، حتی اگر Search پس از Process reclaim ریشه
+  Task شده باشد، مقصد Home تضمین می‌شود و کاربر به Launcher پرت نمی‌شود.
 
 ---
 

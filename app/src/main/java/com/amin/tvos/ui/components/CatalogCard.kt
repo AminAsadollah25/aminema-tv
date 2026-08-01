@@ -45,11 +45,20 @@ import com.amin.tvos.ui.theme.TextSecondary
  * a third-party CDN.
  */
 @Composable
-fun authenticatedPosterModel(posterUrl: String, pageUrl: String): Any? {
+fun authenticatedPosterModel(
+    posterUrl: String,
+    pageUrl: String,
+    widthPx: Int? = null,
+    heightPx: Int? = null
+): Any? {
     val context = LocalContext.current
-    return remember(posterUrl, pageUrl) {
+    return remember(posterUrl, pageUrl, widthPx, heightPx) {
         if (!posterUrl.startsWith("http")) return@remember posterUrl
-        posterRequest(context, posterUrl, pageUrl).build()
+        posterRequest(context, posterUrl, pageUrl)
+            .apply {
+                if (widthPx != null && heightPx != null) size(widthPx, heightPx)
+            }
+            .build()
     }
 }
 

@@ -58,6 +58,9 @@ import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.home.CinematicBackground
+import com.amin.tvos.ui.metadata.displayReleaseYear
+import com.amin.tvos.ui.metadata.isIranianTitle
+import com.amin.tvos.ui.metadata.spotlightCategory
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceElevated
@@ -241,40 +244,42 @@ fun SpotlightScreen(
                         horizontalAlignment = Alignment.Start
                     ) {
                     Text(
-                        "AMINEMA  •  ${if (item.kind == CatalogKind.SERIES) "سریال" else "فیلم"}",
+                        spotlightCategory(item),
                         color = CinemaRed,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(12.dp))
-                    Text(
-                        buildAnnotatedString {
-                            append(item.title)
-                            if (
-                                item.year.isNotBlank() &&
-                                !item.title.contains(item.year)
-                            ) {
-                                append("  ")
-                                withStyle(
-                                    SpanStyle(
-                                        color = TextSecondary,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Normal
-                                    )
-                                ) {
-                                    append("(${item.year})")
-                                }
-                            }
-                        },
-                        color = TextPrimary,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 38.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Start,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Text(
+                            spotlightTitle(item),
+                            color = TextPrimary,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 38.sp,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.weight(1f)
+                        )
+                        displayReleaseYear(item).takeIf { it.isNotBlank() }?.let { year ->
+                            Text(
+                                year,
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.White.copy(alpha = 0.12f))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(16.dp))
 
                     MetadataChips(item)
@@ -325,7 +330,7 @@ fun SpotlightScreen(
                             color = TextPrimary.copy(alpha = 0.90f),
                             style = MaterialTheme.typography.bodyLarge,
                             lineHeight = 26.sp,
-                            maxLines = 2,
+                            maxLines = 4,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -393,20 +398,22 @@ private fun CreditsBlock(item: SpotlightItem) {
         if (item.directors.isNotEmpty()) {
             CreditLine(
                 label = "کارگردان",
-                names = item.directors.take(2).map { it.name }
+                names = item.directors.take(3).map { it.name },
+                maxLines = 1
             )
         }
         if (item.cast.isNotEmpty()) {
             CreditLine(
                 label = "بازیگران",
-                names = item.cast.take(4).map { it.name }
+                names = item.cast.take(8).map { it.name },
+                maxLines = 2
             )
         }
     }
 }
 
 @Composable
-private fun CreditLine(label: String, names: List<String>) {
+private fun CreditLine(label: String, names: List<String>, maxLines: Int) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
@@ -421,7 +428,7 @@ private fun CreditLine(label: String, names: List<String>) {
             names.joinToString("  •  "),
             color = TextPrimary,
             style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -434,10 +441,30 @@ private fun MetadataChips(item: SpotlightItem) {
 
     val neutral = Color.White.copy(alpha = 0.11f)
     val chips = buildList {
-        item.rating.takeIf { it.isNotBlank() }?.let { add(Chip("★ $it", neutral)) }
+        item.rating.takeIf { it.isNotBlank() }?.let { rating ->
+            val numeric = rating
+                .toLatinNumberDigits()
+                .replace('٫', '.')
+                .let { Regex("""\d+(?:\.\d+)?""").find(it)?.value }
+                ?.toFloatOrNull()
+            if (!item.isIranianTitle() && numeric != null) {
+                val (label, color, foreground) = when {
+                    numeric < 5f -> Triple("ضعیف", Color(0xFF8E2430), Color(0xFFFFE8EA))
+                    numeric < 7f -> Triple("متوسط", Color(0xFFA45F00), Color(0xFFFFF0D6))
+                    numeric < 9f -> Triple("خوب", Color(0xFF087A4B), Color(0xFFE8FFF2))
+                    else -> Triple("عالی", Color(0xFFD5A514), Color(0xFF1B1500))
+                }
+                add(Chip("IMDb  ★ $rating  •  $label", color, foreground))
+            } else {
+                add(Chip("★ $rating", neutral))
+            }
+        }
         item.runtime.takeIf { it.isNotBlank() }?.let { add(Chip(it, neutral)) }
         item.country.takeIf { it.isNotBlank() }?.let {
             add(Chip("محصول $it", neutral))
+        }
+        item.language.takeIf { it.isNotBlank() }?.let {
+            add(Chip("زبان $it", neutral))
         }
         if (item.hasPersianDub) {
             add(
@@ -458,10 +485,7 @@ private fun MetadataChips(item: SpotlightItem) {
             )
         }
         addAll(
-            item.genres
-                .filter { it.isNotBlank() }
-                .take(if (item.country.isNotBlank()) 1 else 2)
-                .map { Chip(it, neutral) }
+            item.genres.filter { it.isNotBlank() }.take(4).map { Chip(it, neutral) }
         )
     }.distinct()
 
@@ -485,6 +509,24 @@ private fun MetadataChips(item: SpotlightItem) {
     }
 }
 
+private fun spotlightTitle(item: SpotlightItem): String {
+    if (item.year.isBlank()) return item.title
+    val rawYear = item.year.toLatinNumberDigits().filter(Char::isDigit).take(4)
+    if (rawYear.isBlank()) return item.title
+    return item.title
+        .replace(Regex("""\s*[（(]\s*$rawYear\s*[)）]\s*$"""), "")
+        .trim()
+        .ifBlank { item.title }
+}
+
+private fun String.toLatinNumberDigits(): String = map { character ->
+    when (character) {
+        in '۰'..'۹' -> ('0'.code + character.code - '۰'.code).toChar()
+        in '٠'..'٩' -> ('0'.code + character.code - '٠'.code).toChar()
+        else -> character
+    }
+}.joinToString("")
+
 @Composable
 private fun SpotlightButton(
     text: String,
@@ -504,8 +546,8 @@ private fun SpotlightButton(
                 .fillMaxHeight()
                 .background(
                     when {
-                        primary && focused -> CinemaRed
-                        primary -> Color.White.copy(alpha = 0.15f)
+                        primary && focused -> Color(0xFFFF2736)
+                        primary -> CinemaRed
                         focused -> Color.White.copy(alpha = 0.85f)
                         else -> Color.White.copy(alpha = 0.08f)
                     },

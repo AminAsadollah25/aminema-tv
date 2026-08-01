@@ -5,11 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
+import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.SurfaceElevated
 
 /**
@@ -48,19 +53,24 @@ fun FeaturedBannerCard(
     onFocused: (Boolean) -> Unit = {}
 ) {
     val art = item.backdropUrl.ifBlank { item.posterUrl }
-    val model = authenticatedPosterModel(art, item.contentUrl)
+    val model = authenticatedPosterModel(
+        posterUrl = art,
+        pageUrl = item.contentUrl,
+        widthPx = 820,
+        heightPx = 460
+    )
     FocusableCard(
-        modifier = Modifier.width(352.dp),
-        shape = RoundedCornerShape(18.dp),
-        focusedScale = 1.05f,
+        modifier = Modifier.width(410.dp),
+        shape = RoundedCornerShape(20.dp),
+        focusedScale = 1.045f,
         onClick = onClick,
         onInteractionFocusChanged = onFocused
-    ) {
+    ) { focused ->
         Box(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(SurfaceElevated)
         ) {
             AsyncImage(
@@ -69,6 +79,23 @@ fun FeaturedBannerCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(13.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = 0.58f))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Box(Modifier.size(7.dp).clip(CircleShape).background(CinemaRed))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "انتخاب ویژه",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.92f)
+                )
+            }
             // Just enough darkness at the foot of the card to carry white text over any
             // artwork, without dimming the picture itself.
             Box(
@@ -91,7 +118,7 @@ fun FeaturedBannerCard(
                 Text(
                     item.title,
                     color = Color.White,
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -110,6 +137,15 @@ fun FeaturedBannerCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+            if (focused) {
+                Box(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth(0.62f)
+                        .height(3.dp)
+                        .background(CinemaRed)
+                )
             }
         }
     }

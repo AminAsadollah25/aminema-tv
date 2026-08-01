@@ -4,6 +4,7 @@ import android.content.Context
 import com.amin.tvos.data.model.CatalogSection
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.TitleMetadata
+import com.amin.tvos.data.model.mergePrefer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,7 +65,8 @@ class CatalogRepository(private val context: Context) {
         val normalized = normalize(metadata)
         if (normalized.contentUrl.isBlank()) return@withContext
         val key = ContentMetadataPolicy.canonicalContentUrl(normalized.contentUrl)
-        val merged = (_titleMetadata.value + (key to normalized))
+        val complete = _titleMetadata.value[key]?.mergePrefer(normalized) ?: normalized
+        val merged = (_titleMetadata.value + (key to complete))
             .values
             .sortedByDescending { it.fetchedAt }
             .take(MAX_TITLE_METADATA)
@@ -114,7 +116,8 @@ class CatalogRepository(private val context: Context) {
             all = section.all.map(::normalize),
             movies = section.movies.map(::normalize),
             series = section.series.map(::normalize),
-            popularSeries = section.popularSeries.map(::normalize)
+            popularSeries = section.popularSeries.map(::normalize),
+            featured = section.featured.map(::normalize)
         )
 
     private fun normalize(item: CatalogItem): CatalogItem =
@@ -151,6 +154,12 @@ class CatalogRepository(private val context: Context) {
     private fun normalize(metadata: TitleMetadata): TitleMetadata =
         metadata.copy(
             contentUrl = ContentMetadataPolicy.canonicalContentUrl(metadata.contentUrl),
+            posterUrl = metadata.posterUrl.trim().take(2_000)
+                .takeIf { it.startsWith("https://", ignoreCase = true) }
+                .orEmpty(),
+            backdropUrl = metadata.backdropUrl.trim().take(2_000)
+                .takeIf { it.startsWith("https://", ignoreCase = true) }
+                .orEmpty(),
             summary = cleanText(metadata.summary, 520),
             year = metadata.year.replace(Regex("""[^0-9۰-۹]"""), "").take(4),
             genres = metadata.genres
@@ -165,6 +174,10 @@ class CatalogRepository(private val context: Context) {
             runtime = cleanText(metadata.runtime, 24),
             country = cleanText(metadata.country, 60),
             language = cleanText(metadata.language, 60),
+            imdbId = metadata.imdbId
+                .trim()
+                .takeIf { Regex("""tt\d{5,12}""").matches(it) }
+                .orEmpty(),
             directors = normalizePeople(metadata.directors, 3),
             cast = normalizePeople(metadata.cast, 8)
         )
