@@ -383,6 +383,89 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 10. **0.18.1 — Reliability, Keyboard & Provider Health**
 11. **0.19.0 — Geek Mode**
 
+### Series Lab تکمیل تصویری — FilmRooz، ۲ اوت ۲۰۲۶
+
+مرجع کامل `SERIES_LAB_FILMROOZ.md` است. فصل از Dropdown انتخاب می‌شود؛ سپس
+Qualityها و Episodeهای همان فصل Hydrate می‌شوند. Episodeهای خاکستری هنوز
+آماده Online نیستند و Action `پخش آنلاین` باید زده شود؛ بعد Episodeها آبی و
+قابل انتخاب می‌شوند و Action به `دانلود` برمی‌گردد. Checkmark جای Play icon
+را می‌گیرد اما Evidence فقط Device/Browser-local است. نمونه The Handmaid's
+Tale S6 تیک‌های ناپیوسته ۴ و ۵ دارد با اینکه ۱ تا ۳ جای دیگری دیده شده‌اند؛
+بنابراین اولین Episode بدون تیک هرگز Next Episode قطعی محسوب نشود. ماشین حالت
+0.16.3 باید `Season → Quality → Activate online → Exact episode → Verify
+player` باشد و در Failure صفحه عادی Provider را قابل استفاده نگه دارد.
+
+ترجیحات جدید کاربر برای 0.16.3 قطعی شد: انتخاب خودکار کیفیت
+`1080p → 720p → 480p` است و 2160p حتی در صورت وجود فقط انتخاب دستی می‌ماند.
+درون Edition انتخاب‌شده دوبله/دو‌زبانه مقدم است، چون Player FilmRooz اجازه
+تعویض Audio track به زبان اصلی را می‌دهد. Edition محور مستقلی از Quality است:
+The Office ردیف عادی و 1080p Uncut با مدت‌های متفاوت دارد؛ Friends نیز DVD
+Uncut کامل‌تر و BluRay 1080p کوتاه‌تر دارد. Resolver باید اول Edition را
+انتخاب/یادآوری کند و سپس زبان و کیفیت را داخل همان Edition رتبه‌بندی کند.
+Checkmarkها نیز ردیف/Edition-specific هستند و بین نسخه‌ها Merge نمی‌شوند.
+
+تصمیم UX تکمیلی: Multi-edition نادر است و نباید Flow عمومی را سنگین کند. UI آن
+برای عنوان تک‌نسخه کاملاً مخفی است. در عنوان چندنسخه، History فقط Suggestion
+می‌دهد و Preference را خودکار عوض نمی‌کند. گزینه جایگزین دو Action دارد:
+`فقط همین قسمت با این نسخه` و `از این به بعد این نسخه`. Progress نیز دو لایه
+است: Canonical episode completion برای پیدا کردن قسمت بعدی، و Variant-specific
+position برای Resume دقیق همان Cut. اگر Playback نیمه‌کاره باشد همان Edition
+Resume می‌شود؛ پس از Completion، قسمت بعد با Preferred Edition سریال باز می‌شود.
+
+هیچ لیست دستی از عنوان‌های Multi-edition وجود ندارد و نباید Hardcode ساخته شود.
+Adapter باید Edition را به‌صورت Generic کشف کند: پس از حذف Source، Resolution،
+Language، Size و Duration، Label باقی‌مانده + اختلاف مدت و یکسانی Episode set
+یک Confidence می‌سازند. Uncut/Extended صریح High است؛ Episode set یکسان با اختلاف
+مدت معنادار Medium؛ تفاوت ساده BluRay/WEBRip با مدت برابر Low و فقط Source است.
+Unknown label Merge نشود و فقط در Diagnostics محلی ثبت گردد.
+
+اصلاح مهم مدل براساس رفتار واقعی FilmRooz: Quality و Audio renditionهای یک
+PlaybackIdentity هستند. Progress فیلم/قسمت بین 1080/720/480 و دوبله/زبان اصلی
+مشترک است و کاربر می‌تواند داخل Player این موارد را عوض کند. Progress فقط وقتی
+جداست که Timeline واقعاً متفاوت باشد، مثل Normal در برابر Extended/Uncut یا
+BluRay کوتاه‌شده در برابر DVD کامل. بنابراین Resolution/Audio هرگز جزو Progress
+key نباشد؛ `editionTimelineId` جزو آن باشد.
+
+FilmRooz بعد از پایان کامل Episode داخل همان فصل به قسمت بعد Navigate می‌کند و
+کاربر باید دوباره Play بزند؛ از آخر فصل به فصل بعد عبور نمی‌کند. این Auto-next
+WebView history را برای هر Episode بزرگ می‌کند و Back را به زنجیره قسمت‌های قبلی
+تبدیل می‌کند. 0.16.3 باید `PlaybackSessionController` داشته باشد: Back اول از
+Overlay موقت را می‌بندد؛ در حالت عادی Playback یک Back هم Fullscreen را می‌بندد
+و هم مستقیماً Native Episode Navigator را باز می‌کند و history قسمت‌ها را نادیده
+می‌گیرد. در پایان فصل CTA بومی فصل بعد نمایش داده شود.
+
+Auto-next همچنین باید `currentEpisodeKey` را بعد از هر Player navigation واقعی
+به‌روز کند؛ در غیر این صورت Continue Watching پس از Binge چندقسمتی همچنان قسمت
+اول Session را نشان می‌دهد.
+
+Scope تصمیم‌گیری‌شده پیش از توسعه: Spoiler Shield و Episode summary در 0.16.3
+نیستند؛ FilmRooz فقط خلاصه کلی سریال دارد و Summary قسمت نیازمند Source مستقل
+فارسی/انگلیسی یا ترجمه AI آینده است. Native playback-start settings نیز ساخته
+نمی‌شود؛ بهترین Seed خودکار انتخاب و تنظیم Quality/Audio/Channel به Player موجود
+واگذار می‌شود. Parental Guide برای صفحه جزئیات در Roadmap 0.18.2 ثبت شد، همراه
+با Episode recap/summary به‌عنوان تحقیق جدا و Source-grounded. قابلیت Awards
+به‌طور کامل از Product scope و Roadmap حذف شد؛ نه Icon، نه Trophy و نه متن.
+
+DOM probe لاگین‌شده روی URLهای واقعی Friends و The Office انجام شد. قراردادهای
+مهم Provider: Season یک `select#cseason` واقعی است؛ همه فصل‌ها از ابتدا در
+`#cseason_{n}` موجود و فقط Hide/Show می‌شوند؛ Episodeهای دانلود و Stream به‌ترتیب
+در `.eDbox` و `.eSbox` هستند؛ Actionها `data-action=dl|stream` دارند؛ آیکن‌های
+دیده‌شده و قابل‌پخش `data-icon=check|play-circle` هستند. بنابراین Catalog تمام
+فصل‌ها را می‌توان بدون کلیک پیاپی و بدون Network hydration در یک Pass استخراج
+کرد. Friends همچنین در متن رسمی صفحه تأیید می‌کند بعضی صحنه‌ها از BluRay حذف و
+فقط در DVD موجودند. Duration باید per-season/per-edition باشد، نه global.
+
+### ایده ثبت‌شده ۲ اوت ۲۰۲۶ — Download-to-Stream Bridge
+
+برای عنوان‌های قدیمی که Provider فقط Download عادی ارائه می‌کند، پس از کلیک
+خود کاربر `DownloadListener` می‌تواند URL/MIME/UA را به Aminema بدهد و UI
+گزینه `پخش مستقیم | دانلود` نشان دهد. مسیر پیشنهادی Media3 progressive با
+Cookie/Referer همان نشست، Range/206، Resume و Subtitle عادی است؛ فایل کامل
+ذخیره نمی‌شود و فقط Buffer موقت وجود دارد. نبود Range با هشدار Seek محدود
+Fallback می‌شود. ZIP/RAR، DRM، Token extraction یا Authentication bypass
+خارج از محدوده است. این قابلیت باید به‌عنوان RemoteFile Player مشترک با
+Telegram تحقیق شود. مرجع کامل ایده‌ها: `IDEA_BACKLOG.md`.
+
 یافته عملی MyMoviz: صفحه عادی سریال فصل‌ها، تعداد قسمت، آخرین انتشار،
 Progress، `قسمت بعدی شما` و علامت‌گذاری قسمت/فصل را دارد؛ صفحه `من` نیز
 Continue، قسمت بعدی و تقویم پخش دارد. Search واقعی `spiderman` صفر،

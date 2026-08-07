@@ -236,9 +236,10 @@ class AccountSyncActivity : ComponentActivity() {
                     return {
                       title: String(item.title || '').slice(0, 140),
                       contentUrl: location.origin + '/medias/' + kind + '/' + item.id,
-                      // Portrait artwork for a portrait card: thumbnail is ~0.8:1 while
-                      // cover is ~1.8:1, so taking cover first cropped a wide image badly.
-                      posterUrl: item.thumbnailLink || item.coverLink || '',
+                      // Portrait artwork only. The provider's "thumbnail" is the portrait one
+                      // (~0.8:1) and "cover" is wide (~1.8:1); a wide image in a 2:3 frame is
+                      // cropped to a strip, so no fallback to it.
+                      posterUrl: item.thumbnailLink || '',
                       resumePosition: 0
                     };
                   }

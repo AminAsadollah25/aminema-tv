@@ -1,5 +1,12 @@
 # نقشه توسعه Aminema
 
+فهرست ایده‌های خارج از صف قطعی و دروازه‌های تحقیق در `IDEA_BACKLOG.md`
+نگهداری می‌شود. ایده تازه ابتدا آنجا ثبت می‌شود و فقط بعد از Research و تصمیم
+معماری وارد صف نسخه‌ها خواهد شد.
+
+یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
+`SERIES_LAB_FILMROOZ.md` ثبت شده است.
+
 Candidate فعلی `0.16.2 / code 34 — Cinematic Hero, Complete Metadata & Search Polish` است.
 Build و QA امولاتور موفق‌اند و مرجع آن فایل‌های
 `DEVELOPMENT_LOG_0.16.2.md`، `TEST_REPORT_0.16.2.md` و
@@ -79,10 +86,54 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
 
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
+- FilmRooz نیازمند ماشین حالت صریح
+  `انتخاب فصل → انتخاب کیفیت → فعال‌سازی پخش آنلاین → انتخاب قسمت` است؛
+  خاکستری‌بودن Episodeها پیش از Action و آبی‌شدن آن‌ها پس از Action باید با
+  DOM واقعی تأیید شود.
+- DOM probe لاگین‌شده تأیید کرد `select#cseason` و Containerهای
+  `#cseason_{n}` تمام فصل‌ها را از ابتدا در صفحه دارند؛ Catalog همه فصل‌ها در
+  یک Pass استخراج و Cache شود و فقط عملیات پخش وارد ماشین حالت WebView شود.
+- Adapter از `.eSbox/.eDbox`، `data-action=stream|dl` و آیکن‌های معنایی
+  `check/play-circle` استفاده کند؛ Download modal هرگز Episode stream تلقی نشود.
 - سه Action جدا: `ادامه قسمت بعد`، `آخرین قسمت منتشرشده` و
   `انتخاب فصل و قسمت`.
 - Continue فقط از Playback واقعی، Checkmark معتبر یا Baseline دستی.
 - ترجیح هر سریال بین `ادامه داستان` و `همیشه آخرین انتشار`.
+- Resolver قطعی پخش: دوبله/دو‌زبانه 1080p، سپس زبان اصلی 1080p و بعد
+  Fall back به 720p و 480p؛ کیفیت 2160p خودکار انتخاب نشود.
+- Editionهای Normal، Uncut، Extended، DVD و BluRay جدا از Quality مدل شوند؛
+  ابتدا Edition و بعد زبان/کیفیت انتخاب شود.
+- انتخاب Edition هر عنوان ذخیره و Progress هر Episode به‌صورت Edition-aware
+  نگهداری شود؛ تیک‌های نسخه BluRay و DVD/Uncut با هم Merge نشوند.
+- Quality و Audio به‌عنوان Rendition یک PlaybackIdentity مدل شوند؛ Progress
+  میان 1080/720/480 و دوبله/زبان اصلی مشترک و فقط بین Timelineهای متفاوت جداست.
+- در تعارض کیفیت و کامل‌بودن، انتخابگر کوتاه شامل نام نسخه و مدت تقریبی فقط
+  بار اول نمایش داده شود.
+- Edition UI با Progressive disclosure باشد: برای اکثریت عناوین کاملاً مخفی؛
+  فقط در Multi-edition گزینه کم‌اهمیت `نسخه‌های دیگر` نشان داده شود.
+- انتخاب جایگزین بین `فقط همین قسمت` و `از این به بعد این نسخه` تفکیک شود؛
+  تماشای مقایسه‌ای یک Episode نباید Preferred Edition سریال را تغییر دهد.
+- Progress دو لایه باشد: Canonical episode completion برای Next Episode و
+  Variant-specific position برای Resume دقیق همان Cut.
+- Multi-editionها خودکار کشف شوند؛ نیاز به لیست دستی عنوان‌ها نباشد. Parser با
+  حذف Source/Resolution/Language/Size/Duration، Edition label باقی‌مانده و
+  اختلاف مدت/همسانی Episode set را با Confidence ارزیابی کند.
+- Label ناشناخته Merge نشود و در Diagnostics محلی ثبت شود؛ فقط Confidence بالا
+  یا متوسط UI `نسخه‌های دیگر` را فعال کند تا Sourceهای معمولی اشتباه Edition
+  شناخته نشوند.
+- Episode identity از Raw label/range نیز پشتیبانی کند تا قسمت‌های Combined،
+  Split، Special، Bonus، Episode 0 و شماره‌گذاری متفاوت اشتباه Merge نشوند.
+- `PlaybackSessionController` اضافه شود: Auto-next داخل فصل پذیرفته شود، اما Back
+  از Player با یک Action، Fullscreen را ببندد و مستقیماً Native Episode Navigator
+  را باز کند؛ زنجیره History قسمت‌ها و صفحه WebView واسطه نمایش داده نشوند.
+- انتهای فصل CTA بومی `فصل بعد • قسمت ۱` داشته باشد؛ Auto-play واقعی فقط پس از
+  Probe سیاست Player/Autoplay فعال شود.
+- هر Auto-next تأییدشده، `currentEpisodeKey` و Continue Watching را به Episode
+  جدید منتقل کند؛ Session نباید روی قسمت اولیه ثابت بماند.
+- Episode summary و Spoiler Shield در این نسخه ساخته نشوند؛ Provider فقط خلاصه
+  کلی سریال دارد و Summary قسمت نیازمند Source مستقل معتبر است.
+- Native playback-start settings ساخته نشود؛ Resolver بهترین Seed را انتخاب کند
+  و Quality/Audio/Channel داخل Player فعلی مدیریت شوند.
 - واژه `دیده‌نشده` فقط با Evidence دقیق؛ در غیر این صورت
   `قسمت جدید از آخرین وضعیت ثبت‌شده`.
 
@@ -161,6 +212,17 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
 - Back بهتر FilmRooz بر اساس KeyCode واقعی Android Box.
 - مهاجرت Home عمودی به LazyColumn اگر تعداد Railها از بودجه Performance عبور کرد.
 
+### 0.18.2 — Rich Details & Parental Guide
+
+- افزودن Parental Guide به صفحه توضیحات با دسته‌بندی روشن خشونت، زبان، مواد،
+  محتوای جنسی و شدت؛ بدون کپی متن طولانی یا شلوغ‌کردن Hero.
+- Progressive disclosure: در Spotlight فقط رده‌بندی خلاصه و در صفحه جزئیات
+  دسته‌بندی کامل Parental Guide؛ داده ناقص باعث Placeholder یا ادعای ساختگی نشود.
+- منبع اصلی Provider/IMDb/Wikipedia یا Source معتبر Metadata و Cache محلی؛
+  داده فارسی موجود مقدم و ترجمه AI در آینده با Label شفاف انجام شود.
+- Episode recap/summary به‌عنوان تحقیق جدا: Source انگلیسی معتبر، ترجمه فارسی و
+  امکان Recap فقط تا آخرین Episode دیده‌شده؛ خارج از Scope اولیه این نسخه.
+
 ### 0.19.0 — Geek Mode
 
 - Collectionهای نسخه‌بندی‌شده: MCU، Star Wars، Lord of the Rings و Harry Potter.
@@ -174,6 +236,11 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
 - Provider ایرانی چهارم پس از دریافت URL و Probe.
 - کانال‌های Live TV جدید از JSON و Settings همراه با Health check.
 - فیدهای Promo جدید؛ فقط Normal page URL و هرگز Media/Stream URL.
+- `Download-to-Stream Bridge`: پس از کلیک عادی کاربر روی Download، پیشنهاد
+  پخش تدریجی فایل مجاز با Media3، Cookie/Header همان نشست و بدون ذخیره کامل.
+  Range/206، Expiry، زیرنویس و Fallback بدون Seek باید ابتدا Probe شوند. هسته
+  RemoteFile Player آن با Telegram مشترک خواهد بود؛ DRM یا Authentication
+  هیچ‌گاه دور زده نمی‌شود.
 
 ## تصمیم طراحی Home
 

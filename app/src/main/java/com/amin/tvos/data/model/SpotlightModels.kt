@@ -2,11 +2,19 @@ package com.amin.tvos.data.model
 
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class AwardEvent(
+    val event: String,
+    val awards: List<String> = emptyList()
+)
+
 /** The single dominant action shown on a native Aminema title page. */
 @Serializable
 enum class SpotlightAction {
     WATCH,
-    CONTINUE
+    CONTINUE,
+    SELECT_EPISODE,
+    LATEST_EPISODE
 }
 
 /**
@@ -39,11 +47,13 @@ data class SpotlightItem(
     val hasPersianSubtitle: Boolean = false,
     val directors: List<PersonRef> = emptyList(),
     val cast: List<PersonRef> = emptyList(),
+    val awards: List<AwardEvent> = emptyList(),
     val primaryAction: SpotlightAction = SpotlightAction.WATCH,
     /** Normal top-level page BrowserActivity should open after the second click. */
     val browserStartUrl: String = contentUrl,
     val resumePosition: Long = 0L,
     val duration: Long = 0L,
+    val editionTimelineId: String = "",
     val autoResume: Boolean = false,
     val directPlay: Boolean = false,
     val resumeStrategy: ResumeStrategy? = null,
@@ -68,6 +78,7 @@ data class TitleMetadata(
     val hasPersianSubtitle: Boolean = false,
     val directors: List<PersonRef> = emptyList(),
     val cast: List<PersonRef> = emptyList(),
+    val awards: List<AwardEvent> = emptyList(),
     /** Public title identifier exposed by the normal provider page, never a media id. */
     val imdbId: String = "",
     /** Prevents repeatedly querying a public fallback when no matching article exists. */
@@ -96,6 +107,7 @@ fun TitleMetadata.mergePrefer(newer: TitleMetadata): TitleMetadata = copy(
     hasPersianSubtitle = hasPersianSubtitle || newer.hasPersianSubtitle,
     directors = newer.directors.ifEmpty { directors },
     cast = newer.cast.ifEmpty { cast },
+    awards = newer.awards.ifEmpty { awards },
     imdbId = newer.imdbId.ifBlank { imdbId },
     externalLookupAt = maxOf(externalLookupAt, newer.externalLookupAt),
     externalLookupVersion = maxOf(externalLookupVersion, newer.externalLookupVersion),
@@ -119,5 +131,6 @@ fun SpotlightItem.withMetadata(metadata: TitleMetadata): SpotlightItem = copy(
     hasPersianDub = hasPersianDub || metadata.hasPersianDub,
     hasPersianSubtitle = hasPersianSubtitle || metadata.hasPersianSubtitle,
     directors = metadata.directors.ifEmpty { directors },
-    cast = metadata.cast.ifEmpty { cast }
+    cast = metadata.cast.ifEmpty { cast },
+    awards = metadata.awards.ifEmpty { awards }
 )

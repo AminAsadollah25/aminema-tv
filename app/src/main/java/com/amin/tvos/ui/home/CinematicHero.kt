@@ -393,16 +393,16 @@ private fun HeroSlideContent(
                         .padding(start = 20.dp, bottom = 18.dp)
                 ) {
                     HeroCarouselArrow(
-                        pointsLeft = true,
-                        contentDescription = "اسلاید قبلی",
-                        onClick = onPrevious,
-                        onFocusChanged = { previousFocused = it }
-                    )
-                    HeroCarouselArrow(
                         pointsLeft = false,
                         contentDescription = "اسلاید بعدی",
                         onClick = onNext,
                         onFocusChanged = { nextFocused = it }
+                    )
+                    HeroCarouselArrow(
+                        pointsLeft = true,
+                        contentDescription = "اسلاید قبلی",
+                        onClick = onPrevious,
+                        onFocusChanged = { previousFocused = it }
                     )
                 }
             }

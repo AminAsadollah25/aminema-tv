@@ -83,6 +83,9 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
         private const val EXTRA_DIRECT_PLAY = "direct_play"
         private const val EXTRA_LIVE_THEATER_MODE = "live_theater_mode"
+        private const val EXTRA_SM_SEASON = "sm_season"
+        private const val EXTRA_SM_QUALITY = "sm_quality"
+        private const val EXTRA_SM_EPISODE = "sm_episode"
         private const val PLAYBACK_PREPARATION_TIMEOUT_MS = 14_000L
         private const val ACTION_RETRY_COOLDOWN_MS = 850L
 
@@ -99,8 +102,10 @@ class BrowserActivity : ComponentActivity() {
             directPlay: Boolean = false,
             resumeStrategyOverride: ResumeStrategy? = null,
             actionButtonTextPatterns: List<String> = emptyList(),
-            /** Make an ordinary live-channel page fill the TV without a second click. */
-            liveTheaterMode: Boolean = false
+            liveTheaterMode: Boolean = false,
+            smSeason: String? = null,
+            smQuality: String? = null,
+            smEpisode: String? = null
         ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
@@ -113,6 +118,9 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
                 .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
+                .putExtra(EXTRA_SM_SEASON, smSeason)
+                .putExtra(EXTRA_SM_QUALITY, smQuality)
+                .putExtra(EXTRA_SM_EPISODE, smEpisode)
                 .putStringArrayListExtra(
                     EXTRA_ACTION_BUTTON_PATTERNS,
                     ArrayList(actionButtonTextPatterns)
@@ -125,6 +133,7 @@ class BrowserActivity : ComponentActivity() {
     private lateinit var errorView: TvErrorView
     private lateinit var mouseKeyboard: MouseKeyboardOverlay
     private lateinit var quickMenu: QuickMenuOverlay
+    lateinit var playbackSessionController: PlaybackSessionController
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -152,6 +161,10 @@ class BrowserActivity : ComponentActivity() {
     private var liveTheaterModeApplied = false
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
+    private var smSeason: String? = null
+    private var smQuality: String? = null
+    private var smEpisode: String? = null
+    
     private var keyboardOpenSuppressedUntil = 0L
     private var keyboardSessionSequence = 0L
     private var keyboardSession = BrowserKeyboardSession()
@@ -217,6 +230,9 @@ class BrowserActivity : ComponentActivity() {
             }
         requestedActionButtonPatterns =
             intent.getStringArrayListExtra(EXTRA_ACTION_BUTTON_PATTERNS).orEmpty()
+        smSeason = intent.getStringExtra(EXTRA_SM_SEASON)
+        smQuality = intent.getStringExtra(EXTRA_SM_QUALITY)
+        smEpisode = intent.getStringExtra(EXTRA_SM_EPISODE)
 
         root = FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)
@@ -279,6 +295,7 @@ class BrowserActivity : ComponentActivity() {
             )
         )
         quickMenu = QuickMenuOverlay(this) { handleQuickAction(it) }
+        playbackSessionController = PlaybackSessionController(this, webView)
         root.addView(
             quickMenu,
             FrameLayout.LayoutParams(
@@ -387,6 +404,11 @@ class BrowserActivity : ComponentActivity() {
                 scheduleSiteContinue(view)
                 scheduleDirectPlay(view)
                 scheduleLiveTheaterMode(view)
+                
+                if (smSeason != null && smEpisode != null) {
+                    playbackSessionController.markEpisodePlaybackStarted()
+                    playbackSessionController.executeFilmRoozStateMachine(smSeason!!, smQuality ?: "", smEpisode!!)
+                }
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
@@ -2055,6 +2077,9 @@ class BrowserActivity : ComponentActivity() {
                         webView.requestFocus()
                     }
                     mouseKeyboard.isShowing -> mouseKeyboard.dismiss()
+                    playbackSessionController.handleBackPress(isFullscreen = customView != null) -> {
+                        // Handled by controller, activity is finishing.
+                    }
                     customView != null -> webView.webChromeClient?.onHideCustomView()
                     playbackLoadingView.isShowing -> {
                         playbackAutomationHandler.removeCallbacks(playbackAutomationTimeout)

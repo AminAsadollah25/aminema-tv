@@ -167,8 +167,9 @@ fun RailNavigationControls(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
-    val page = {
-        (scrollState.viewportSize * 0.82f).toInt().coerceAtLeast(360)
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val step = remember(density) {
+        with(density) { 210.dp.toPx() }.toInt()
     }
 
     Row(
@@ -182,7 +183,7 @@ fun RailNavigationControls(
             onClick = {
                 scope.launch {
                     scrollState.animateScrollTo(
-                        (scrollState.value - page()).coerceAtLeast(0)
+                        (scrollState.value - step).coerceAtLeast(0)
                     )
                 }
             }
@@ -202,7 +203,7 @@ fun RailNavigationControls(
             onClick = {
                 scope.launch {
                     scrollState.animateScrollTo(
-                        (scrollState.value + page()).coerceAtMost(scrollState.maxValue)
+                        (scrollState.value + step).coerceAtMost(scrollState.maxValue)
                     )
                 }
             }
@@ -230,17 +231,15 @@ fun RailNavigationControls(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
     ) {
+        // Right arrow (RTL: scroll right = previous)
         FocusableCard(
             modifier = Modifier.size(width = 48.dp, height = 42.dp),
             shape = RoundedCornerShape(50),
             enabled = listState.canScrollBackward,
             onClick = {
                 scope.launch {
-                    val pageSize = (
-                        listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1) - 1
-                        ).coerceAtLeast(1)
                     listState.animateScrollToItem(
-                        (listState.firstVisibleItemIndex - pageSize).coerceAtLeast(0)
+                        (listState.firstVisibleItemIndex - 1).coerceAtLeast(0)
                     )
                 }
             }
@@ -253,17 +252,16 @@ fun RailNavigationControls(
                 )
             }
         }
+        
+        // Left arrow (RTL: scroll left = next)
         FocusableCard(
             modifier = Modifier.size(width = 48.dp, height = 42.dp),
             shape = RoundedCornerShape(50),
             enabled = listState.canScrollForward,
             onClick = {
                 scope.launch {
-                    val pageSize = (
-                        listState.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1) - 1
-                        ).coerceAtLeast(1)
                     listState.animateScrollToItem(
-                        (listState.firstVisibleItemIndex + pageSize)
+                        (listState.firstVisibleItemIndex + 1)
                             .coerceAtMost((itemCount - 1).coerceAtLeast(0))
                     )
                 }

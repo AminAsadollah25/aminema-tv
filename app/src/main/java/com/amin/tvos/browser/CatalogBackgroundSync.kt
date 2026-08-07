@@ -439,10 +439,15 @@ class CatalogBackgroundSync(
                   title: String(item.title || '').slice(0, 140),
                   kind: kind,
                   contentUrl: location.origin + '/medias/' + path + '/' + item.id,
-                  // thumbnail is the portrait artwork and cover is the wide one; measured
-                  // on live data as roughly 0.8:1 versus 1.8:1. Taking cover first put a
-                  // landscape image inside a 2:3 card, which cropped it to a magnified strip.
-                  posterUrl: item.thumbnailLink || item.coverLink || '',
+                  // The provider's field names are the opposite of what they sound like:
+                  // "thumbnail" is the PORTRAIT artwork (~0.8:1) and "cover" is the WIDE one
+                  // (~1.8:1), both measured on live data.
+                  //
+                  // Deliberately no fallback to the wide image here. A poster frame is 2:3,
+                  // so a landscape image dropped into it gets cropped to a magnified strip —
+                  // which looks broken rather than merely imperfect. A title with no portrait
+                  // artwork leaves this empty and the card falls back to its clean placeholder.
+                  posterUrl: item.thumbnailLink || '',
                   backdropUrl: item.coverLink || '',
                   episodeLabel: '',
                   summary: text(
@@ -506,8 +511,8 @@ class CatalogBackgroundSync(
                     return {
                       title: String(item.title || '').slice(0, 140),
                       contentUrl: location.origin + '/medias/' + kind + '/' + item.id,
-                      // Portrait first: see the note on the catalog mapper above.
-                      posterUrl: item.thumbnailLink || item.coverLink || '',
+                      // Portrait only: see the note on the catalog mapper above.
+                      posterUrl: item.thumbnailLink || '',
                       resumePosition: 0
                     };
                   });
@@ -546,9 +551,11 @@ class CatalogBackgroundSync(
                       title: String(entry.title || '').slice(0, 140),
                       kind: isSeries ? 'SERIES' : 'MOVIE',
                       contentUrl: link,
-                      // A SLIDER item has no portrait artwork at all, so the wide image is
-                      // both the backdrop and the only poster this item can offer.
-                      posterUrl: entry.cover || '',
+                      // A SLIDER item ships only wide artwork, so it becomes the backdrop and
+                      // the poster stays empty. The rejoin below fills the real portrait from
+                      // the typed catalog; when even that has none, an empty poster is still
+                      // better than a wide image cropped into a 2:3 frame.
+                      posterUrl: '',
                       backdropUrl: entry.cover || '',
                       // Not the shared text() helper: that one is scoped inside map().
                       summary: String(entry.description || '')

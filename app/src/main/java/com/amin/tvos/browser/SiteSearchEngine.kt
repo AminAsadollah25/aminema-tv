@@ -176,8 +176,9 @@ class SiteSearchEngine(
                     kind: kind,
                     contentUrl: location.origin + '/medias/' +
                       (kind === 'SERIES' ? 'series' : 'movies') + '/' + item.id,
-                    // Portrait artwork for a portrait card: thumbnail is ~0.8:1, cover ~1.8:1.
-                    posterUrl: item.thumbnailLink || item.coverLink || ''
+                    // Portrait artwork only: "thumbnail" is the portrait one (~0.8:1) and
+                    // "cover" is wide (~1.8:1), which a 2:3 result card would crop to a strip.
+                    posterUrl: item.thumbnailLink || ''
                   };
                 });
                 AminSearch.results('parsiflix', JSON.stringify(items));

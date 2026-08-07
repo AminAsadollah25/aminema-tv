@@ -1,0 +1,16 @@
+<script type='text/javascript'>
+                    
+                    function setCookie(cvalue) {
+                      const d = new Date();
+                      d.setTime(d.getTime() + (365*24*60*60*1000));
+                      let expires = 'expires='+ d.toUTCString();
+                      document.cookie = 'scr=' + cvalue + ';' + expires + ';path=/';
+                    }
+    
+                    if(window.devicePixelRatio)
+                        setCookie(window.devicePixelRatio);
+                    else
+                        setCookie(1);
+                </script>
+                    <meta http-equiv='refresh' content="0;URL='/post/series/5673834/ted-lasso/?scr=1'" />
+                

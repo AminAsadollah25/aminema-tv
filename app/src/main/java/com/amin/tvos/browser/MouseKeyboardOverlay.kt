@@ -498,7 +498,6 @@ class MouseKeyboardOverlay(
         minHeight = 0
         minimumHeight = 0
         isFocusable = true
-        isFocusableInTouchMode = true
         setPadding(dp(4), 0, dp(4), 0)
         setTextColor(Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)

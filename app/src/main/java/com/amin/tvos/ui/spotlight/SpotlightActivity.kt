@@ -17,6 +17,11 @@ import com.amin.tvos.AminTvApp
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.PublicTitleMetadataEnricher
+import com.amin.tvos.data.model.CatalogKind
+import com.amin.tvos.data.model.Episode
+import com.amin.tvos.data.model.SeriesEdition
+import com.amin.tvos.data.model.Season
+import com.amin.tvos.data.model.SpotlightAction
 import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.data.model.TitleMetadata
 import com.amin.tvos.data.model.isDecisionComplete
@@ -38,6 +43,11 @@ class SpotlightActivity : ComponentActivity() {
     private var metadataLoader: SpotlightMetadataLoader? = null
     private var sheydaMetadataLoader: SheydaMetadataLoader? = null
     private val publicMetadataEnricher = PublicTitleMetadataEnricher()
+    private var showEpisodeNavigator by mutableStateOf(false)
+    private var episodeNavLoading by mutableStateOf(false)
+    private var episodeNavFailed by mutableStateOf(false)
+    private var availableEditions by mutableStateOf<List<SeriesEdition>>(emptyList())
+    private var episodeLoader: EpisodeLoader? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +59,10 @@ class SpotlightActivity : ComponentActivity() {
             return
         }
         spotlightItem = decodedItem
+
+        if (decodedItem.kind == CatalogKind.SERIES) {
+            showEpisodeNavigator = true
+        }
 
         setContent {
             AminTvTheme {
@@ -62,13 +76,46 @@ class SpotlightActivity : ComponentActivity() {
                     item = item,
                     isFavorite = isFavorite,
                     metadataLoading = metadataLoading,
-                    onBack = ::finish,
+                    showEpisodeNavigator = showEpisodeNavigator,
+                    onBack = { finish() },
                     onToggleFavorite = { spotlightViewModel.toggleFavorite(item) },
-                    onWatch = { openBrowser(item) }
+                    onAction = { action ->
+                        when (action) {
+                            SpotlightAction.WATCH, SpotlightAction.CONTINUE -> {
+                                if (item.kind == CatalogKind.SERIES) {
+                                    // With the scrollable UI, 'Watch' will focus the episodes,
+                                    // but if we want to play the latest/next episode, we can openBrowser.
+                                    openBrowser(item)
+                                } else {
+                                    openBrowser(item)
+                                }
+                            }
+                            SpotlightAction.SELECT_EPISODE -> {
+                                // Handled implicitly by scrolling down in the UI now
+                            }
+                            SpotlightAction.LATEST_EPISODE -> openBrowser(item)
+                        }
+                    },
+                    episodeNavigatorContent = {
+                        EpisodeNavigatorInline(
+                            editions = availableEditions,
+                            isLoading = episodeNavLoading,
+                            hasFailed = episodeNavFailed,
+                            posterUrl = item.backdropUrl.ifEmpty { item.posterUrl },
+                            contentUrl = item.contentUrl,
+                            onEpisodeSelected = { episode, edition ->
+                                openBrowserWithEpisode(item, episode, edition)
+                            },
+                            onDismiss = { }
+                        )
+                    }
                 )
             }
         }
 
+        if (decodedItem.kind == CatalogKind.SERIES) {
+            startEpisodeLoad(decodedItem)
+        }
         enrichMetadata(decodedItem)
     }
 
@@ -84,6 +131,7 @@ class SpotlightActivity : ComponentActivity() {
             // A fresh synopsis-only record is not complete. Retry the provider's ordinary
             // title metadata so newly supported credits can appear without clearing app data.
             val cacheIsFresh = cached?.isDecisionComplete() == true &&
+                !cached.backdropUrl.isNullOrBlank() &&
                 System.currentTimeMillis() - cached.fetchedAt < METADATA_MAX_AGE_MS
             if (isFinishing || isDestroyed) return@launch
             if (cacheIsFresh) {
@@ -182,6 +230,25 @@ class SpotlightActivity : ComponentActivity() {
             metadata?.directors.isNullOrEmpty() || metadata?.cast.isNullOrEmpty()
         )
 
+    private fun openBrowserWithEpisode(item: SpotlightItem, episode: Episode, edition: SeriesEdition) {
+        val season = edition.seasons.firstOrNull { s -> s.episodes.any { it.id == episode.id } }
+        startActivity(
+            com.amin.tvos.browser.BrowserActivity.intent(
+                context = this,
+                serviceId = item.serviceId,
+                url = item.browserStartUrl.ifBlank { item.contentUrl },
+                resumePosition = 0L,
+                contentUrl = item.contentUrl,
+                contentPoster = item.posterUrl,
+                autoResume = false,
+                directPlay = true,
+                smSeason = season?.id,
+                smQuality = edition.resolution,
+                smEpisode = episode.actionPayload
+            )
+        )
+    }
+
     private fun openBrowser(item: SpotlightItem) {
         startActivity(
             BrowserActivity.intent(
@@ -218,7 +285,28 @@ class SpotlightActivity : ComponentActivity() {
         metadataLoader = null
         sheydaMetadataLoader?.destroy()
         sheydaMetadataLoader = null
+        episodeLoader?.destroy()
+        episodeLoader = null
         super.onDestroy()
+    }
+
+    private fun startEpisodeLoad(item: SpotlightItem) {
+        val app = application as AminTvApp
+        episodeNavLoading = true
+        episodeNavFailed = false
+        episodeLoader?.destroy()
+        episodeLoader = EpisodeLoader(
+            activity = this,
+            app = app,
+            onLoaded = { editions ->
+                availableEditions = editions
+                episodeNavLoading = false
+            },
+            onFailed = {
+                episodeNavLoading = false
+                episodeNavFailed = true
+            }
+        ).also { it.load(item) }
     }
 
     companion object {
