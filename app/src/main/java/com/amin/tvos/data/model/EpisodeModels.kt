@@ -27,7 +27,7 @@ data class Season(
 data class Episode(
     val id: String,
     val title: String,          // e.g. "قسمت ۱"
-    val actionPayload: String,  // URL or JS action payload to activate this episode
+    val actionPayload: String,  // Aminema semantic DOM action; never a media/download URL
     val isAvailableOnline: Boolean, // True if streamable (e.g. .eSbox), false if only download
     val isWatched: Boolean      // True if provider shows checkmark
 )

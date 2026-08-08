@@ -82,13 +82,17 @@ class PlaybackLoadingView(context: Context) : FrameLayout(context) {
         )
     }
 
-    fun showPreparing(isContinue: Boolean) {
-        title.text = if (isContinue) {
+    fun showPreparing(isContinue: Boolean, episodeLabel: String? = null) {
+        title.text = if (!episodeLabel.isNullOrBlank()) {
+            "در حال آماده‌سازی $episodeLabel…"
+        } else if (isContinue) {
             "پاپ‌کورن یادت نره… 🍿"
         } else {
             "چراغ‌ها خاموش، پاپ‌کورن آماده… 🍿"
         }
-        subtitle.text = if (isContinue) {
+        subtitle.text = if (!episodeLabel.isNullOrBlank()) {
+            "انتخابت ثبت شد؛ داریم دقیقاً همون قسمت رو باز می‌کنیم 🍿"
+        } else if (isContinue) {
             "داریم فیلمت رو از همون‌جایی که جا گذاشتی میاریم؛ خوش بگذره!"
         } else {
             "چند لحظه تا شروع فیلم؛ خوش بگذره!"

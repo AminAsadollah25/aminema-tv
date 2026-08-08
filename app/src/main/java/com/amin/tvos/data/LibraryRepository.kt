@@ -197,7 +197,7 @@ class LibraryRepository(private val context: Context) {
                 )
                 val next = item.copy(
                     title = if (titleIsGeneric) catalog.title else item.title,
-                    posterUrl = item.posterUrl.ifBlank { catalog.posterUrl }
+                    posterUrl = catalog.posterUrl.ifBlank { item.posterUrl }
                 )
                 if (next != item) changed = true
                 next

@@ -188,8 +188,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                         } else {
                             item.title
                         },
-                        posterUrl = item.posterUrl.ifBlank {
-                            catalog?.posterUrl.orEmpty()
+                        posterUrl = catalog?.posterUrl.orEmpty().ifBlank {
+                            item.posterUrl
                         },
                         serviceName = configuredServices.firstOrNull {
                             it.id == item.serviceId

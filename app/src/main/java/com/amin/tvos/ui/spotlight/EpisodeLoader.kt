@@ -142,6 +142,7 @@ class EpisodeLoader(
                 finish(editions)
             }
         }
+
     }
 
     private fun parse(payload: String): List<SeriesEdition>? {
@@ -231,6 +232,16 @@ class EpisodeLoader(
         val EXTRACT_SCRIPT = """
             (async function() {
               function clean(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
+              function toEnglishDigits(value) {
+                var fa = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+                var ar = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+                var result = String(value || '');
+                for (var i = 0; i < 10; i++) {
+                  result = result.replace(new RegExp(fa[i], 'g'), String(i));
+                  result = result.replace(new RegExp(ar[i], 'g'), String(i));
+                }
+                return result;
+              }
 
               // ── FilmRooz pattern ──────────────────────────────────────────
               // DOM structure (from actual inspection):
@@ -244,30 +255,22 @@ class EpisodeLoader(
               //     <div class="eSbox"> ... stream episodes (قسمت ۰۱, قسمت ۰۲) ... </div>
               //     <div class="eDbox"> ... download episodes ... </div>
               function filmRoozEditions() {
-                // Method 1: Read cseason divs directly (works even without select)
                 var cseasonDivs = Array.from(document.querySelectorAll('div.cseason[id^="cseason_"]'));
-                
-                // Method 2: Fall back to select#cseason
                 var seasonSelect = document.querySelector('select#cseason');
-                
                 if (!cseasonDivs.length && !seasonSelect) return null;
-                
-                // If we have the select, use its options for season names
+
                 var seasonNames = {};
                 if (seasonSelect) {
                   Array.from(seasonSelect.options).forEach(function(opt) {
                     seasonNames[opt.value] = clean(opt.textContent);
                   });
                 }
-                
-                // If no cseason divs, try to determine them from select
                 if (!cseasonDivs.length && seasonSelect) {
                   Array.from(seasonSelect.options).forEach(function(opt) {
                     var div = document.getElementById('cseason_' + opt.value);
                     if (div) cseasonDivs.push(div);
                   });
                 }
-                
                 if (!cseasonDivs.length) return null;
 
                 var seasons = [];
@@ -275,70 +278,68 @@ class EpisodeLoader(
                   var idMatch = div.id.match(/cseason_(\d+)/);
                   var seasonNum = idMatch ? idMatch[1] : String(idx + 1);
                   var seasonName = seasonNames[seasonNum] || ('فصل ' + (idx + 1));
-                  
-                  var episodesMap = {};
-                  var links = Array.from(div.querySelectorAll('a'));
-                  
-                  links.forEach(function(link) {
-                    var href = link.getAttribute('href') || link.getAttribute('data-url') || '';
-                    if (!href || href === '#' || href.indexOf('javascript') === 0) return;
-                    
-                    var parent = link.closest('.eSbox, .dl-box, .item, .eDbox') || link.parentElement;
-                    var titleEl = parent ? (parent.querySelector('.eTitle') || parent.querySelector('span')) : null;
-                    var fullText = clean(link.textContent + ' ' + (titleEl ? titleEl.textContent : '') + ' ' + (parent ? parent.textContent : ''));
-                    
-                    var epMatch = fullText.match(/قسمت\s*(\d+)/i) || 
-                                  fullText.match(/[Ee]pisode\s*(\d+)/i) || 
-                                  fullText.match(/[Ee]p\s*(\d+)/i) ||
-                                  fullText.match(/[Ss]\d+[Ee](\d+)/i) ||
-                                  href.match(/[Ss]\d+[Ee](\d+)/i) ||
-                                  href.match(/episode-(\d+)/i);
-                                  
-                    if (epMatch) {
-                      var epNum = parseInt(epMatch[1], 10);
-                      if (!episodesMap[epNum]) {
-                         episodesMap[epNum] = {
-                           id: seasonNum + '-ep-' + epNum,
-                           title: 'قسمت ' + epNum,
-                           actionPayload: href,
-                           isAvailableOnline: true,
-                           isWatched: false,
-                           _order: epNum
-                         };
-                      }
-                    }
+
+                  // Verified FilmRooz structure: each quality block owns one .eSbox.
+                  // Its children are the site's real online-play controls; .eDbox links
+                  // are downloads and must never become an Aminema action payload.
+                  var qualityBlocks = Array.from(div.children).filter(function(block) {
+                    return !!block.querySelector('.eSbox');
                   });
-                  
-                  var episodes = Object.keys(episodesMap).map(function(k) { return episodesMap[k]; });
-                  episodes.sort(function(a, b) { return a._order - b._order; });
-                  
-                  if (episodes.length === 0) {
-                     var streamBoxes = Array.from(div.querySelectorAll('.eSbox'));
-                     if (streamBoxes.length > 0) {
-                        streamBoxes.forEach(function(sbox, i) {
-                           var link = sbox.querySelector('a');
-                           episodes.push({
-                              id: seasonNum + '-ep-' + (i+1),
-                              title: 'قسمت ' + (i+1),
-                              actionPayload: link ? link.getAttribute('href') : '',
-                              isAvailableOnline: true,
-                              isWatched: false
-                           });
-                        });
-                     } else {
-                        var dBoxes = Array.from(div.querySelectorAll('.eDbox, .dl-box'));
-                        dBoxes.forEach(function(dbox, i) {
-                           episodes.push({
-                              id: seasonNum + '-ep-' + (i+1),
-                              title: 'قسمت ' + (i+1),
-                              actionPayload: '',
-                              isAvailableOnline: false,
-                              isWatched: false
-                           });
-                        });
-                     }
-                  }
-                  
+                  var candidates = qualityBlocks.map(function(block, blockIndex) {
+                    var header = block.querySelector('.dlbox-color') || block.firstElementChild;
+                    var label = clean(header ? header.textContent : '');
+                    var normalized = toEnglishDigits(label);
+                    var resolutionMatch = normalized.match(/(?:^|\s)(2160|1080|720|480)p(?:\s|$)/i);
+                    var resolution = resolutionMatch ? parseInt(resolutionMatch[1], 10) : 0;
+                    var languageRank = /دو\s*زبانه|دوبله|صوت\s*فارسی|فارسی/i.test(label) ? 2 : 1;
+                    var qualityRank = resolution === 1080 ? 3 :
+                                      resolution === 720 ? 2 :
+                                      resolution === 480 ? 1 : 0;
+                    var streamBox = block.querySelector('.eSbox');
+                    var episodeControls = streamBox ? Array.from(streamBox.children) : [];
+                    return {
+                      blockIndex: blockIndex,
+                      languageRank: languageRank,
+                      qualityRank: qualityRank,
+                      episodeControls: episodeControls
+                    };
+                  }).filter(function(candidate) {
+                    // 2160p is intentionally not an automatic choice on TV boxes.
+                    return candidate.qualityRank > 0 && candidate.episodeControls.length > 0;
+                  });
+
+                  candidates.sort(function(a, b) {
+                    return (b.languageRank - a.languageRank) ||
+                           (b.qualityRank - a.qualityRank) ||
+                           (a.blockIndex - b.blockIndex);
+                  });
+                  var best = candidates[0];
+                  if (!best) return;
+
+                  var episodesMap = {};
+                  best.episodeControls.forEach(function(control) {
+                    var text = toEnglishDigits(clean(control.textContent));
+                    var match = text.match(/قسمت\s*(\d+)/i) ||
+                                text.match(/[Ee]pisode\s*(\d+)/i);
+                    if (!match) return;
+                    var epNum = parseInt(match[1], 10);
+                    if (!epNum || episodesMap[epNum]) return;
+                    episodesMap[epNum] = {
+                      id: seasonNum + '-ep-' + epNum,
+                      title: 'قسمت ' + epNum,
+                      actionPayload: '#filmrooz-s' + seasonNum +
+                        '-box' + best.blockIndex + '-epnum-' + epNum,
+                      isAvailableOnline: true,
+                      isWatched: !!control.querySelector(
+                        '.fa-check,.fa-check-circle,[class*="check"],[class*="Check"]'
+                      ),
+                      _order: epNum
+                    };
+                  });
+                  var episodes = Object.keys(episodesMap).map(function(key) {
+                    return episodesMap[key];
+                  }).sort(function(a, b) { return a._order - b._order; });
+
                   if (episodes.length > 0) {
                     seasons.push({
                       id: seasonNum,
@@ -351,7 +352,7 @@ class EpisodeLoader(
                 if (!seasons.length) return null;
                 return [{
                   id: 'default',
-                  label: 'پیش‌فرض',
+                  label: 'پخش پیشنهادی',
                   language: '',
                   resolution: '',
                   isDefault: true,
@@ -370,33 +371,21 @@ class EpisodeLoader(
                 var mediaMatch = location.pathname.match(/\/medias\/series\/(\d+)/i);
                 if (!mediaMatch) return null;
 
-                // Try various selectors to find season containers
-                // From DOM dump: seasonItems with title (فصل اول) and eps array
                 var seasons = [];
 
-                // Strategy 1: look for season header elements (h2,h3,div with فصل text)
                 var allEls = Array.from(document.querySelectorAll('*'));
-                
-                // Find containers that group episodes by season
-                // Parsiflix uses accordion or tab pattern for seasons
-                var seasonContainers = Array.from(document.querySelectorAll(
-                  '[class*="season"], [class*="Season"], [data-season]'
-                )).filter(function(el) {
-                  return el.querySelectorAll('a, button, [role="button"]').length > 0 ||
-                         el.textContent.indexOf('قسمت') !== -1;
-                });
+                // Verified live structure. The suffix is hashed, `_seasonItem_` is stable.
+                var seasonContainers = Array.from(
+                  document.querySelectorAll('[class*="_seasonItem_"]')
+                );
 
-                // If no explicit season containers, look for sections with episode lists
                 if (!seasonContainers.length) {
-                  // Find all elements whose text is just a season name
-                  var headerEls = allEls.filter(function(el) {
-                    var t = el.childElementCount === 0 ? (el.textContent || '').trim() : '';
-                    return /^فصل\s*(\w+|\d+)$/.test(t) || /^Season\s*\d+$/i.test(t);
+                  seasonContainers = Array.from(document.querySelectorAll(
+                    '[class*="season"], [class*="Season"], [data-season]'
+                  )).filter(function(el) {
+                    return el.querySelectorAll('a, button, [role="button"]').length > 0 ||
+                           el.textContent.indexOf('قسمت') !== -1;
                   });
-                  // Use parent containers of those headers
-                  seasonContainers = headerEls.map(function(h) {
-                    return h.closest('section, div, article, li') || h.parentElement;
-                  }).filter(Boolean);
                 }
 
                 // Remove duplicate/ancestor containers - keep only leaf containers
@@ -421,9 +410,22 @@ class EpisodeLoader(
                   if (!seasonName) seasonName = 'فصل ' + (sIdx + 1);
 
                   // Find episode elements within this season container
-                  var epEls = Array.from(container.querySelectorAll(
-                    'a[href*="episode"], a[href*="ep"], [class*="episode"], [class*="Episode"], [data-episode-id]'
-                  ));
+                  // Prefer the provider's verified row. The hashed suffix changes,
+                  // but `_episodeItem_` is the stable semantic part of the class.
+                  var epEls = Array.from(container.querySelectorAll('[class*="_episodeItem_"]'));
+                  if (!epEls.length) {
+                    epEls = Array.from(container.querySelectorAll(
+                      'a[href*="episode"], a[href*="ep"], [class*="episode"], [class*="Episode"], [data-episode-id]'
+                    ));
+                    // Generic selectors can return a wrapper, row and number label
+                    // for the same episode. Keep one leaf candidate only in fallback.
+                    epEls = epEls.filter(function(el) {
+                      return !epEls.some(function(other) {
+                        return other !== el && el.contains(other);
+                      });
+                    });
+                  }
+
                   // Fallback: any clickable/link element with قسمت in text
                   if (!epEls.length) {
                     epEls = Array.from(container.querySelectorAll('a, button, [role="button"], [onClick]'))
@@ -438,7 +440,8 @@ class EpisodeLoader(
 
                   var episodes = [];
                   epEls.forEach(function(el, epIdx) {
-                    var epText = clean(el.textContent || '');
+                    var numberEl = el.querySelector && el.querySelector('[class*="_episodeNumber_"]');
+                    var epText = clean(numberEl ? numberEl.textContent : (el.textContent || ''));
                     var epNumMatch = epText.match(/قسمت\s*(\d+)/);
                     if (!epNumMatch) {
                         var standalone = epText.match(/^(\d+)$/);
@@ -495,7 +498,7 @@ class EpisodeLoader(
                       epMap[epNum] = {
                         id: epId,
                         title: 'قسمت ' + epNum,
-                        actionPayload: linkEl.getAttribute('href') || epId,
+                        actionPayload: '#parsiflix-s0-epnum-' + epNum,
                         isAvailableOnline: true,
                         isWatched: false
                       };

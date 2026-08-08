@@ -457,6 +457,25 @@ Probe کند چیزی که یک بار قطعی کشف شده.
 
 ---
 
+## ۱۰. Episode Navigator نهایی 0.16.3 — 2026-08-08
+
+- ParsiFlix: Container دقیق فصل `_seasonItem_` و Row دقیق قسمت
+  `_episodeItem_` است. شماره از `_episodeNumber_` خوانده و Button همان Row
+  فقط یک‌بار Click می‌شود.
+- FilmRooz: `.eDbox` دانلود و `.eSbox` پخش آنلاین است. مدل Episode فقط Action
+  معنایی `#filmrooz-sN-boxN-epnum-N` نگه می‌دارد؛ href دانلود ممنوع است.
+- Native callback فصل را صریح همراه Episode می‌فرستد؛ پیدا کردن فصل از روی
+  Episode ID تکراری ممنوع است.
+- هنگام `smEpisode`، Generic Direct Play و Site Continue نباید اجرا شوند.
+- State Machine فقط یک‌بار و فقط روی Detail/Content URL Dispatch می‌شود.
+- پوستر Portrait کاتالوگ بر پوستر قدیمی Recent/Continue اولویت دارد؛ Repair
+  غیرمخرب است و Login/Cookie/Library پاک نمی‌شود.
+- تست مالک: لیسانسه‌ها فصل ۱ و ۲، بامداد خمار فصل ۲ قسمت ۴، Life/Larry و
+  پوسترهای مربوط موفق بودند.
+- جزئیات کامل: `DEVELOPMENT_LOG_0.16.3.md` و `TEST_REPORT_0.16.3.md`.
+
+---
+
 ## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)
 
 ### ۹.۱ ریشه باگ Continue گاه‌به‌گاه

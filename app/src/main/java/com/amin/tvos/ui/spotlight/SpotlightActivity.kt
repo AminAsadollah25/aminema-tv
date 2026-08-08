@@ -103,8 +103,8 @@ class SpotlightActivity : ComponentActivity() {
                             hasFailed = episodeNavFailed,
                             posterUrl = item.backdropUrl.ifEmpty { item.posterUrl },
                             contentUrl = item.contentUrl,
-                            onEpisodeSelected = { episode, edition ->
-                                openBrowserWithEpisode(item, episode, edition)
+                            onEpisodeSelected = { episode, season, edition ->
+                                openBrowserWithEpisode(item, episode, season, edition)
                             },
                             onDismiss = { }
                         )
@@ -230,19 +230,26 @@ class SpotlightActivity : ComponentActivity() {
             metadata?.directors.isNullOrEmpty() || metadata?.cast.isNullOrEmpty()
         )
 
-    private fun openBrowserWithEpisode(item: SpotlightItem, episode: Episode, edition: SeriesEdition) {
-        val season = edition.seasons.firstOrNull { s -> s.episodes.any { it.id == episode.id } }
+    private fun openBrowserWithEpisode(
+        item: SpotlightItem,
+        episode: Episode,
+        season: Season,
+        edition: SeriesEdition
+    ) {
         startActivity(
             com.amin.tvos.browser.BrowserActivity.intent(
                 context = this,
                 serviceId = item.serviceId,
-                url = item.browserStartUrl.ifBlank { item.contentUrl },
+                // Episode selection always starts from the stable title page, never
+                // from a previously saved player page belonging to another episode.
+                url = item.contentUrl,
                 resumePosition = 0L,
                 contentUrl = item.contentUrl,
+                contentTitle = item.title,
                 contentPoster = item.posterUrl,
                 autoResume = false,
                 directPlay = true,
-                smSeason = season?.id,
+                smSeason = season.id,
                 smQuality = edition.resolution,
                 smEpisode = episode.actionPayload
             )

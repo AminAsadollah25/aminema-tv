@@ -153,8 +153,8 @@ fun HomeScreen(
             title = item.title,
             kind = baseMeta.kind,
             contentUrl = item.url,
-            posterUrl = item.posterUrl.ifBlank {
-                baseMeta.posterUrl.ifBlank { fetchedMeta?.posterUrl.orEmpty() }
+            posterUrl = baseMeta.posterUrl.ifBlank {
+                fetchedMeta?.posterUrl.orEmpty().ifBlank { item.posterUrl }
             },
             backdropUrl = baseMeta.backdropUrl.ifBlank {
                 fetchedMeta?.backdropUrl.orEmpty()
@@ -252,10 +252,8 @@ fun HomeScreen(
             kind = metadata?.kind ?: catalogKindFromUrl(session.contentUrl)
                 ?: CatalogKind.MOVIE,
             contentUrl = session.contentUrl,
-            posterUrl = session.posterUrl.ifBlank {
-                metadata?.posterUrl.orEmpty().ifBlank {
-                    fetchedMetadata?.posterUrl.orEmpty()
-                }
+            posterUrl = metadata?.posterUrl.orEmpty().ifBlank {
+                fetchedMetadata?.posterUrl.orEmpty().ifBlank { session.posterUrl }
             },
             backdropUrl = metadata?.backdropUrl.orEmpty().ifBlank {
                 fetchedMetadata?.backdropUrl.orEmpty()
@@ -686,10 +684,13 @@ fun HomeScreen(
                 items = continueWatching,
                 key = { it.id }
             ) { session ->
+                    val catalogPoster = catalogByUrl[
+                        ContentMetadataPolicy.canonicalContentUrl(session.contentUrl)
+                    ]?.posterUrl.orEmpty()
                     val item = MovieItem(
                         id = session.id,
                         title = session.title,
-                        posterUrl = session.posterUrl,
+                        posterUrl = catalogPoster.ifBlank { session.posterUrl },
                         serviceId = session.serviceId,
                         serviceName = session.serviceName,
                         url = session.contentUrl,
@@ -745,8 +746,8 @@ fun HomeScreen(
                             title = session.title,
                             kind = CatalogKind.SERIES,
                             contentUrl = session.contentUrl,
-                            posterUrl = session.posterUrl.ifBlank {
-                                release?.posterUrl.orEmpty()
+                            posterUrl = release?.posterUrl.orEmpty().ifBlank {
+                                session.posterUrl
                             },
                             serviceId = session.serviceId,
                             // Publication status only — never claim "unwatched" without
@@ -769,8 +770,8 @@ fun HomeScreen(
                         onFocused = { focused ->
                             if (focused) {
                                 previewFromRail(
-                                    session.posterUrl.ifBlank {
-                                        release?.posterUrl.orEmpty()
+                                    release?.posterUrl.orEmpty().ifBlank {
+                                        session.posterUrl
                                     },
                                     session.contentUrl
                                 )

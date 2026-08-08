@@ -51,7 +51,7 @@ fun EpisodeNavigatorInline(
     hasFailed: Boolean,
     posterUrl: String,
     contentUrl: String,
-    onEpisodeSelected: (Episode, SeriesEdition) -> Unit,
+    onEpisodeSelected: (Episode, Season, SeriesEdition) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedEdition by remember(editions) {
@@ -206,7 +206,9 @@ fun EpisodeNavigatorInline(
                                         focusedScale = 1.06f,
                                         onClick = {
                                             selectedEdition?.let { edition ->
-                                                onEpisodeSelected(ep, edition)
+                                                selectedSeason?.let { season ->
+                                                    onEpisodeSelected(ep, season, edition)
+                                                }
                                             }
                                         }
                                     ) { focused ->

@@ -164,6 +164,7 @@ class BrowserActivity : ComponentActivity() {
     private var smSeason: String? = null
     private var smQuality: String? = null
     private var smEpisode: String? = null
+    private var episodeSelectionDispatched = false
     
     private var keyboardOpenSuppressedUntil = 0L
     private var keyboardSessionSequence = 0L
@@ -305,7 +306,10 @@ class BrowserActivity : ComponentActivity() {
         )
         setContentView(root)
         if (autoResumeRequested || directPlayRequested) {
-            playbackLoadingView.showPreparing(isContinue = autoResumeRequested)
+            playbackLoadingView.showPreparing(
+                isContinue = autoResumeRequested,
+                episodeLabel = requestedEpisodeLabel()
+            )
             playbackAutomationHandler.postDelayed(
                 playbackAutomationTimeout,
                 PLAYBACK_PREPARATION_TIMEOUT_MS
@@ -405,7 +409,13 @@ class BrowserActivity : ComponentActivity() {
                 scheduleDirectPlay(view)
                 scheduleLiveTheaterMode(view)
                 
-                if (smSeason != null && smEpisode != null) {
+                if (
+                    smSeason != null &&
+                    smEpisode != null &&
+                    !episodeSelectionDispatched &&
+                    serviceAdapter?.isContentUrl(url) == true
+                ) {
+                    episodeSelectionDispatched = true
                     playbackSessionController.markEpisodePlaybackStarted()
                     playbackSessionController.executeFilmRoozStateMachine(smSeason!!, smQuality ?: "", smEpisode!!)
                 }
@@ -1415,6 +1425,9 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun scheduleDirectPlay(view: WebView = webView) {
+        // Native episode selection owns the detail-page click. Running the generic
+        // movie resolver at the same time can start the provider's Continue episode.
+        if (smEpisode != null) return
         if (!directPlayRequested || directPlayTriggered || playbackAutomationTimedOut) return
         if (serviceAdapter?.directPlay == null) return
         listOf(
@@ -1550,6 +1563,14 @@ class BrowserActivity : ComponentActivity() {
             """(?:^|/|#)(?:login|signin|sign-in|auth|device|pair|qr)(?:/|$|[?#])""",
             RegexOption.IGNORE_CASE
         ).containsMatchIn(url)
+
+    private fun requestedEpisodeLabel(): String? {
+        val season = smSeason?.takeIf { it.isNotBlank() } ?: return null
+        val episode = smEpisode?.let { action ->
+            Regex("epnum-(\\d+)").find(action)?.groupValues?.getOrNull(1)
+        } ?: return null
+        return "فصل $season، قسمت $episode"
+    }
 
     /**
      * Takes the detail page one step further, to the site's own player page.
@@ -1727,6 +1748,7 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun scheduleSiteContinue(view: WebView = webView) {
+        if (smEpisode != null) return
         val adapter = serviceAdapter ?: return
         if (
             !autoResumeRequested ||

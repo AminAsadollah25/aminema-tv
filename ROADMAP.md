@@ -82,7 +82,15 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
 جزئیات Probe و تصمیم معماری MyMoviz در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` ثبت شده است.
 
-### 0.16.3 — Episode Navigator
+### 0.16.3 — Episode Navigator ✅ Candidate نهایی
+
+- انتخاب صریح `Season + Episode`، ماشین حالت Provider-specific و اصلاح پوستر
+  در 2026-08-08 روی امولاتور لاگین‌شده تأیید شد. جزئیات Evidence در
+  `DEVELOPMENT_LOG_0.16.3.md` و نتیجه تست در `TEST_REPORT_0.16.3.md` است.
+- Scope نهایی این نسخه: انتخاب دستی دقیق فصل/قسمت، Resolver پیشنهادی FilmRooz،
+  جلوگیری از Race با Direct Play و ترمیم پوستر Recent/Continue.
+- موارد پیشرفته زیر (سه Action هوشمند، Preferred Edition و Progress
+  Edition-aware) Backlog نسخه‌های بعدی‌اند و جزو ادعای Release 0.16.3 نیستند.
 
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
