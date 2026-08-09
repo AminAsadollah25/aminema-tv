@@ -23,7 +23,7 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - محصول: **Aminema**
 - نسخه کد: **0.16.5.1 / versionCode 38 — Cinematic Intro Refresh**
 - وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
-- Commit کد Release: در همگام‌سازی پس از انتشار ثبت می‌شود
+- Commit کد Release و هدف Tag: `ddcd35f880a917c62ca90f2875ea1d1789fb7a0e`
 - Tag: `v0.16.5.1`
 - GitHub Latest: **v0.16.5.1 همراه APK و SHA-256**
 - Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.5.1`
@@ -68,6 +68,9 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
   `1bb45c567aefe2d5a83af2fce47ffc4907058c1c2d6d76d99569bc842485429a`.
 - وضعیت Release: تست و تأیید مالک انجام شد؛ Commit، Tag و GitHub Release در
   همین چرخه انتشار ساخته شدند.
+- راستی‌آزمایی GitHub: Release نه Draft و نه Prerelease است، `v0.16.5.1`
+  Latest است و هر دو Asset `Aminema-0.16.5.1-debug.apk` و فایل `.sha256`
+  قابل دانلود هستند.
 
 ## Hotfix قبلی — 0.16.4، ۹ اوت ۲۰۲۶
 
