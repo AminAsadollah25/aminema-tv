@@ -2,7 +2,7 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Release candidate
+## Current release
 
 **Aminema 0.16.5 — Episode Loading Hotfix** (`versionCode 37`)
 
@@ -246,7 +246,7 @@ available. It also adds a visible Search Back action whose remote and pointer
 paths always return to Aminema Home, even if Android restored Search as the
 task root.
 
-## Next update queue — after the 0.16.5 candidate is released
+## Next update queue — after v0.16.5
 
 1. **0.16.6 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as

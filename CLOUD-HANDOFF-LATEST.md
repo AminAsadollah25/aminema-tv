@@ -22,11 +22,11 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 
 - محصول: **Aminema**
 - نسخه کد: **0.16.5 / versionCode 37 — Episode Loading Hotfix**
-- وضعیت در این لحظه: **Candidate؛ Build، Unit، Lint و Emulator QA موفق**
-- Commit کد انتشار: هنوز ساخته نشده
-- Tag: هنوز ساخته نشده
-- GitHub Latest: **v0.16.4 همراه APK و SHA-256**
-- Release 0.16.5: در انتظار انتشار مالک
+- وضعیت در این لحظه: **Release؛ Build، Unit، Lint و Emulator QA موفق**
+- Commit کد انتشار: `2ea955d`
+- Tag: `v0.16.5`
+- GitHub Latest: **v0.16.5 همراه APK و SHA-256**
+- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.5`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
@@ -405,7 +405,7 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 
 1. **0.16.3 — Episode Navigator:** انتخاب فصل/قسمت منتشر شد.
 2. **0.16.4 — In-app Update Banner Hotfix:** نصب مستقیم از Settings منتشر شد.
-3. **0.16.5 — Episode Loading Hotfix:** Race بارگذاری Silo و Retry آماده انتشار است.
+3. **0.16.5 — Episode Loading Hotfix:** Race بارگذاری Silo و Retry منتشر شد.
 4. **0.16.6 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
    چند SourceVariant؛ پذیرش اولیه با `لیسانسه`؛ Query variant برای
    `spiderman`، `spider man` و `spider-man`.

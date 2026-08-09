@@ -7,7 +7,7 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-کاندید جاری `0.16.5 / code 37 — Episode Loading Hotfix` است. EpisodeLoader دیگر
+نسخه جاری `0.16.5 / code 37 — Episode Loading Hotfix` است. EpisodeLoader دیگر
 با تایم‌اوت هشت‌ثانیه‌ای قبل از آماده‌شدن DOM بسته نمی‌شود؛ استخراج پس از
 `onPageFinished` زمان‌بندی و نتیجه خالی SPA به‌صورت محدود Retry می‌شود. مرجع
 این Hotfix فایل‌های `DEVELOPMENT_LOG_0.16.5.md`، `TEST_REPORT_0.16.5.md` و
@@ -103,7 +103,7 @@
   همان نشست نمایش می‌دهد.
 - Package، Signing، Cookie، Login، Library و Cacheهای کاربر تغییر نکرده‌اند.
 
-### 0.16.5 — Episode Loading Hotfix 🧪 آماده انتشار
+### 0.16.5 — Episode Loading Hotfix ✅ منتشر شد
 
 - Race قطعی Silo بازسازی شد: صفحه پس از حدود ۶.۲ ثانیه تمام می‌شد، ولی
   استخراج زمان‌بندی‌شده بعد از تایم‌اوت هشت‌ثانیه‌ای قرار می‌گرفت و هرگز اجرا
