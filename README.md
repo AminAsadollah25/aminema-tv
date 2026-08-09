@@ -4,6 +4,19 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
+**Aminema 0.16.5.1 — Cinematic Intro Refresh** (`versionCode 38`)
+
+- Replaces the bundled cold-start video with the new 8.2-second Aminema mascot intro.
+- The supplied source is normalized to a fast-start 1080p H.264/AAC file for
+  broad Android 9+ TV decoder compatibility.
+- Mouse skip is made reliable by handling click/touch directly on the native
+  VideoView; remote/back skip, mute, the one-shot gate and watchdogs remain intact.
+- Clean build, unit tests, Lint, in-place install, full completion, remote skip
+  and mouse skip pass on the signed-in 1080p TV emulator.
+- Published as GitHub release `v0.16.5.1` with the tested APK and SHA-256 file.
+
+## Previous release
+
 **Aminema 0.16.5 — Episode Loading Hotfix** (`versionCode 37`)
 
 - Episode loading now waits for the signed-in provider page to finish before it
@@ -246,7 +259,7 @@ available. It also adds a visible Search Back action whose remote and pointer
 paths always return to Aminema Home, even if Android restored Search as the
 task root.
 
-## Next update queue — after v0.16.5
+## Next update queue — after v0.16.5.1
 
 1. **0.16.6 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as

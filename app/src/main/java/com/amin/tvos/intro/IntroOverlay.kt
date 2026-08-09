@@ -72,6 +72,16 @@ fun IntroOverlay(
                 VideoView(ctx).apply {
                     setBackgroundColor(android.graphics.Color.BLACK)
                     keepScreenOn = true
+                    // AndroidView receives pointer events before the Compose parent, so handle
+                    // mouse / air-mouse clicks on the native view as well as on the overlay.
+                    isClickable = true
+                    setOnClickListener { finishOnce() }
+                    setOnTouchListener { view, event ->
+                        if (event.action == android.view.MotionEvent.ACTION_UP) {
+                            view.performClick()
+                        }
+                        true
+                    }
                     setOnPreparedListener { player ->
                         player.isLooping = false
                         // Audio otherwise follows the device media volume.

@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Release جدید،
-فایل‌های `DEVELOPMENT_LOG_0.16.5.md`، `TEST_REPORT_0.16.5.md` و
-`RELEASE_NOTES_0.16.5.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.16.5.1.md`، `TEST_REPORT_0.16.5.1.md` و
+`RELEASE_NOTES_0.16.5.1.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,12 +21,12 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.16.5 / versionCode 37 — Episode Loading Hotfix**
-- وضعیت در این لحظه: **Release؛ Build، Unit، Lint و Emulator QA موفق**
-- Commit کد انتشار: `2ea955d`
-- Tag: `v0.16.5`
-- GitHub Latest: **v0.16.5 همراه APK و SHA-256**
-- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.5`
+- نسخه کد: **0.16.5.1 / versionCode 38 — Cinematic Intro Refresh**
+- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- Commit کد Release: در همگام‌سازی پس از انتشار ثبت می‌شود
+- Tag: `v0.16.5.1`
+- GitHub Latest: **v0.16.5.1 همراه APK و SHA-256**
+- Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.5.1`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
@@ -51,6 +51,23 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - APK کاندید: `22,921,132` بایت؛ SHA-256:
   `54bc877a92e551c991caf0c622303047ce302060ea484df11f10a1ffed272211`؛
   signing digest با 0.16.4 یکسان است.
+
+## آخرین Release — 0.16.5.1، ۹ اوت ۲۰۲۶
+
+- Scope فقط تازه‌سازی ویدئوی Cold-start Intro است؛ هیچ Provider، Browser،
+  Episode، Update یا Data path تغییر نکرده است.
+- Asset جدید ۸.۲ ثانیه و 1080p/16:9 است؛ H.264/AAC حفظ و فایل برای Fast Start
+  نرمال شد.
+- Preview فریم خروجی کادر کامل تلویزیون و Mascot/Aminema را بدون Crop تأیید کرد.
+- در QA معلوم شد Parent Compose کلیک موس را از روی `AndroidView` دریافت
+  نمی‌کند؛ Click/Touch listener مستقیم روی `VideoView` اضافه شد و با Mouse
+  واقعی امولاتور به Home عبور کرد.
+- Clean Build، Unit test، Lint، نصب درجا، پایان طبیعی، Remote skip و Mouse
+  skip موفق‌اند؛ Fatal Exception صفر است.
+- APK Release: `24,749,024` بایت؛ SHA-256:
+  `1bb45c567aefe2d5a83af2fce47ffc4907058c1c2d6d76d99569bc842485429a`.
+- وضعیت Release: تست و تأیید مالک انجام شد؛ Commit، Tag و GitHub Release در
+  همین چرخه انتشار ساخته شدند.
 
 ## Hotfix قبلی — 0.16.4، ۹ اوت ۲۰۲۶
 

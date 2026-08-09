@@ -510,6 +510,25 @@ Probe کند چیزی که یک بار قطعی کشف شده.
   معتبر برگشت و هر سه فصل همراه Episode cardها در 1080p دیده شدند.
 - جزئیات: `DEVELOPMENT_LOG_0.16.5.md` و `TEST_REPORT_0.16.5.md`.
 
+## ۱۳. تازه‌سازی Intro سینمایی 0.16.5.1 — 2026-08-09
+
+- Asset محلی `res/raw/aminema_intro.mp4` با ویدئوی جدید Mascot جایگزین شد.
+- Source کاربر ۸.۲ ثانیه، 16:9 و دارای H.264/AAC Stereo بود؛ با
+  `avconvert PresetAppleM4V1080pHD` به فایل Fast Start نرمال شد تا Decoderهای
+  Android 9+ برای شروع مجبور به خواندن انتهای فایل نباشند.
+- SHA-256 Asset نهایی داخل Source:
+  `54c2ed65e42a2d546a059f1b8cf94344c75352b50dea775ed0d70bff39e4369e`.
+- در QA واقعی، `AndroidView/VideoView` رویداد Mouse را پیش از Parent Compose
+  مصرف می‌کرد؛ Listener لمس/Click مستقیم روی `VideoView` اضافه شد تا
+  `ACTION_UP` به `finishOnce()` برسد. پخش فقط Cold Start، Skip با
+  Remote/Back، Mute اختیاری، Prepare timeout چهارثانیه و Hard cap بیست‌ثانیه
+  حفظ شده‌اند.
+- Asset محلی و آفلاین است؛ هیچ Network، Cookie، Login یا Provider state در
+  Intro دخالت ندارد.
+- Clean Build، Unit، Lint، نصب درجا، پایان طبیعی و Skip با Remote/Mouse موفق
+  و Fatal Exception صفر است.
+- جزئیات: `DEVELOPMENT_LOG_0.16.5.1.md` و `TEST_REPORT_0.16.5.1.md`.
+
 ---
 
 ## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)

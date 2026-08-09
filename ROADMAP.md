@@ -7,11 +7,11 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-نسخه جاری `0.16.5 / code 37 — Episode Loading Hotfix` است. EpisodeLoader دیگر
-با تایم‌اوت هشت‌ثانیه‌ای قبل از آماده‌شدن DOM بسته نمی‌شود؛ استخراج پس از
-`onPageFinished` زمان‌بندی و نتیجه خالی SPA به‌صورت محدود Retry می‌شود. مرجع
-این Hotfix فایل‌های `DEVELOPMENT_LOG_0.16.5.md`، `TEST_REPORT_0.16.5.md` و
-`RELEASE_NOTES_0.16.5.md` است.
+نسخه جاری `0.16.5.1 / code 38 — Cinematic Intro Refresh` است. ویدئوی جدید
+۸.۲ ثانیه‌ای با Mascot جای Intro قبلی را گرفته و برای Fast Start و سازگاری
+Android TV به 1080p H.264/AAC نرمال شده است. مرجع این Release فایل‌های
+`DEVELOPMENT_LOG_0.16.5.1.md`، `TEST_REPORT_0.16.5.1.md` و
+`RELEASE_NOTES_0.16.5.1.md` است و همراه APK/SHA-256 در GitHub منتشر شد.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -115,6 +115,19 @@
   Spotlight خارج شود.
 - Silo روی امولاتور لاگین‌شده با سه فصل و کارت‌های قسمت تأیید شد؛ هیچ
   Cookie، Login، Library یا App data پاک نشد.
+
+### 0.16.5.1 — Cinematic Intro Refresh ✅ منتشر شد
+
+- ویدئوی جدید Mascot با مدت ۸.۲ ثانیه جای Asset قبلی Intro را گرفت.
+- Source به MP4/M4V Fast Start با Video برابر H.264، Audio برابر AAC Stereo و
+  کادر 16:9/1080p تبدیل شد؛ تصویر در Preview بدون Crop یا نوار تأیید شد.
+- برای اینکه `AndroidView` Click موس را نبلعد، Touch/Click مستقیم روی
+  `VideoView` به `finishOnce()` وصل شد؛ Remote/Back، Mute، Intro Gate و
+  Watchdogهای ۴/۲۰ ثانیه‌ای حفظ شده‌اند.
+- افزایش Asset نسبت به Intro قبلی حدود ۱.۸ مگابایت است و WebView/Login/Library
+  هیچ تغییری ندارند.
+- Clean Build، Unit، Lint، Full completion و Skip با Remote/Mouse روی امولاتور
+  1080p موفق‌اند و APK/SHA-256 در GitHub Release قرار گرفتند.
 
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
