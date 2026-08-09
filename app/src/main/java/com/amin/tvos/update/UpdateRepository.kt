@@ -6,6 +6,9 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
@@ -29,6 +32,15 @@ import org.json.JSONObject
  * A broken build should never be able to auto-apply itself.
  */
 class UpdateRepository(private val context: Context) {
+
+    // Application-scoped state: Home and Settings must always present the same release,
+    // download progress and retry state instead of maintaining disconnected screen copies.
+    private val _state = MutableStateFlow<UpdateState>(UpdateState.Idle)
+    val state: StateFlow<UpdateState> = _state.asStateFlow()
+
+    fun publishState(state: UpdateState) {
+        _state.value = state
+    }
 
     suspend fun checkForUpdate(currentVersionCode: Int): ReleaseInfo? =
         withContext(Dispatchers.IO) {

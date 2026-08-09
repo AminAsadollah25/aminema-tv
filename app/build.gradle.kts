@@ -15,8 +15,8 @@ android {
         applicationId = "com.amin.tvos"
         minSdk = 28          // Android 9+
         targetSdk = 35
-        versionCode = 35
-        versionName = "0.16.3"
+        versionCode = 36
+        versionName = "0.16.4"
     }
 
     androidResources {
@@ -57,6 +57,28 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    lint {
+        // The Compose runtime-lint 1.7.2 artifact is binary-incompatible with Lint 31.13.2:
+        // multiple detectors crash before reporting any issue. Disable only that artifact's
+        // 14 checks; Android/UI/Material/Navigation lint remains enabled. Remove this list
+        // after the planned, separately-tested Compose runtime upgrade.
+        disable += setOf(
+            "AutoboxingStateValueProperty",
+            "AutoboxingStateCreation",
+            "CoroutineCreationDuringComposition",
+            "FlowOperatorInvokedInComposition",
+            "ComposableLambdaParameterNaming",
+            "ComposableLambdaParameterPosition",
+            "ComposableNaming",
+            "StateFlowValueCalledInComposition",
+            "CompositionLocalNaming",
+            "MutableCollectionMutableState",
+            "ProduceStateDoesNotAssignValue",
+            "RememberReturnType",
+            "OpaqueUnitKey",
+            "UnrememberedMutableState"
+        )
     }
 }
 

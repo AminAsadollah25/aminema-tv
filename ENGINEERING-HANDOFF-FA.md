@@ -474,6 +474,22 @@ Probe کند چیزی که یک بار قطعی کشف شده.
   پوسترهای مربوط موفق بودند.
 - جزئیات کامل: `DEVELOPMENT_LOG_0.16.3.md` و `TEST_REPORT_0.16.3.md`.
 
+## ۱۱. Hotfix بروزرسانی درون‌برنامه‌ای 0.16.4 — 2026-08-09
+
+- `UpdateRepository` مالک یک `StateFlow<UpdateState>` سطح Application است؛
+  `HomeViewModel` و `SettingsViewModel` هر دو همین State واحد را مصرف می‌کنند.
+- `SettingsViewModel` چک دستی را انجام می‌دهد و فقط Release با `versionCode`
+  بزرگ‌تر از Build نصب‌شده را به `UpdateState.Available` تبدیل می‌کند.
+- ساختن State جدا در Home یا Settings ممنوع است؛ نسخه، Download progress، Failure
+  و Retry باید در هر دو صفحه یکسان باقی بمانند.
+- چک دستی عمداً نسخهٔ قبلاً Skipشده را برای همان مراجعه دوباره نشان می‌دهد،
+  اما مقدار Skip در DataStore حذف یا بازنویسی نمی‌شود.
+- بعد از نتیجه موفق، Settings همان `UpdateBanner` مشترک Home را درجا نشان
+  می‌دهد؛ دانلود و Progress همان‌جا دیده می‌شود و Installer معمول Android باز
+  می‌شود. با خروج از Settings همان State در Home نیز حفظ می‌شود.
+- چک شبکه‌ای دوم و Toast گمراه‌کننده «از صفحه اصلی نصب کنید» حذف شده است.
+- جزئیات: `DEVELOPMENT_LOG_0.16.4.md` و `TEST_REPORT_0.16.4.md`.
+
 ---
 
 ## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)

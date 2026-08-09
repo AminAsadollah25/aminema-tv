@@ -37,8 +37,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.model.UserAgentMode
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.home.UpdateBanner
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
+import com.amin.tvos.update.UpdateState
 
 @Composable
 fun SettingsScreen(
@@ -48,6 +50,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val services by viewModel.services.collectAsState()
     val uaMode by viewModel.userAgentMode.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -233,16 +236,25 @@ fun SettingsScreen(
         Spacer(Modifier.height(16.dp))
         FocusableCard(onClick = {
             viewModel.checkForUpdate { release ->
-                toast(
-                    if (release != null) {
-                        "نسخه ${release.versionName} موجود است — از صفحه اصلی نصب کنید"
-                    } else {
-                        "شما آخرین نسخه را دارید"
-                    }
-                )
+                // A found release is rendered by the shared UpdateState directly below.
+                if (release == null) {
+                    toast("شما آخرین نسخه را دارید")
+                }
             }
         }) {
             Text("بررسی بروزرسانی", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+        }
+        if (updateState is UpdateState.Available ||
+            updateState is UpdateState.Downloading ||
+            updateState is UpdateState.Failed
+        ) {
+            Spacer(Modifier.height(14.dp))
+            UpdateBanner(
+                state = updateState,
+                onInstall = viewModel::downloadAndInstall,
+                onSkip = viewModel::skipUpdate,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
         Spacer(Modifier.height(32.dp))
     }

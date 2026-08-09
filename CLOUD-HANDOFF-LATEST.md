@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
-این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Candidate جدید،
-فایل‌های `DEVELOPMENT_LOG_0.16.2.md`، `TEST_REPORT_0.16.2.md` و
-`RELEASE_NOTES_0.16.2.md` خوانده شوند. معماری پایدار در
+این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Release جدید،
+فایل‌های `DEVELOPMENT_LOG_0.16.4.md`، `TEST_REPORT_0.16.4.md` و
+`RELEASE_NOTES_0.16.4.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,18 +21,35 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.16.2 / versionCode 34 — Cinematic Hero, Complete Metadata & Search Polish**
-- وضعیت در این لحظه: **Candidate نهایی؛ Build، Unit، Lint و Emulator QA موفق**
-- Commit کد انتشار: هنوز ساخته نشده
-- Tag هدف: `v0.16.2`
-- GitHub Latest فعلی: **v0.16.1؛ بدون Asset دانلود**
-- Release هدف: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.2`
+- نسخه کد: **0.16.4 / versionCode 36 — In-app Update Banner Hotfix**
+- وضعیت در این لحظه: **Release؛ Build، Unit، Lint و Emulator QA موفق**
+- Commit کد انتشار: در تاریخچه Git همین Release ثبت شده است
+- Tag: `v0.16.4`
+- GitHub Latest: **v0.16.4 همراه APK و SHA-256**
+- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.4`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
 - Package پایه: `com.amin.tvos`
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
+
+## آخرین Hotfix — 0.16.4، ۹ اوت ۲۰۲۶
+
+- باگ: Settings نسخه جدید را پیدا می‌کرد اما فقط Toast نشان می‌داد؛ Home به
+  دلیل State مستقل یا Skip قبلی بنر نصب را نشان نمی‌داد.
+- Fix: `UpdateRepository` مالک State واحد سطح Application است؛ Settings و Home
+  همان نسخه، بنر، Progress و Retry را می‌بینند. Settings دکمه نصب را درجا نشان
+  می‌دهد و خروج از آن همان State را در Home نگه می‌دارد.
+- چک دستی فقط برای همان مراجعه از Skip عبور می‌کند و مقدار DataStore را حذف
+  نمی‌کند.
+- فایل‌های اصلی: `UpdateRepository.kt`، `HomeViewModel.kt`،
+  `SettingsViewModel.kt` و `SettingsScreen.kt`.
+- هیچ Login، Cookie، WebStorage، Library، Continue یا Favorite پاک نشده است.
+- بدهی ابزار: Artifact `compose-runtime-lint 1.7.2` با Lint 31.13.2 در چند
+  Detector Crash می‌کند؛ ۱۴ Check همان Artifact تا Upgrade بعدی Compose
+  غیرفعال‌اند و سایر Lintها اجرا می‌شوند. جزئیات در
+  `TEST_REPORT_0.16.4.md` ثبت شده است.
 
 ## 0.16.2 چه چیزی را حل می‌کند
 

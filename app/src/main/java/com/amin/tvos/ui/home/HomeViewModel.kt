@@ -216,8 +216,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Self-update ----
 
-    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
-    val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
+    val updateState: StateFlow<UpdateState> = updateRepo.state
 
     init {
         refresh()
@@ -243,23 +242,23 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun checkForUpdate() = viewModelScope.launch {
         val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE) ?: return@launch
         val skipped = settingsRepo.skippedUpdateVersionCode.first()
-        if (release.versionCode > skipped) _updateState.value = UpdateState.Available(release)
+        if (release.versionCode > skipped) {
+            updateRepo.publishState(UpdateState.Available(release))
+        }
     }
 
     /** Settings' manual "check now" — ignores any previously skipped version. */
     fun checkForUpdateManually() = viewModelScope.launch {
-        _updateState.value = UpdateState.Checking
+        updateRepo.publishState(UpdateState.Checking)
         val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE)
-        _updateState.value = if (release != null) {
-            UpdateState.Available(release)
-        } else {
-            UpdateState.Idle
-        }
+        updateRepo.publishState(
+            if (release != null) UpdateState.Available(release) else UpdateState.Idle
+        )
     }
 
     fun skipUpdate(release: ReleaseInfo) = viewModelScope.launch {
         settingsRepo.setSkippedUpdateVersionCode(release.versionCode)
-        _updateState.value = UpdateState.Idle
+        updateRepo.publishState(UpdateState.Idle)
     }
 
     fun downloadAndInstall(release: ReleaseInfo, context: Context) = viewModelScope.launch {
@@ -270,17 +269,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             )
             return@launch
         }
-        _updateState.value = UpdateState.Downloading(release, 0)
+        updateRepo.publishState(UpdateState.Downloading(release, 0))
         val file: File = try {
             updateRepo.download(release) { percent ->
-                _updateState.value = UpdateState.Downloading(release, percent)
+                updateRepo.publishState(UpdateState.Downloading(release, percent))
             }
         } catch (error: Exception) {
-            _updateState.value = UpdateState.Failed(release, error.message ?: "Download failed")
+            updateRepo.publishState(
+                UpdateState.Failed(release, error.message ?: "Download failed")
+            )
             return@launch
         }
         context.startActivity(updateRepo.installIntent(file))
-        _updateState.value = UpdateState.Idle
+        updateRepo.publishState(UpdateState.Idle)
     }
 
     fun toggleFavorite(id: String) = viewModelScope.launch {

@@ -2,22 +2,20 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Current candidate
+## Current release
 
-**Aminema 0.16.2 — Cinematic Hero, Complete Metadata & Search Polish** (`versionCode 34`)
+**Aminema 0.16.4 — In-app Update Banner Hotfix** (`versionCode 36`)
 
-- Featured Hero titles use a genuine portrait poster; wide artwork stays an ambient backdrop
-- Explicit RTL geometry and navigation, including the correct «بعدی» action direction
-- Provider-first Iranian/foreign series summaries with a safe Wikipedia/Wikidata fill-only fallback
-- Rich metadata is merged non-destructively, with Persian director/cast labels when available
-- Auto rotation stops after the user starts browsing the content rails
-- Featured provider banners are larger, cleaner and TV-focus friendly
-- Search has a visible mouse/DPAD Back button and a reliable remote-Back Home fallback
-- Unit tests, Lint, APK build and 1920×1080 emulator QA pass
-
-The candidate is ready locally and will replace the current GitHub Latest entry
-after owner approval. The `v0.16.1` GitHub entry has no downloadable APK asset;
-`v0.16.2` must therefore be published with both APK and SHA-256 assets.
+- A successful manual update check in Settings now publishes the exact release
+  into one application-scoped update state shared with Home.
+- Settings shows the install banner and download progress in place; the same state
+  remains visible on Home if the user leaves Settings.
+- A manual check can reveal a release previously dismissed with “Later” without
+  deleting the persisted preference or any other user setting.
+- Version comparison still requires `remote versionCode > installed versionCode`.
+- Unit tests, Lint, APK build and 1920×1080 emulator navigation QA pass.
+- The package id, debug signing channel, cookies, provider sessions and library data
+  remain unchanged; upgrades continue to install in place.
 
 The release status and next milestone below are updated as part of every
 version's release checklist, together with `CLOUD-HANDOFF-LATEST.md`.
@@ -247,22 +245,20 @@ available. It also adds a visible Search Back action whose remote and pointer
 paths always return to Aminema Home, even if Android restored Search as the
 task root.
 
-## Next update queue — after v0.16.2
+## Next update queue — after v0.16.4
 
-1. **0.16.3 — Episode Navigator:** season/episode selection, separate
-   next-episode and latest-release actions, and evidence-based progress.
-2. **0.16.4 — Canonical Library & Dedupe:** one card per title across
+1. **0.16.5 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as
    `spiderman` / `spider man` / `spider-man`.
-3. **0.16.5 — My Series:** followed shows, manual watched baseline, new episode
+2. **0.16.6 — My Series:** followed shows, manual watched baseline, new episode
    and new season indicators, then provider-account progress where reliable.
-4. **0.16.6 — Cinematic Promo Feed:** provider carousels join the new Hero;
+3. **0.16.7 — Cinematic Promo Feed:** provider carousels join the new Hero;
    title promos open Spotlight and Live TV promos stay direct.
-5. **0.17.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
+4. **0.17.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
    variant after a 100-title overlap/coverage report.
-6. **0.17.1 — Best Source Resolver:** dub-first/original-first/ask preferences
+5. **0.17.1 — Best Source Resolver:** dub-first/original-first/ask preferences
    while keeping one canonical card and never switching sources mid-play.
-7. **0.17.2+ — People, Personal Home, Reliability and Geek Mode:** merged
+6. **0.17.2+ — People, Personal Home, Reliability and Geek Mode:** merged
    filmographies, person alerts, pinnable rails, provider health, and curated
    MCU/Star Wars/LOTR/Harry Potter collections.
 

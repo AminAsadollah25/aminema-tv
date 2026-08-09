@@ -10,6 +10,8 @@ import com.amin.tvos.data.model.ServiceType
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
 import com.amin.tvos.intro.IntroPreferences
+import com.amin.tvos.update.ReleaseInfo
+import com.amin.tvos.update.UpdateState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +29,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private val libraryRepo = tvApp.libraryRepository
     private val introPrefs = IntroPreferences(app)
     private val updateRepo = tvApp.updateRepository
+
+    val updateState: StateFlow<UpdateState> = updateRepo.state
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
@@ -102,10 +106,44 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearHistory() = viewModelScope.launch { libraryRepo.clearHistory() }
 
-    /** Manual "check now" — reports the result via [onResult] instead of a shared banner. */
-    fun checkForUpdate(onResult: (com.amin.tvos.update.ReleaseInfo?) -> Unit) =
+    /** Manual check publishes into the application-scoped banner shared with Home. */
+    fun checkForUpdate(onResult: (ReleaseInfo?) -> Unit) =
         viewModelScope.launch {
+            updateRepo.publishState(UpdateState.Checking)
             val release = updateRepo.checkForUpdate(com.amin.tvos.BuildConfig.VERSION_CODE)
+            updateRepo.publishState(
+                if (release != null) UpdateState.Available(release) else UpdateState.Idle
+            )
             onResult(release)
         }
+
+    fun skipUpdate(release: ReleaseInfo) = viewModelScope.launch {
+        settingsRepo.setSkippedUpdateVersionCode(release.versionCode)
+        updateRepo.publishState(UpdateState.Idle)
+    }
+
+    fun downloadAndInstall(release: ReleaseInfo) = viewModelScope.launch {
+        val context = getApplication<Application>()
+        if (!updateRepo.canRequestInstalls()) {
+            context.startActivity(
+                updateRepo.unknownSourcesSettingsIntent()
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            return@launch
+        }
+
+        updateRepo.publishState(UpdateState.Downloading(release, 0))
+        val file = try {
+            updateRepo.download(release) { percent ->
+                updateRepo.publishState(UpdateState.Downloading(release, percent))
+            }
+        } catch (error: Exception) {
+            updateRepo.publishState(
+                UpdateState.Failed(release, error.message ?: "Download failed")
+            )
+            return@launch
+        }
+        context.startActivity(updateRepo.installIntent(file))
+        updateRepo.publishState(UpdateState.Idle)
+    }
 }

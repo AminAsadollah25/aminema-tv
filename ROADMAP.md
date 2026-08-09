@@ -7,11 +7,11 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-Candidate فعلی `0.16.2 / code 34 — Cinematic Hero, Complete Metadata & Search Polish` است.
-Build و QA امولاتور موفق‌اند و مرجع آن فایل‌های
-`DEVELOPMENT_LOG_0.16.2.md`، `TEST_REPORT_0.16.2.md` و
-`RELEASE_NOTES_0.16.2.md` است. GitHub Latest فعلاً `v0.16.1` است اما Asset
-دانلود ندارد؛ انتشار 0.16.2 باید APK و SHA-256 را با هم جایگزین کند.
+نسخه جاری `0.16.4 / code 36 — In-app Update Banner Hotfix` است. نتیجهٔ چک
+دستی Settings اکنون مستقیماً به State همان Home منتقل می‌شود و بنر نصب و
+پیشرفت دانلود همان‌جا، حتی پس از «بعداً» قبلی، دیده می‌شود. مرجع این Hotfix فایل‌های
+`DEVELOPMENT_LOG_0.16.4.md`، `TEST_REPORT_0.16.4.md` و
+`RELEASE_NOTES_0.16.4.md` است.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -82,7 +82,7 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
 جزئیات Probe و تصمیم معماری MyMoviz در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` ثبت شده است.
 
-### 0.16.3 — Episode Navigator ✅ Candidate نهایی
+### 0.16.3 — Episode Navigator ✅ منتشر شد
 
 - انتخاب صریح `Season + Episode`، ماشین حالت Provider-specific و اصلاح پوستر
   در 2026-08-08 روی امولاتور لاگین‌شده تأیید شد. جزئیات Evidence در
@@ -91,6 +91,17 @@ Build و QA امولاتور موفق‌اند و مرجع آن فایل‌ها�
   جلوگیری از Race با Direct Play و ترمیم پوستر Recent/Continue.
 - موارد پیشرفته زیر (سه Action هوشمند، Preferred Edition و Progress
   Edition-aware) Backlog نسخه‌های بعدی‌اند و جزو ادعای Release 0.16.3 نیستند.
+
+### 0.16.4 — In-app Update Banner Hotfix ✅ منتشر شد
+
+- ریشه باگ: Settings فقط Toast نشان می‌داد و Release پیدا‌شده را به
+  `HomeViewModel` نمی‌داد؛ Home در حالت `Idle` یا نسخهٔ Skipشده باقی می‌ماند.
+- `UpdateRepository` اکنون State واحد سطح Application را در اختیار Settings و
+  Home می‌گذارد؛ بنر نصب/پیشرفت داخل Settings و بدون چک شبکه‌ای دوم دیده
+  می‌شود و با خروج از Settings همان State در Home باقی می‌ماند.
+- انتخاب «بعداً» از DataStore پاک نمی‌شود؛ فقط درخواست دستی جاری آن را برای
+  همان نشست نمایش می‌دهد.
+- Package، Signing، Cookie، Login، Library و Cacheهای کاربر تغییر نکرده‌اند.
 
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
