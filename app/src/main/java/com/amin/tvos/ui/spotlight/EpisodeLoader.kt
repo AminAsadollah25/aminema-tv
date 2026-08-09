@@ -39,13 +39,20 @@ class EpisodeLoader(
     private val handler = Handler(Looper.getMainLooper())
     private var webView: WebView? = null
     private var delivered = false
-    private val timeout = Runnable { finish(null) }
+    private var extractionScheduled = false
+    private var extractionAttempt = 0
+    private val timeout = Runnable {
+        Log.d("EpisodeLoader", "Timed out after ${TIMEOUT_MS}ms; attempts=$extractionAttempt")
+        finish(null)
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun load(item: SpotlightItem) {
         destroy()
         Log.d("EpisodeLoader", "load() called for: ${item.contentUrl}")
         delivered = false
+        extractionScheduled = false
+        extractionAttempt = 0
         val service = app.servicesRepository.findById(item.serviceId) ?: run {
             Log.d("EpisodeLoader", "Service not found: ${item.serviceId}")
             onFailed()
@@ -91,29 +98,12 @@ class EpisodeLoader(
                 CookieManager.getInstance().flush()
                 Log.d("EpisodeLoader", "onPageFinished: $url delivered=$delivered")
                 if (delivered || source !== webView) return
-                // Wait for SPA hydration then extract
-                val delay = if (item.serviceId == "parsiflix") 2_500L else 1_800L
-                source.postDelayed({
-                    if (source === webView && !delivered) {
-                        // No pre-dump needed; EXTRACT_SCRIPT handles everything
-                        // Then run the actual extraction after a small delay
-                        source.postDelayed({
-                            if (source === webView && !delivered) {
-                                source.evaluateJavascript("""
-                                    (function() {
-                                        var imgs = Array.from(document.querySelectorAll('img')).map(i => i.src).filter(s => s && !s.startsWith('data:'));
-                                        var bgs = Array.from(document.querySelectorAll('*')).map(e => window.getComputedStyle(e).backgroundImage).filter(b => b && b !== 'none');
-                                        return JSON.stringify({imgs: imgs, bgs: bgs});
-                                    })();
-                                """.trimIndent()) { res ->
-                                    Log.d("EpisodeLoader", "Found Images: ${res?.take(2000)}")
-                                }
-                                Log.d("EpisodeLoader", "Executing EXTRACT_SCRIPT")
-                                source.evaluateJavascript(EXTRACT_SCRIPT, null)
-                            }
-                        }, 500)
-                    }
-                }, delay)
+                // onPageFinished can arrive late on lower-powered TV boxes. Queue extraction
+                // relative to the actual page completion instead of racing a short global
+                // timeout. A null bridge result is retried because SPA episode controls may
+                // hydrate after the document itself has finished loading.
+                val delay = if (item.serviceId == "parsiflix") 2_000L else 1_200L
+                queueExtraction(source, delay)
             }
 
             override fun onReceivedError(
@@ -121,7 +111,10 @@ class EpisodeLoader(
                 request: WebResourceRequest,
                 error: WebResourceError
             ) {
-                if (request.isForMainFrame) finish(null)
+                if (request.isForMainFrame) {
+                    Log.d("EpisodeLoader", "Main-frame load failed: ${error.errorCode}")
+                    finish(null)
+                }
             }
         }
         activity.addContentView(
@@ -139,10 +132,26 @@ class EpisodeLoader(
             handler.post {
                 if (delivered) return@post
                 val editions = parse(payload.orEmpty())
-                finish(editions)
+                if (!editions.isNullOrEmpty()) {
+                    finish(editions)
+                } else {
+                    webView?.let { queueExtraction(it, RETRY_DELAY_MS) }
+                }
             }
         }
 
+    }
+
+    private fun queueExtraction(source: WebView, delayMs: Long) {
+        if (delivered || source !== webView || extractionScheduled) return
+        extractionScheduled = true
+        handler.postDelayed({
+            extractionScheduled = false
+            if (delivered || source !== webView) return@postDelayed
+            extractionAttempt += 1
+            Log.d("EpisodeLoader", "Executing EXTRACT_SCRIPT attempt=$extractionAttempt")
+            source.evaluateJavascript(EXTRACT_SCRIPT, null)
+        }, delayMs)
     }
 
     private fun parse(payload: String): List<SeriesEdition>? {
@@ -199,6 +208,7 @@ class EpisodeLoader(
     private fun finish(editions: List<SeriesEdition>?) {
         if (delivered) return
         delivered = true
+        extractionScheduled = false
         handler.removeCallbacks(timeout)
         Log.d("EpisodeLoader", "finish() editions=${editions?.size ?: "null"}")
         if (editions.isNullOrEmpty()) onFailed() else onLoaded(editions)
@@ -223,7 +233,8 @@ class EpisodeLoader(
 
     private companion object {
         const val BRIDGE_NAME = "AminEpisode"
-        const val TIMEOUT_MS = 8_000L  // Fail fast if page doesn't load
+        const val TIMEOUT_MS = 25_000L
+        const val RETRY_DELAY_MS = 1_500L
 
         /**
          * Extracts season/episode structure.

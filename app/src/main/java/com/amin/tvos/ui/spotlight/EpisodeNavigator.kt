@@ -52,6 +52,7 @@ fun EpisodeNavigatorInline(
     posterUrl: String,
     contentUrl: String,
     onEpisodeSelected: (Episode, Season, SeriesEdition) -> Unit,
+    onRetry: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedEdition by remember(editions) {
@@ -100,6 +101,18 @@ fun EpisodeNavigatorInline(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = onRetry,
+                        colors = ButtonDefaults.buttonColors(containerColor = CinemaRed),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            text = "تلاش دوباره",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
             else -> {

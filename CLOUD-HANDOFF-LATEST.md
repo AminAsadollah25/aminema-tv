@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Release جدید،
-فایل‌های `DEVELOPMENT_LOG_0.16.4.md`، `TEST_REPORT_0.16.4.md` و
-`RELEASE_NOTES_0.16.4.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.16.5.md`، `TEST_REPORT_0.16.5.md` و
+`RELEASE_NOTES_0.16.5.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,12 +21,12 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.16.4 / versionCode 36 — In-app Update Banner Hotfix**
-- وضعیت در این لحظه: **Release؛ Build، Unit، Lint و Emulator QA موفق**
-- Commit کد انتشار: در تاریخچه Git همین Release ثبت شده است
-- Tag: `v0.16.4`
+- نسخه کد: **0.16.5 / versionCode 37 — Episode Loading Hotfix**
+- وضعیت در این لحظه: **Candidate؛ Build، Unit، Lint و Emulator QA موفق**
+- Commit کد انتشار: هنوز ساخته نشده
+- Tag: هنوز ساخته نشده
 - GitHub Latest: **v0.16.4 همراه APK و SHA-256**
-- Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.4`
+- Release 0.16.5: در انتظار انتشار مالک
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
@@ -34,7 +34,25 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - Package و Debug signing identity تغییر نکرده‌اند؛ نصب `adb install -r`
   Cookie، login، تنظیمات، Library و Poster cache را حفظ کرد.
 
-## آخرین Hotfix — 0.16.4، ۹ اوت ۲۰۲۶
+## آخرین Hotfix — 0.16.5، ۹ اوت ۲۰۲۶
+
+- باگ: Silo روی Android TV پیام «اطلاعات قسمت‌ها یافت نشد» می‌داد، با اینکه
+  صفحه و قسمت‌ها روی FilmRooz موجود بودند.
+- Evidence: صفحه در حدود ۶.۲ ثانیه `onPageFinished` می‌شد و استخراج قرار بود
+  بعد از پایان Timeout هشت‌ثانیه‌ای اجرا شود؛ بنابراین Script اصلاً فرصت اجرا
+  نداشت.
+- Fix: Deadline محدود ۲۵ ثانیه‌ای، زمان‌بندی استخراج نسبت به پایان واقعی صفحه،
+  Retry سبک نتیجه خالی SPA و دکمه Native `تلاش دوباره`.
+- QA: Silo روی امولاتور لاگین‌شده در Attempt اول یک Edition معتبر برگرداند و
+  سه فصل و کارت‌های قسمت‌ها بصری تأیید شدند.
+- فایل‌های اصلی: `EpisodeLoader.kt`، `EpisodeNavigator.kt` و
+  `SpotlightActivity.kt`.
+- هیچ Login، Cookie، WebStorage، Library، Continue یا Favorite پاک نشده است.
+- APK کاندید: `22,921,132` بایت؛ SHA-256:
+  `54bc877a92e551c991caf0c622303047ce302060ea484df11f10a1ffed272211`؛
+  signing digest با 0.16.4 یکسان است.
+
+## Hotfix قبلی — 0.16.4، ۹ اوت ۲۰۲۶
 
 - باگ: Settings نسخه جدید را پیدا می‌کرد اما فقط Toast نشان می‌داد؛ Home به
   دلیل State مستقل یا Skip قبلی بنر نصب را نشان نمی‌داد.
@@ -105,9 +123,11 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## قدم بعد از پذیرش 0.16.2
 
 1. `0.16.3 — Episode Navigator`
-2. `0.16.4 — Canonical Library, Dedupe & Smart Search`
-3. `0.16.5 — My Series`
-4. `0.16.6 — Cinematic Promo Feed`
+2. `0.16.4 — In-app Update Banner Hotfix`
+3. `0.16.5 — Episode Loading Hotfix`
+4. `0.16.6 — Canonical Library, Dedupe & Smart Search`
+5. `0.16.7 — My Series`
+6. `0.16.8 — Cinematic Promo Feed`
 5. سپس MyMoviz/Best Source/People طبق `ROADMAP.md`
 
 ## 0.15.1 چه چیزی را حل می‌کند
@@ -383,22 +403,23 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 تحلیل کامل MyMoviz، Dedupe، Series Progress، Promo Banner و Geek Mode در
 `MYMOVIZ_PRODUCT_ANALYSIS.md` و نسخه اولویت‌بندی‌شده در `ROADMAP.md` ثبت شد.
 
-1. **0.16.3 — Episode Navigator:** فصل/قسمت، `ادامه قسمت بعد`،
-   `آخرین قسمت منتشرشده` و Progress صادقانه.
-2. **0.16.4 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
+1. **0.16.3 — Episode Navigator:** انتخاب فصل/قسمت منتشر شد.
+2. **0.16.4 — In-app Update Banner Hotfix:** نصب مستقیم از Settings منتشر شد.
+3. **0.16.5 — Episode Loading Hotfix:** Race بارگذاری Silo و Retry آماده انتشار است.
+4. **0.16.6 — Canonical Library, Dedupe & Smart Search:** یک عنوان/یک کارت/
    چند SourceVariant؛ پذیرش اولیه با `لیسانسه`؛ Query variant برای
    `spiderman`، `spider man` و `spider-man`.
-3. **0.16.5 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
+5. **0.16.7 — My Series:** Follow، Baseline دستی، قسمت/فصل جدید و سپس
    Account progress در Providerهایی که شاهد قابل‌اعتماد دارند.
-4. **0.16.6 — Cinematic Promo Feed:** تغذیه Hero موجود، توقف روی Focus و
+6. **0.16.8 — Cinematic Promo Feed:** تغذیه Hero موجود، توقف روی Focus و
    Title→Spotlight / Live→Direct.
-5. **Coverage Lab:** گزارش حداقل 100 عنوان پیش از ادعای درصد هم‌پوشانی.
-6. **0.17.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
-7. **0.17.1 — Best Source Resolver:** Dub-first/original-first/ask.
-8. **0.17.2 — People & Alerts**
-9. **0.18.0 — Cinema Library & Personal Home**
-10. **0.18.1 — Reliability, Keyboard & Provider Health**
-11. **0.19.0 — Geek Mode**
+7. **Coverage Lab:** گزارش حداقل 100 عنوان پیش از ادعای درصد هم‌پوشانی.
+8. **0.17.0 — MyMoviz Provider:** فقط Coverage gap یا نسخه دوبله بهتر.
+9. **0.17.1 — Best Source Resolver:** Dub-first/original-first/ask.
+10. **0.17.2 — People & Alerts**
+11. **0.18.0 — Cinema Library & Personal Home**
+12. **0.18.1 — Reliability, Keyboard & Provider Health**
+13. **0.19.0 — Geek Mode**
 
 ### Series Lab تکمیل تصویری — FilmRooz، ۲ اوت ۲۰۲۶
 

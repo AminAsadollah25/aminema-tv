@@ -106,6 +106,7 @@ class SpotlightActivity : ComponentActivity() {
                             onEpisodeSelected = { episode, season, edition ->
                                 openBrowserWithEpisode(item, episode, season, edition)
                             },
+                            onRetry = { startEpisodeLoad(item) },
                             onDismiss = { }
                         )
                     }

@@ -2,18 +2,19 @@
 
 A premium personal Android TV streaming hub — a Netflix-style dashboard that opens your own subscribed streaming websites in an optimized embedded browser. It hosts, scrapes, and redistributes nothing; it only renders websites with standard browser technology.
 
-## Current release
+## Release candidate
 
-**Aminema 0.16.4 — In-app Update Banner Hotfix** (`versionCode 36`)
+**Aminema 0.16.5 — Episode Loading Hotfix** (`versionCode 37`)
 
-- A successful manual update check in Settings now publishes the exact release
-  into one application-scoped update state shared with Home.
-- Settings shows the install banner and download progress in place; the same state
-  remains visible on Home if the user leaves Settings.
-- A manual check can reveal a release previously dismissed with “Later” without
-  deleting the persisted preference or any other user setting.
-- Version comparison still requires `remote versionCode > installed versionCode`.
-- Unit tests, Lint, APK build and 1920×1080 emulator navigation QA pass.
+- Episode loading now waits for the signed-in provider page to finish before it
+  starts its hydration window, instead of racing an eight-second global timeout.
+- A temporarily empty SPA result is retried at a bounded interval; the first null
+  result no longer becomes an immediate false “episodes not found” error.
+- The error state now offers a TV-friendly **Retry** action without leaving the
+  title page.
+- Silo was reproduced failing on the old timing and then verified with all three
+  seasons and episode cards on the signed-in 1920×1080 emulator.
+- Unit tests, Lint and the final APK build pass.
 - The package id, debug signing channel, cookies, provider sessions and library data
   remain unchanged; upgrades continue to install in place.
 
@@ -245,14 +246,14 @@ available. It also adds a visible Search Back action whose remote and pointer
 paths always return to Aminema Home, even if Android restored Search as the
 task root.
 
-## Next update queue — after v0.16.4
+## Next update queue — after the 0.16.5 candidate is released
 
-1. **0.16.5 — Canonical Library & Dedupe:** one card per title across
+1. **0.16.6 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as
    `spiderman` / `spider man` / `spider-man`.
-2. **0.16.6 — My Series:** followed shows, manual watched baseline, new episode
+2. **0.16.7 — My Series:** followed shows, manual watched baseline, new episode
    and new season indicators, then provider-account progress where reliable.
-3. **0.16.7 — Cinematic Promo Feed:** provider carousels join the new Hero;
+3. **0.16.8 — Cinematic Promo Feed:** provider carousels join the new Hero;
    title promos open Spotlight and Live TV promos stay direct.
 4. **0.17.0 — MyMoviz Provider:** add only archive gaps or a better Persian-dub
    variant after a 100-title overlap/coverage report.

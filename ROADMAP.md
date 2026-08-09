@@ -7,11 +7,11 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-نسخه جاری `0.16.4 / code 36 — In-app Update Banner Hotfix` است. نتیجهٔ چک
-دستی Settings اکنون مستقیماً به State همان Home منتقل می‌شود و بنر نصب و
-پیشرفت دانلود همان‌جا، حتی پس از «بعداً» قبلی، دیده می‌شود. مرجع این Hotfix فایل‌های
-`DEVELOPMENT_LOG_0.16.4.md`، `TEST_REPORT_0.16.4.md` و
-`RELEASE_NOTES_0.16.4.md` است.
+کاندید جاری `0.16.5 / code 37 — Episode Loading Hotfix` است. EpisodeLoader دیگر
+با تایم‌اوت هشت‌ثانیه‌ای قبل از آماده‌شدن DOM بسته نمی‌شود؛ استخراج پس از
+`onPageFinished` زمان‌بندی و نتیجه خالی SPA به‌صورت محدود Retry می‌شود. مرجع
+این Hotfix فایل‌های `DEVELOPMENT_LOG_0.16.5.md`، `TEST_REPORT_0.16.5.md` و
+`RELEASE_NOTES_0.16.5.md` است.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -103,6 +103,19 @@
   همان نشست نمایش می‌دهد.
 - Package، Signing، Cookie، Login، Library و Cacheهای کاربر تغییر نکرده‌اند.
 
+### 0.16.5 — Episode Loading Hotfix 🧪 آماده انتشار
+
+- Race قطعی Silo بازسازی شد: صفحه پس از حدود ۶.۲ ثانیه تمام می‌شد، ولی
+  استخراج زمان‌بندی‌شده بعد از تایم‌اوت هشت‌ثانیه‌ای قرار می‌گرفت و هرگز اجرا
+  نمی‌شد.
+- Timeout به پنجره محدود ۲۵ ثانیه‌ای تبدیل شد؛ استخراج FilmRooz/ParsiFlix
+  نسبت به پایان واقعی صفحه زمان‌بندی می‌شود و نتیجه خالی تا پایان پنجره با
+  فاصله سبک Retry می‌شود.
+- حالت خطا دکمه `تلاش دوباره` دارد و کاربر برای یک خطای موقت لازم نیست از
+  Spotlight خارج شود.
+- Silo روی امولاتور لاگین‌شده با سه فصل و کارت‌های قسمت تأیید شد؛ هیچ
+  Cookie، Login، Library یا App data پاک نشد.
+
 - نمایش صریح `فصل X • قسمت Y` زیر تمام کارت‌های سریال.
 - انتخاب فصل و قسمت در Spotlight پس از Probe کنترل‌های عادی هر Provider.
 - FilmRooz نیازمند ماشین حالت صریح
@@ -156,7 +169,7 @@
 - واژه `دیده‌نشده` فقط با Evidence دقیق؛ در غیر این صورت
   `قسمت جدید از آخرین وضعیت ثبت‌شده`.
 
-### 0.16.4 — Canonical Library, Dedupe & Smart Search
+### 0.16.6 — Canonical Library, Dedupe & Smart Search
 
 - مدل `CanonicalMedia + SourceVariant`؛ یک عنوان، یک کارت، چند نسخه.
 - حذف تکراری ParsiFlix/FilmRooz با پذیرش اولیه Query فارسی `لیسانسه`.
@@ -167,7 +180,7 @@
 - انتقال Continue/Favorite/Recent از Provider card به CanonicalMedia.
 - بخش کم‌حجم `نسخه‌های موجود` در Spotlight بدون شلوغ‌کردن Home.
 
-### 0.16.5 — My Series
+### 0.16.7 — My Series
 
 - Follow دستی سریال و Baseline `تا فصل/قسمت دیدم` به‌عنوان مسیر سریع.
 - Rail/صفحه `سریال‌های من`: `قسمت بعدی`، `۲ قسمت جدید`، `فصل جدید`،
@@ -177,7 +190,7 @@
 - بررسی مسیر ایرانی پس از تثبیت سریال خارجی.
 - اعلان داخل اپ فقط برای Episode/Season واقعاً جدید؛ بدون Spam.
 
-### 0.16.6 — Cinematic Promo Feed
+### 0.16.8 — Cinematic Promo Feed
 
 - Promo/Carousel عادی ParsiFlix و FilmRooz به Hero واحد 0.15.1 اضافه می‌شود.
 - چرخش آرام، توقف روی Focus/Hover و بدون دزدیدن Focus.

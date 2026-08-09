@@ -490,6 +490,26 @@ Probe کند چیزی که یک بار قطعی کشف شده.
 - چک شبکه‌ای دوم و Toast گمراه‌کننده «از صفحه اصلی نصب کنید» حذف شده است.
 - جزئیات: `DEVELOPMENT_LOG_0.16.4.md` و `TEST_REPORT_0.16.4.md`.
 
+## ۱۲. Hotfix بارگذاری قسمت‌ها 0.16.5 — 2026-08-09
+
+- ریشه باگ با Silo روی حساب لاگین‌شده بازسازی شد: `onPageFinished` حدود ۶.۲
+  ثانیه بعد از شروع می‌رسید و استخراج FilmRooz حدود ۲.۳ ثانیه بعد زمان‌بندی
+  می‌شد، اما Timeout سراسری هشت‌ثانیه‌ای WebView را پیش از اجرای Script می‌بست.
+- Timeout اکنون ۲۵ ثانیه و همچنان محدود است. اولین استخراج نسبت به پایان واقعی
+  صفحه زمان‌بندی می‌شود؛ FilmRooz بعد از ۱.۲ ثانیه و ParsiFlix بعد از ۲ ثانیه.
+- نتیجه `null` در SPA شکست قطعی نیست. تا وقتی WebView زنده و Deadline باقی است،
+  استخراج هر ۱.۵ ثانیه Retry می‌شود؛ اولین payload دارای Season/Episode جریان
+  را با موفقیت تمام می‌کند.
+- فقط یک Extraction در هر لحظه Queue می‌شود و `destroy/finish` تمام Callbackها
+  و WebView مخفی را آزاد می‌کند؛ Loop یا WebView دائمی ساخته نمی‌شود.
+- اسکن و Log غیرضروری همه تصاویر DOM حذف شد. هیچ media URL، Cookie، Token یا
+  DRM خوانده یا Log نمی‌شود.
+- حالت شکست Native دکمه `تلاش دوباره` دارد و همان `startEpisodeLoad` امن را
+  بدون خروج از Spotlight اجرا می‌کند.
+- Evidence پس از Fix برای Silo: Extraction در Attempt اول اجرا شد، یک Edition
+  معتبر برگشت و هر سه فصل همراه Episode cardها در 1080p دیده شدند.
+- جزئیات: `DEVELOPMENT_LOG_0.16.5.md` و `TEST_REPORT_0.16.5.md`.
+
 ---
 
 ## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)
