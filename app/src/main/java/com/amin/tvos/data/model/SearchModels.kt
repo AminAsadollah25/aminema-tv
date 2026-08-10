@@ -8,7 +8,12 @@ data class SearchResult(
     val posterUrl: String,
     val serviceId: String,
     /** Release year only when the provider's visible result already includes it. */
-    val year: String = ""
+    val year: String = "",
+    val imdbId: String = "",
+    val hasPersianDub: Boolean = false,
+    val hasPersianSubtitle: Boolean = false,
+    val maxQualityHeight: Int = 0,
+    val qualityLabel: String = ""
 )
 
 /** Per-service state of a single query, so one slow or broken site never blocks the other. */

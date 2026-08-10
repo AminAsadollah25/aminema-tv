@@ -48,7 +48,7 @@ class ServicesRepository(private val context: Context) {
 
         // Add newly shipped presentation metadata to existing installs without
         // replacing the user's URL, service order, or custom services.
-        val enriched = saved.map { current ->
+        val enrichedExisting = saved.map { current ->
             val defaults = bundled.firstOrNull { it.id == current.id }
             if (defaults == null) current else current.copy(
                 name = if (current.name in setOf("ParsiFlix", "FilmRooz")) {
@@ -119,6 +119,12 @@ class ServicesRepository(private val context: Context) {
                 // must reach existing installs instead of staying pinned to an old file.
                 liveTv = defaults.liveTv ?: current.liveTv
             )
+        }
+        // Provider definitions are shipped adapter capabilities. Existing installs keep
+        // every customised service untouched, while a newly bundled provider is appended
+        // once instead of requiring an app-data reset or a manual JSON edit.
+        val enriched = enrichedExisting + bundled.filter { bundledService ->
+            enrichedExisting.none { it.id == bundledService.id }
         }
         if (enriched != saved) file.writeText(json.encodeToString(enriched))
         _services.value = enriched

@@ -2,6 +2,8 @@ package com.amin.tvos
 
 import android.app.Application
 import android.webkit.CookieManager
+import android.webkit.WebView
+import com.amin.tvos.BuildConfig
 import com.amin.tvos.data.CatalogRepository
 import com.amin.tvos.data.LibraryRepository
 import com.amin.tvos.data.ServicesRepository
@@ -22,6 +24,7 @@ class AminTvApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
         // Persistent login sessions: accept + persist cookies globally.
         CookieManager.getInstance().setAcceptCookie(true)
     }

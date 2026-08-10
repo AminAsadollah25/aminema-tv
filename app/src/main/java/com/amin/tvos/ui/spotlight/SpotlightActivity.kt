@@ -28,6 +28,7 @@ import com.amin.tvos.data.model.TitleMetadata
 import com.amin.tvos.data.model.defaultSpotlightAction
 import com.amin.tvos.data.model.isDecisionComplete
 import com.amin.tvos.data.model.withMetadata
+import com.amin.tvos.data.model.withPlaybackSource
 import com.amin.tvos.ui.theme.AminTvTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -40,6 +41,7 @@ import kotlinx.serialization.json.Json
  * scroll position, while Live TV remains on its existing one-click BrowserActivity path.
  */
 class SpotlightActivity : ComponentActivity() {
+    private val app get() = application as AminTvApp
     private var spotlightItem by mutableStateOf<SpotlightItem?>(null)
     private var metadataLoading by mutableStateOf(false)
     private var metadataLoader: SpotlightMetadataLoader? = null
@@ -60,9 +62,10 @@ class SpotlightActivity : ComponentActivity() {
             finish()
             return
         }
-        spotlightItem = decodedItem
+        val initialItem = decodedItem.withProviderCapabilities()
+        spotlightItem = initialItem
 
-        if (decodedItem.kind == CatalogKind.SERIES) {
+        if (supportsNativeEpisodeNavigator(initialItem)) {
             showEpisodeNavigator = true
         }
 
@@ -117,10 +120,10 @@ class SpotlightActivity : ComponentActivity() {
             }
         }
 
-        if (decodedItem.kind == CatalogKind.SERIES) {
-            startEpisodeLoad(decodedItem)
+        if (supportsNativeEpisodeNavigator(initialItem)) {
+            startEpisodeLoad(initialItem)
         }
-        enrichMetadata(decodedItem)
+        enrichMetadata(initialItem)
     }
 
     private fun enrichMetadata(initial: SpotlightItem) {
@@ -251,44 +254,32 @@ class SpotlightActivity : ComponentActivity() {
         episodeNavLoading = false
         episodeNavFailed = false
 
-        val variant = source.item
-        val switched = current.copy(
-            title = variant.title,
-            kind = variant.kind,
-            contentUrl = variant.contentUrl,
-            posterUrl = variant.posterUrl.ifBlank { current.posterUrl },
-            backdropUrl = variant.backdropUrl.ifBlank { current.backdropUrl },
-            serviceId = source.providerId,
-            serviceName = source.providerName,
-            summary = variant.summary.ifBlank { current.summary },
-            year = variant.year.ifBlank { current.year },
-            genres = variant.genres.ifEmpty { current.genres },
-            rating = variant.rating.ifBlank { current.rating },
-            runtime = variant.runtime.ifBlank { current.runtime },
-            episodeLabel = variant.episodeLabel,
-            country = variant.country.ifBlank { current.country },
-            language = variant.language.ifBlank { current.language },
-            hasPersianDub = variant.hasPersianDub,
-            hasPersianSubtitle = variant.hasPersianSubtitle,
-            directors = variant.directors.ifEmpty { current.directors },
-            cast = variant.cast.ifEmpty { current.cast },
-            // Switching provider deliberately drops provider-specific resume state. Series must
-            // still return to the native navigator instead of opening the provider page directly.
-            primaryAction = variant.kind.defaultSpotlightAction(),
-            browserStartUrl = variant.contentUrl,
-            resumePosition = 0L,
-            duration = 0L,
-            editionTimelineId = "",
-            autoResume = false,
-            directPlay = variant.kind == CatalogKind.MOVIE,
-            resumeStrategy = null,
-            actionButtonTextPatterns = emptyList()
-        )
+        val switched = current.withPlaybackSource(
+            source = source,
+            // A provider becomes eligible for one-click playback only after its ordinary
+            // signed-in watch flow has been inspected and shipped as adapter capability.
+            providerSupportsDirectPlay =
+                app.servicesRepository.findById(source.providerId)?.directPlay != null
+        ).withProviderCapabilities()
         spotlightItem = switched
-        showEpisodeNavigator = switched.kind == CatalogKind.SERIES
+        showEpisodeNavigator = supportsNativeEpisodeNavigator(switched)
         if (showEpisodeNavigator) startEpisodeLoad(switched)
-        enrichMetadata(switched)
+        // Source selection is only a playback decision. Re-loading that provider's metadata here
+        // made the entire canonical panel (notably IMDb rating and language badges) visibly jump.
     }
+
+    private fun SpotlightItem.withProviderCapabilities(): SpotlightItem {
+        if (kind != CatalogKind.SERIES || supportsNativeEpisodeNavigator(this)) return this
+        // Unknown providers keep the normal one-click website flow until their
+        // season/episode DOM has been characterized and added to the native navigator.
+        return copy(
+            primaryAction = SpotlightAction.WATCH,
+            directPlay = app.servicesRepository.findById(serviceId)?.directPlay != null
+        )
+    }
+
+    private fun supportsNativeEpisodeNavigator(item: SpotlightItem): Boolean =
+        item.kind == CatalogKind.SERIES && item.serviceId in NATIVE_EPISODE_PROVIDERS
 
     private fun isCurrentSource(candidate: SpotlightItem): Boolean =
         spotlightItem?.let { current ->
@@ -393,6 +384,7 @@ class SpotlightActivity : ComponentActivity() {
     }
 
     companion object {
+        private val NATIVE_EPISODE_PROVIDERS = setOf("parsiflix", "filmrooz", "mymoviz")
         private const val EXTRA_ITEM = "spotlight_item"
         private const val METADATA_MAX_AGE_MS = 14L * 24L * 60L * 60L * 1_000L
         private val json = Json {

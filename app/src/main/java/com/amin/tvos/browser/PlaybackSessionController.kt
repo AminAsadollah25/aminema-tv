@@ -44,6 +44,7 @@ class PlaybackSessionController(
         val provider = when {
             episodeAction.startsWith("#parsiflix-") -> "parsiflix"
             episodeAction.startsWith("#filmrooz-") -> "filmrooz"
+            episodeAction.startsWith("#mymoviz-") -> "mymoviz"
             else -> "invalid"
         }
         Log.d(
@@ -136,13 +137,128 @@ class PlaybackSessionController(
                     finishResult('NOT_FOUND:button');
                     return;
                   }
-                  // One user action must produce one click. Double-dispatching MouseEvent
+            // One user action must produce one click. Double-dispatching MouseEvent
                   // plus click() raced the provider's Continue behavior.
                   button.click();
                   finishResult('CLICKED:parsiflix');
                 }
                 attemptParsi(10);
                 return 'scheduled:parsiflix';
+              }
+
+              // MyMoviz modern DOM:
+              // .mv-tv__season[data-season] selects a season and
+              // #mv-tv-panel details.mv-ep contains the episode. The provider's
+              // visible play links live under .mv-epaudio--dubbed or
+              // .mv-epaudio--original. We click that normal site control only;
+              // no href, download URL or media value is read.
+              var my = action.match(/^#mymoviz-s(\d+)-epnum-(\d+)$/);
+              if (my) {
+                var mySeason = my[1];
+                var myEpisode = parseInt(my[2], 10);
+
+                function qualityRank(text) {
+                  var normalized = toEnglishDigits(clean(text));
+                  if (/2160p/i.test(normalized)) return 0;
+                  if (/1080p/i.test(normalized)) return 3;
+                  if (/720p/i.test(normalized)) return 2;
+                  if (/480p/i.test(normalized)) return 1;
+                  return 0;
+                }
+
+                function bestPlayControl(container) {
+                  if (!container) return null;
+                  var candidates = Array.from(
+                    container.querySelectorAll('.mv-eprow')
+                  ).map(function(row) {
+                    return {
+                      rank: qualityRank(row.textContent),
+                      button: row.querySelector('a.mv-eprow__btn--play')
+                    };
+                  }).filter(function(candidate) { return !!candidate.button; });
+                  candidates.sort(function(a, b) { return b.rank - a.rank; });
+                  return candidates.length ? candidates[0].button : null;
+                }
+
+                function attemptMyMoviz(retriesLeft) {
+                  var seasonButton = document.querySelector(
+                    '.mv-tv__season[data-season="' + mySeason + '"]'
+                  );
+                  if (!seasonButton) {
+                    if (retriesLeft > 0) {
+                      setTimeout(function() { attemptMyMoviz(retriesLeft - 1); }, 450);
+                    } else {
+                      finishResult('NOT_FOUND:season');
+                    }
+                    return;
+                  }
+
+                  if (!seasonButton.classList.contains('is-active')) {
+                    seasonButton.click();
+                    setTimeout(function() { attemptMyMoviz(retriesLeft); }, 500);
+                    return;
+                  }
+
+                  // The tab's active class changes before the async panel is
+                  // replaced. Do not read the old season's rows during that
+                  // window; the provider exposes the authoritative season on
+                  // each visible tracking button.
+                  var panelRows = Array.from(
+                    document.querySelectorAll('#mv-tv-panel details.mv-ep')
+                  ).filter(function(candidate) {
+                    var track = candidate.querySelector('.mv-eptrack[data-season]');
+                    return track && track.getAttribute('data-season') === mySeason;
+                  });
+                  if (!panelRows.length) {
+                    if (retriesLeft > 0) {
+                      setTimeout(function() { attemptMyMoviz(retriesLeft - 1); }, 450);
+                    } else {
+                      finishResult('NOT_FOUND:season-panel');
+                    }
+                    return;
+                  }
+
+                  var rows = panelRows;
+                  var row = rows.find(function(candidate) {
+                    var track = candidate.querySelector(
+                      '.mv-eptrack[data-season="' + mySeason + '"][data-track-ep="' +
+                        myEpisode + '"]'
+                    );
+                    return !!track && episodeNumber(candidate) === myEpisode;
+                  });
+                  if (!row) {
+                    if (retriesLeft > 0) {
+                      setTimeout(function() { attemptMyMoviz(retriesLeft - 1); }, 450);
+                    } else {
+                      finishResult('NOT_FOUND:episode');
+                    }
+                    return;
+                  }
+
+                  row.open = true;
+                  var dubbed = bestPlayControl(
+                    row.querySelector('.mv-epaudio--dubbed')
+                  );
+                  var original = bestPlayControl(
+                    row.querySelector('.mv-epaudio--original')
+                  );
+                  var target = dubbed || original ||
+                    row.querySelector('a.mv-eprow__btn--play');
+                  if (!target) {
+                    if (retriesLeft > 0) {
+                      setTimeout(function() { attemptMyMoviz(retriesLeft - 1); }, 450);
+                    } else {
+                      finishResult('NOT_FOUND:play-control');
+                    }
+                    return;
+                  }
+
+                  target.click();
+                  finishResult('CLICKED:mymoviz');
+                }
+
+                attemptMyMoviz(15);
+                return 'scheduled:mymoviz';
               }
 
               // FilmRooz live DOM:
@@ -225,6 +341,10 @@ class PlaybackSessionController(
               return finishResult('REJECTED:invalid-action');
             })();
         """.trimIndent()
-        webView.evaluateJavascript(script, null)
+        webView.evaluateJavascript(script) { result ->
+            // Result is a semantic state only (CLICKED/NOT_FOUND/REJECTED),
+            // never a provider URL or media value.
+            Log.d("PlaybackSession", "Episode state-machine result=$result")
+        }
     }
 }

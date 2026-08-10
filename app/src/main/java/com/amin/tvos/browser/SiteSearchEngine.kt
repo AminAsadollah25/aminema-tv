@@ -129,7 +129,19 @@ class SiteSearchEngine(
                         contentUrl = contentUrl,
                         posterUrl = item.optString("posterUrl").take(2_000)
                             .takeIf { it.startsWith("http", true) }.orEmpty(),
-                        serviceId = service.id
+                        serviceId = service.id,
+                        year = item.optString("year")
+                            .replace(Regex("""[^0-9۰-۹]"""), "")
+                            .take(4),
+                        imdbId = item.optString("imdbId").trim().take(20),
+                        hasPersianDub = item.optBoolean("hasPersianDub"),
+                        hasPersianSubtitle = item.optBoolean("hasPersianSubtitle"),
+                        maxQualityHeight = item.optInt("maxQualityHeight")
+                            .coerceIn(0, 4_320),
+                        qualityLabel = item.optString("qualityLabel")
+                            .replace(Regex("""\s+"""), " ")
+                            .trim()
+                            .take(32)
                     )
                 )
             }
@@ -138,11 +150,16 @@ class SiteSearchEngine(
 
     private fun script(service: StreamingService, query: String): String {
         val encoded = JSONObject.quote(query)
-        return if (service.id == PARSI_ID) parsiScript(encoded) else filmRoozScript(encoded)
+        return when (service.id) {
+            PARSI_ID -> parsiScript(encoded)
+            MYMOVIZ_ID -> myMovizScript(encoded)
+            else -> filmRoozScript(encoded)
+        }
     }
 
     private companion object {
         const val PARSI_ID = "parsiflix"
+        const val MYMOVIZ_ID = "mymoviz"
         const val MAX_RESULTS = 24
 
         /** The account's own catalog endpoint, matched on title. Persian titles only. */
@@ -252,6 +269,109 @@ class SiteSearchEngine(
                 AminSearch.results('filmrooz', JSON.stringify(items.slice(0, 24)));
               } catch (error) {
                 AminSearch.failed('filmrooz', 'Service unavailable');
+              }
+            })();
+        """.trimIndent()
+
+        /** Public MyMoviz search. Login is deliberately not required until watch QA. */
+        fun myMovizScript(query: String) = """
+            (async function() {
+              function clean(value) {
+                return String(value || '').replace(/\s+/g, ' ').trim();
+              }
+              function nodeText(root, selector) {
+                var node = root ? root.querySelector(selector) : null;
+                return node ? node.textContent : '';
+              }
+              function queryVariants(raw) {
+                var first = clean(raw);
+                var values = [first, first.replace(/[-_]+/g, ' ')];
+                // MyMoviz treats some joined English names as one token. Keep the user's
+                // exact query, then add a conservative common-word split (spiderman case).
+                var split = first.replace(
+                  /([a-z]{3,})(man|woman|men|wars|world|house|night|day)$/i,
+                  '${'$'}1 ${'$'}2'
+                );
+                values.push(split);
+                var seen = {};
+                return values.filter(function(value) {
+                  value = clean(value);
+                  if (!value || seen[value.toLowerCase()]) return false;
+                  seen[value.toLowerCase()] = true;
+                  return true;
+                });
+              }
+              function parse(html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                return Array.from(
+                  doc.querySelectorAll('.mv-results-grid .mv-ritem')
+                ).map(function(row) {
+                  var card = row.querySelector('a.mv-card[href*="/_modern/title/"]');
+                  if (!card) return null;
+                  var url = new URL(card.getAttribute('href') || '', location.origin);
+                  if (url.origin !== location.origin ||
+                      !/^\/_modern\/title\/\d+\//.test(url.pathname)) return null;
+                  var title = clean(
+                    nodeText(row, '.mv-ritem__t-en') ||
+                    nodeText(card, '.mv-card__title') ||
+                    card.getAttribute('title')
+                  );
+                  var yearMatch = clean(
+                    nodeText(row, '.mv-ritem__t-yr') || title
+                  ).match(/(?:19|20)\d{2}/);
+                  title = title.replace(
+                    /\s*[\[(（](?:19|20)\d{2}[\])）]\s*$/, ''
+                  );
+                  var image = card.querySelector('.mv-card__img');
+                  var rawPoster = image ? (
+                    image.getAttribute('data-src') || image.getAttribute('src') || ''
+                  ) : '';
+                  var imdbAnchor = row.querySelector('a[href*="imdb.com/title/tt"]');
+                  var imdbMatch = imdbAnchor
+                    ? String(imdbAnchor.getAttribute('href') || '').match(/tt\d{5,12}/i)
+                    : null;
+                  var quality = clean(
+                    nodeText(row, '.mv-ritem__q') || nodeText(card, '.mv-card__q')
+                  );
+                  var qualityMatch = quality.match(/(2160|1080|720|480)p/i);
+                  var tags = clean(nodeText(row, '.mv-ritem__foot')) + ' ' +
+                    clean(nodeText(card, '.mv-card__badges'));
+                  return {
+                    title: title.slice(0, 140),
+                    kind: card.querySelector('.mv-card__ep') ? 'SERIES' : 'MOVIE',
+                    contentUrl: url.origin + url.pathname,
+                    posterUrl: rawPoster && !/^data:/i.test(rawPoster)
+                      ? new URL(rawPoster, location.origin).href : '',
+                    year: yearMatch ? yearMatch[0] : '',
+                    imdbId: imdbMatch ? imdbMatch[0].toLowerCase() : '',
+                    hasPersianDub: /دوبله/.test(tags),
+                    hasPersianSubtitle: /زیرنویس/.test(tags),
+                    maxQualityHeight: qualityMatch ? Number(qualityMatch[1]) : 0,
+                    qualityLabel: quality.slice(0, 32)
+                  };
+                }).filter(Boolean);
+              }
+              try {
+                var variants = queryVariants($query);
+                var pages = await Promise.all(variants.map(async function(value) {
+                  var response = await fetch(
+                    location.origin + '/_modern/search?q=' + encodeURIComponent(value),
+                    {credentials: 'include'}
+                  );
+                  return response.ok ? parse(await response.text()) : [];
+                }));
+                var seen = {};
+                var items = [];
+                pages.forEach(function(page) {
+                  page.forEach(function(item) {
+                    if (seen[item.contentUrl] || items.length >= 24) return;
+                    seen[item.contentUrl] = true;
+                    items.push(item);
+                  });
+                });
+                AminSearch.results('mymoviz', JSON.stringify(items));
+              } catch (_) {
+                AminSearch.failed('mymoviz', 'Service unavailable');
               }
             })();
         """.trimIndent()

@@ -69,6 +69,8 @@ data class CatalogItem(
      */
     val backdropUrl: String = "",
     val serviceId: String,
+    /** Public IMDb title id exposed by the provider's ordinary catalog/detail page. */
+    val imdbId: String = "",
     /**
      * Ordinary, spoiler-safe release metadata such as `قسمت ۰۴ فصل سوم`.
      *
@@ -87,6 +89,9 @@ data class CatalogItem(
     val language: String = "",
     val hasPersianDub: Boolean = false,
     val hasPersianSubtitle: Boolean = false,
+    /** Best ordinary catalogue quality; 2160/4K is retained but never auto-selected. */
+    val maxQualityHeight: Int = 0,
+    val qualityLabel: String = "",
     /** Ordinary public title credits, when the provider exposes them in its catalog card/API. */
     val directors: List<PersonRef> = emptyList(),
     val cast: List<PersonRef> = emptyList()

@@ -146,3 +146,33 @@ fun SpotlightItem.withMetadata(metadata: TitleMetadata): SpotlightItem = copy(
     cast = metadata.cast.ifEmpty { cast },
     awards = metadata.awards.ifEmpty { awards }
 )
+
+/**
+ * Changes only the provider route behind a canonical title page.
+ *
+ * The title, artwork, synopsis, IMDb rating, language badges and credits belong to the
+ * canonical Aminema panel. They must not jump when the user merely chooses another place to
+ * watch the same verified title. Provider-specific metadata can still improve the canonical
+ * item before this screen opens, but source selection itself is a playback decision only.
+ */
+fun SpotlightItem.withPlaybackSource(
+    source: SourceVariant,
+    providerSupportsDirectPlay: Boolean
+): SpotlightItem {
+    val variant = source.item
+    return copy(
+        kind = variant.kind,
+        contentUrl = variant.contentUrl,
+        serviceId = source.providerId,
+        serviceName = source.providerName,
+        primaryAction = variant.kind.defaultSpotlightAction(),
+        browserStartUrl = variant.contentUrl,
+        resumePosition = 0L,
+        duration = 0L,
+        editionTimelineId = "",
+        autoResume = false,
+        directPlay = variant.kind == CatalogKind.MOVIE && providerSupportsDirectPlay,
+        resumeStrategy = null,
+        actionButtonTextPatterns = emptyList()
+    )
+}

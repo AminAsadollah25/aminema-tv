@@ -249,5 +249,64 @@
     },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
     "resumeButtonTextPatterns": []
+  },
+  {
+    "id": "mymoviz",
+    "name": "مای‌موویز",
+    "url": "https://mymoviz.co/",
+    "icon": "filmrooz",
+    "subtitle": "منبع تکمیلی آرشیو و دوبله",
+    "sourceLabel": "MyMoviz",
+    "artwork": "service_international_cinema",
+    "color": "#E43D3D",
+    "type": "STREAMING",
+    "showOnHome": false,
+    "userAgent": "DESKTOP",
+    "fullscreenSelectors": [
+      "button[aria-label*='fullscreen' i]",
+      "button[title*='fullscreen' i]",
+      ".vjs-fullscreen-control",
+      ".plyr__control[data-plyr='fullscreen']",
+      "[class*='fullscreen' i]"
+    ],
+    "playerSelectors": [
+      "video",
+      "iframe[allowfullscreen]",
+      "iframe[src*='player' i]",
+      ".video-js",
+      ".plyr",
+      ".jwplayer",
+      "[class*='video-player' i]",
+      "[class*='player-wrapper' i]"
+    ],
+    "searchSelectors": [
+      "input[type='search']",
+      "input[placeholder*='نام فیلم' i]",
+      "button[type='submit']"
+    ],
+    "contentUrlPatterns": [
+      "/_modern/title/[0-9]+/"
+    ],
+    "playbackUrlPatterns": [
+      "/_modern/watch/[0-9]+"
+    ],
+    "excludedUrlPatterns": [
+      "(/|#)(login|signin|sign-in|auth|account|profile|settings|panel)(/|$|[?#])"
+    ],
+    "directPlay": {
+      "buttonTextPatterns": [
+        "تماشای آنلاین",
+        "پخش آنلاین",
+        "تماشای انلاین",
+        "پخش انلاین"
+      ],
+      "excludeButtonTextPatterns": [
+        "تریلر",
+        "پخش تریلر"
+      ],
+      "autoPlayOnPlaybackPage": false
+    },
+    "resumeStrategy": "OPEN_PLAYBACK_PAGE",
+    "resumeButtonTextPatterns": []
   }
 ]

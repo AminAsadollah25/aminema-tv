@@ -99,7 +99,11 @@ class CatalogBackgroundSync(
                     !Uri.parse(url).host.equals(serviceHost, ignoreCase = true)
                 ) return
                 scriptStarted = true
-                val delay = if (serviceId == PARSI_ID) 1_500L else 1_200L
+                val delay = when (serviceId) {
+                    PARSI_ID -> 1_500L
+                    MYMOVIZ_ID -> 700L
+                    else -> 1_200L
+                }
                 view.postDelayed({
                     if (slots[serviceId]?.webView === view) {
                         view.evaluateJavascript(scriptFor(serviceId), null)
@@ -259,6 +263,7 @@ class CatalogBackgroundSync(
                             posterUrl = poster,
                             backdropUrl = backdrop,
                             serviceId = service.id,
+                            imdbId = entry.optString("imdbId").trim().take(20),
                             episodeLabel = entry.optString("episodeLabel")
                                 .replace(Regex("""\s+"""), " ")
                                 .trim()
@@ -310,6 +315,12 @@ class CatalogBackgroundSync(
                             hasPersianDub = entry.optBoolean("hasPersianDub"),
                             hasPersianSubtitle =
                                 entry.optBoolean("hasPersianSubtitle"),
+                            maxQualityHeight = entry.optInt("maxQualityHeight")
+                                .coerceIn(0, 4_320),
+                            qualityLabel = entry.optString("qualityLabel")
+                                .replace(Regex("""\s+"""), " ")
+                                .trim()
+                                .take(32),
                             directors = people("directors"),
                             cast = people("cast")
                         )
@@ -382,13 +393,18 @@ class CatalogBackgroundSync(
     private companion object {
         const val PARSI_ID = "parsiflix"
         const val FILMROOZ_ID = "filmrooz"
+        const val MYMOVIZ_ID = "mymoviz"
         const val MAX_ITEMS = 24
         const val MAX_ACCOUNT_ITEMS = 20
         const val TIMEOUT_MS = 35_000L
-        val SUPPORTED_IDS = setOf(PARSI_ID, FILMROOZ_ID)
+        val SUPPORTED_IDS = setOf(PARSI_ID, FILMROOZ_ID, MYMOVIZ_ID)
 
         fun scriptFor(serviceId: String): String =
-            if (serviceId == PARSI_ID) PARSI_SCRIPT else FILMROOZ_SCRIPT
+            when (serviceId) {
+                PARSI_ID -> PARSI_SCRIPT
+                MYMOVIZ_ID -> MYMOVIZ_SCRIPT
+                else -> FILMROOZ_SCRIPT
+            }
 
         val PARSI_SCRIPT = """
             (async function() {
@@ -735,10 +751,18 @@ class CatalogBackgroundSync(
                     }
                     var localText = localCard
                       ? (localCard.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                    var imdbAnchor = card ? card.querySelector(
+                      'a[href*="imdb.com/title/tt"]'
+                    ) : null;
+                    var imdbMatch = imdbAnchor
+                      ? String(imdbAnchor.getAttribute('href') || '').match(/tt\d{5,12}/i)
+                      : null;
+                    var qualityMatch = localText.match(/\b(2160|1080|720|480)p\b/i);
                     items.push({
                       title: title.slice(0, 140),
                       kind: kind,
                       contentUrl: url.origin + url.pathname,
+                      imdbId: imdbMatch ? imdbMatch[0].toLowerCase() : '',
                       posterUrl: poster,
                       episodeLabel: episodeMatch ? episodeMatch[0].trim() : '',
                       summary: summary,
@@ -755,10 +779,15 @@ class CatalogBackgroundSync(
                         /^(?:زبان|Language)\s*:\s*/i
                       ),
                       hasPersianDub:
-                        /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(localText),
+                        /دوبله(?:\s*(?:اختصاصی\s*)?فارسی)?|دو\s*زبانه|دوزبانه|صوت\s*فارسی/i
+                          .test(localText.replace(
+                            /بدون\s*(?:دوبله|صوت\s*فارسی)/gi, ''
+                          )),
                       hasPersianSubtitle:
                         /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i
                           .test(localText),
+                      maxQualityHeight: qualityMatch ? Number(qualityMatch[1]) : 0,
+                      qualityLabel: qualityMatch ? qualityMatch[0] : '',
                       directors: peopleField(/^(?:کارگردان|Director)\s*:/i),
                       cast: peopleField(/^(?:بازیگران|ستارگان|Cast)\s*:/i)
                     });
@@ -956,7 +985,10 @@ class CatalogBackgroundSync(
                       var detailText = detailClone
                         ? (detailClone.textContent || '').replace(/\s+/g, ' ').trim() : '';
                       item.hasPersianDub = Boolean(item.hasPersianDub) ||
-                        /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(detailText);
+                        /دوبله(?:\s*(?:اختصاصی\s*)?فارسی)?|دو\s*زبانه|دوزبانه|صوت\s*فارسی/i
+                          .test(detailText.replace(
+                            /بدون\s*(?:دوبله|صوت\s*فارسی)/gi, ''
+                          ));
                       item.hasPersianSubtitle = Boolean(item.hasPersianSubtitle) ||
                         /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i
                           .test(detailText);
@@ -1056,6 +1088,169 @@ class CatalogBackgroundSync(
                 AminCatalog.section('filmrooz', JSON.stringify(payload));
               } catch (error) {
                 AminCatalog.failed('filmrooz', 'Service unavailable');
+              }
+            })();
+        """.trimIndent()
+
+        /**
+         * Public MyMoviz catalogue only. Two pages per type are enough to feed a balanced
+         * 24-card Home rail after cross-provider dedupe; no login or watch page is touched.
+         */
+        val MYMOVIZ_SCRIPT = """
+            (async function() {
+              function clean(value) {
+                return String(value || '').replace(/\s+/g, ' ').trim();
+              }
+              function nodeText(root, selector) {
+                var node = root ? root.querySelector(selector) : null;
+                return node ? node.textContent : '';
+              }
+              function people(row, label) {
+                var fact = Array.from(row.querySelectorAll('.mv-ritem__fact')).find(
+                  function(node) {
+                    return clean(node.querySelector('.mv-ritem__k')).indexOf(label) === 0;
+                  }
+                );
+                if (!fact) return [];
+                return Array.from(fact.querySelectorAll('a[href*="/_modern/person/"]'))
+                  .map(function(anchor) {
+                    var name = clean(anchor.textContent);
+                    return name ? {
+                      name: name.slice(0, 80),
+                      providerId: (anchor.getAttribute('href') || '')
+                        .split('/').filter(Boolean)[2] || '',
+                      profileUrl: new URL(anchor.getAttribute('href'), location.origin).href
+                    } : null;
+                  }).filter(Boolean).slice(0, 8);
+              }
+              function parse(html, kind) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var seen = {};
+                return Array.from(
+                  doc.querySelectorAll('.mv-results-grid .mv-ritem')
+                ).map(function(row) {
+                  var card = row.querySelector('a.mv-card[href*="/_modern/title/"]');
+                  if (!card) return null;
+                  var url = new URL(card.getAttribute('href') || '', location.origin);
+                  var match = url.pathname.match(/^\/_modern\/title\/(\d+)\//);
+                  if (!match || url.origin !== location.origin || seen[url.pathname]) {
+                    return null;
+                  }
+                  seen[url.pathname] = true;
+                  var title = clean(
+                    nodeText(row, '.mv-ritem__t-en') ||
+                    nodeText(card, '.mv-card__title') ||
+                    card.getAttribute('title')
+                  ).replace(/\s*[\[(（](?:19|20)\d{2}[\])）]\s*$/, '');
+                  var cardSub = card.querySelector('.mv-card__sub');
+                  var yearText = clean(
+                    nodeText(row, '.mv-ritem__t-yr') ||
+                    (cardSub && cardSub.childNodes[0]
+                      ? cardSub.childNodes[0].textContent : '')
+                  );
+                  var yearMatch = yearText.match(/(?:19|20)\d{2}/);
+                  var image = card.querySelector('.mv-card__img');
+                  var rawPoster = image ? (
+                    image.getAttribute('data-src') || image.getAttribute('src') || ''
+                  ) : '';
+                  var imdbAnchor = row.querySelector('a[href*="imdb.com/title/tt"]');
+                  var imdbMatch = imdbAnchor
+                    ? String(imdbAnchor.getAttribute('href') || '').match(/tt\d{5,12}/i)
+                    : null;
+                  var quality = clean(
+                    nodeText(row, '.mv-ritem__q') ||
+                    nodeText(card, '.mv-card__q')
+                  );
+                  var qualityMatch = quality.match(/(2160|1080|720|480)p/i);
+                  var genres = Array.from(
+                    row.querySelectorAll('.mv-ritem__genres a,.mv-card__genre')
+                  ).map(function(node) { return clean(node.textContent); })
+                    .filter(Boolean).slice(0, 4);
+                  var rating = clean(
+                    nodeText(row, '.mv-card__rate--imdb')
+                  ).replace(/[^0-9.]/g, '').slice(0, 5);
+                  var tags = clean(nodeText(row, '.mv-ritem__foot')) + ' ' +
+                    clean(nodeText(card, '.mv-card__badges'));
+                  var countryFact = Array.from(
+                    row.querySelectorAll('.mv-ritem__fact')
+                  ).find(function(node) {
+                    return clean(node.querySelector('.mv-ritem__k')).indexOf('کشور') === 0;
+                  });
+                  var country = countryFact
+                    ? clean(countryFact.textContent).replace(/^کشور\s*:\s*/, '') : '';
+                  return {
+                    title: title.slice(0, 140),
+                    kind: kind,
+                    contentUrl: url.origin + url.pathname,
+                    posterUrl: rawPoster && !/^data:/i.test(rawPoster)
+                      ? new URL(rawPoster, location.origin).href : '',
+                    backdropUrl: '',
+                    imdbId: imdbMatch ? imdbMatch[0].toLowerCase() : '',
+                    episodeLabel: clean(
+                      nodeText(card, '.mv-card__ep')
+                    ).slice(0, 72),
+                    summary: clean(
+                      nodeText(row, '.mv-ritem__plot') ||
+                      nodeText(card, '.mv-card__plot')
+                    ).slice(0, 420),
+                    year: yearMatch ? yearMatch[0] : '',
+                    genres: genres,
+                    rating: rating,
+                    runtime: '',
+                    country: country.slice(0, 60),
+                    language: '',
+                    hasPersianDub: /دوبله/.test(tags),
+                    hasPersianSubtitle: /زیرنویس\s*فارسی|زیرنویس/.test(tags),
+                    maxQualityHeight: qualityMatch ? Number(qualityMatch[1]) : 0,
+                    qualityLabel: quality.slice(0, 32),
+                    directors: people(row, 'کارگردان'),
+                    cast: people(row, 'بازیگران')
+                  };
+                }).filter(Boolean).slice(0, 24);
+              }
+              async function page(type, pageNumber) {
+                var query = '?sort=latest' +
+                  (type === 'SERIES' ? '&type=tv' : '') +
+                  (pageNumber > 1 ? '&p=' + pageNumber : '');
+                var response = await fetch(location.origin + '/_modern/classic' + query, {
+                  credentials: 'include'
+                });
+                if (!response.ok) return [];
+                return parse(await response.text(), type);
+              }
+              function unique(items) {
+                var seen = {};
+                return items.filter(function(item) {
+                  if (seen[item.contentUrl]) return false;
+                  seen[item.contentUrl] = true;
+                  return true;
+                });
+              }
+              try {
+                var pages = await Promise.all([
+                  page('MOVIE', 1), page('MOVIE', 2),
+                  page('SERIES', 1), page('SERIES', 2)
+                ]);
+                var movies = unique(pages[0].concat(pages[1])).slice(0, 24);
+                var series = unique(pages[2].concat(pages[3])).slice(0, 24);
+                if (!movies.length && !series.length) {
+                  AminCatalog.failed('mymoviz', 'Empty catalog');
+                  return;
+                }
+                var all = [];
+                for (var i = 0; i < Math.max(movies.length, series.length); i++) {
+                  if (movies[i]) all.push(movies[i]);
+                  if (series[i]) all.push(series[i]);
+                }
+                AminCatalog.section('mymoviz', JSON.stringify({
+                  all: unique(all).slice(0, 24),
+                  movies: movies,
+                  series: series,
+                  popularSeries: [],
+                  featured: []
+                }));
+              } catch (_) {
+                AminCatalog.failed('mymoviz', 'Service unavailable');
               }
             })();
         """.trimIndent()

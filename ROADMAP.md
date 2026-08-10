@@ -201,6 +201,31 @@ ParsiFlix/FilmRooz به یک کارت با دو منبع تبدیل شدند. Ma
 انجام نشده، چون نیازمند Migration سازگار با داده‌های موجود است و باید در یک
 گام جدا و برگشت‌پذیر پیش از Release نهایی شود.
 
+### 0.17.0 — MyMoviz Public Catalog & Unified Latest
+
+- Adapter عمومی MyMoviz برای کاتالوگ و Search؛ Login فقط هنگام Probe پخش.
+- اجتماع متوازن جدیدترین فیلم و سریال FilmRooz/MyMoviz در Railهای خارجی فعلی.
+- حداکثر 24 کارت و حذف تکراری با Canonical Library.
+- اولویت Movie Source: دوبله فارسی، کیفیت عادی تا 1080، سپس FilmRooz.
+- Badge کوچک دوبله فارسی و زیرنویس فارسی روی Poster برای تصمیم سریع در Home.
+- سریال‌ها از Tag کلی دوبله برای انتخاب قسمت استفاده نمی‌کنند؛ Dub status دقیق
+  باید Episode-level باشد.
+- MyMoviz Direct Play و Episode Navigator تا QA لاگین‌شده Watch غیرفعال می‌ماند.
+
+### 0.17.1 — MyMoviz Signed-in Playback Probe
+
+- Login دستی مالک در امولاتور، بدون پاک‌کردن Sessionهای فعلی.
+- Probe جداگانه Movie و Series از Title تا Watch با URLهای عادی.
+- تعریف Adapter پخش فقط بر اساس DOM واقعی و بدون خواندن Media URL/Token/DRM.
+- Fallback صریح به صفحه Provider اگر Resolver شواهد کافی نداشته باشد.
+
+### 0.17.2 — Episode-level Dub & Best Source Resolver
+
+- وضعیت دوبله هر فصل/قسمت، نه Tag کلی سریال.
+- اعلان «قسمت N دوبله شد» فقط با Evidence دقیق.
+- Source انتخابی هر Episode: دوبله موجود، کیفیت عادی تا 1080، FilmRooz در تساوی.
+- اگر قسمت جدید Original آمده ولی Dub عقب است، هر دو وضعیت جدا و صادقانه دیده شوند.
+
 ### 0.16.7 — My Series
 
 - Follow دستی سریال و Baseline `تا فصل/قسمت دیدم` به‌عنوان مسیر سریع.

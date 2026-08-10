@@ -593,3 +593,74 @@ Back/Menu = Home طراحی خواهد شد.
   است. `SpotlightActivity` در APK نهایی
   `android:exported="false"` است.
 - هنوز Commit/Push/Tag/Release انجام نشده؛ فقط پس از تأیید مالک منتشر شود.
+
+## Candidate محلی 0.17.0 — ۱۰ اوت ۲۰۲۶
+
+### وضعیت اجراشده
+
+- MyMoviz به‌عنوان Provider سوم و مکمل اضافه شده است، ولی Home shortcut جدا
+  ندارد. Catalog/Search/Detail عمومی آن بدون Login قابل استفاده است.
+- ریل‌های جدیدترین فیلم و سریال خارجی، اجتماع بدون تکرار FilmRooz و MyMoviz
+  هستند. Canonical matching از IMDb ID و title/year استفاده می‌کند.
+- سیاست انتخاب فیلم: دوبله فارسی، سپس کیفیت حداکثر 1080p، سپس FilmRooz در
+  شرایط برابر. برای سریال، تگ کلی دوبله به معنی دوبله بودن آخرین قسمت نیست؛
+  تشخیص دقیق قسمت‌به‌قسمت عمداً به 0.17.2 منتقل شده است.
+- Search سه‌منبعی شده و صورت‌های چسبیده/جدا مثل `spiderman` و `spider man` را
+  برای MyMoviz پوشش می‌دهد.
+- روی پوسترهای Home و لیست‌ها Badge سبز «دوبله فارسی» و آبی «زیرنویس فارسی»
+  نمایش داده می‌شود. Badge فقط با داده موجود نشان داده می‌شود و هر دو می‌توانند
+  هم‌زمان حاضر باشند.
+- MyMoviz Direct Play و Native Episode Navigator ندارد؛ کلیک سریال فعلاً Detail
+  عمومی Provider را باز می‌کند تا هیچ قسمت یا Endpoint اشتباهی حدس زده نشود.
+- FocusRequester و بازگشت Hero به بالای صفحه پس از Metadata async نیز اصلاح شد.
+
+### شواهد پذیرش
+
+- Sync واقعی Emulator: ParsiFlix 10، FilmRooz 23، MyMoviz 24؛ بدون Error.
+- جستجوی `spiderman`، Dedup نتایج و بازشدن Detail عمومی MyMoviz موفق بود.
+- Badgeهای دوبله/زیرنویس روی پوستر با D-pad/Mouse و بدون هم‌پوشانی بررسی شدند.
+- `testDebugUnitTest + lintDebug + assembleDebug`: 29 تست موفق، Android Lint
+  صفر Issue. APK Debug برابر 34,824,700 بایت با SHA-256 زیر است:
+  `d070bea2c12e2ec16211d2c035df77d3044ce795d18a814eeb13781920bc10cb`
+- نصب فقط با `adb install -r` انجام شده؛ هیچ App data، Cookie، Session یا Login
+  پاک نشده است.
+
+### نقطه دقیق ادامه برای AI بعدی
+
+قدم بعدی 0.17.1 و **فقط Probe پخش لاگین‌شده MyMoviz** است. پیش از ورود به آن
+مرحله باید از مالک خواسته شود داخل همان Emulator Login کند. تا آن زمان نیازی
+به Login نیست. Probe باید Watch route، انتخاب نسخه/کیفیت/صوت، Cookie/Referer،
+Back و Fullscreen را مشاهده کند؛ نباید Stream URL استخراج، Authentication دور
+زده یا App data پاک شود. پس از قرارداد واقعی Playback، 0.17.2 Resolver دقیق
+«آخرین قسمت دوبله‌شده» را می‌سازد.
+
+این Candidate هنوز Commit/Push/Tag/Release نشده است.
+
+### اصلاح QA چندمنبعی Spider-Man 3
+
+- 9.2 در MyMoviz امتیاز کاربران خود سایت بود؛ IMDb صریح همان صفحه 6.2 است.
+  `SpotlightMetadataLoader` اکنون لینک دارای برچسب IMDb را بر schema
+  `aggregateRating` مقدم می‌داند.
+- تعویض Source قبلاً کل Metadata را از Variant انتخابی جایگزین می‌کرد. اکنون
+  `withPlaybackSource()` فقط service/content/browser route و capability پخش را
+  تغییر می‌دهد؛ پنل Canonical، Artwork، IMDb، خلاصه، Credits و Badgeها ثابت‌اند.
+- FilmRooz اکنون `دوبله`، `دو زبانه/دوزبانه` و `صوت فارسی` را نیز شاهد دوبله
+  می‌داند؛ بنابراین Spider-Man 3 با Badge دوبله صحیح نمایش داده شد.
+- تست رگرسیون Source selection اضافه شد. Gate نهایی: 30 تست موفق، Lint صفر
+  Issue، APK برابر 34,825,588 بایت و SHA-256:
+  `803331c34f13911cac3f71c53162b814a437c65c780d0ef3c77c75f5df3c2a5e`
+
+## 0.17.1 — ورودی MyMoviz در Home و تثبیت انتخاب قسمت
+
+- ورودی Login/بازکردن MyMoviz از صفحه توضیحات حذف شد تا Hero و پنل اطلاعات
+  شلوغ نشود.
+- MyMoviz اکنون در ردیف پایین «ورود مستقیم به سینماها» کنار ParsiFlix و
+  FilmRooz نمایش داده می‌شود. کلیک روی آن BrowserActivity را با صفحه رسمی
+  MyMoviz باز می‌کند؛ همان مسیر عادی برای Login و بررسی سایت.
+- تست واقعی امولاتور تأیید کرد کلیک روی کارت MyMoviz به BrowserActivity و
+  صفحه رسمی سایت می‌رسد.
+- کوکی، Local Storage، Session و Login با نصب جایگزین حفظ شدند.
+- انتخاب Silo فصل ۳ قسمت ۳ قبلاً با Header واقعی «فصل ۳، قسمت ۳» تأیید شده؛
+  فیلتر فصل authoritative مانع برگشت تصادفی به فصل ۱ می‌شود.
+- Gate نسخه: `testDebugUnitTest`، `lintDebug`، `assembleDebug` و
+  `assembleRelease` موفق.

@@ -33,12 +33,37 @@ object CanonicalLibrary {
                 contentUrl = result.contentUrl,
                 posterUrl = result.posterUrl,
                 serviceId = result.serviceId,
-                year = result.year.ifBlank { CanonicalText.extractYear(result.title) }
+                year = result.year.ifBlank { CanonicalText.extractYear(result.title) },
+                imdbId = result.imdbId,
+                hasPersianDub = result.hasPersianDub,
+                hasPersianSubtitle = result.hasPersianSubtitle,
+                maxQualityHeight = result.maxQualityHeight,
+                qualityLabel = result.qualityLabel
             )
         },
         metadataByUrl = metadataByUrl,
         providerNames = providerNames
     )
+
+    /**
+     * Interleaves each provider's own latest order, then collapses verified duplicates.
+     * Home therefore gives both providers a fair chance without claiming a cross-site
+     * publication timestamp that neither catalogue exposes consistently.
+     */
+    fun mergeLatest(
+        providerLists: List<List<CatalogItem>>,
+        metadataByUrl: Map<String, TitleMetadata> = emptyMap(),
+        providerNames: Map<String, String> = emptyMap(),
+        limit: Int = 24
+    ): List<CanonicalMedia> {
+        val balanced = buildList {
+            val maxSize = providerLists.maxOfOrNull(List<CatalogItem>::size) ?: 0
+            for (index in 0 until maxSize) {
+                providerLists.forEach { list -> list.getOrNull(index)?.let(::add) }
+            }
+        }
+        return canonicalize(balanced, metadataByUrl, providerNames).take(limit)
+    }
 
     fun canonicalize(
         items: List<CatalogItem>,
@@ -54,7 +79,7 @@ object CanonicalLibrary {
                     providerId = raw.serviceId,
                     providerName = providerNames[raw.serviceId].orEmpty(),
                     item = raw.withMetadata(metadata),
-                    imdbId = metadata?.imdbId.orEmpty()
+                    imdbId = raw.imdbId.ifBlank { metadata?.imdbId.orEmpty() }
                 )
             }
 
@@ -103,7 +128,14 @@ object CanonicalLibrary {
             val distinct = variants.distinctBy {
                 ContentMetadataPolicy.canonicalContentUrl(it.item.contentUrl)
             }
-            val preferred = distinct.maxByOrNull(::variantQuality) ?: variants.first()
+            val preferred = distinct.maxWithOrNull(
+                compareBy<SourceVariant>(
+                    { if (it.item.kind == CatalogKind.MOVIE && it.item.hasPersianDub) 1 else 0 },
+                    { autoQualityRank(it.item.maxQualityHeight) },
+                    { if (it.providerId == FILMROOZ_ID) 1 else 0 },
+                    ::variantQuality
+                )
+            ) ?: variants.first()
             val representative = distinct
                 .filterNot { it === preferred }
                 .fold(preferred.item) { merged, variant -> merged.mergeDisplay(variant.item) }
@@ -215,6 +247,7 @@ object CanonicalLibrary {
     }
 
     private fun CatalogItem.mergeDisplay(other: CatalogItem): CatalogItem = copy(
+        imdbId = imdbId.ifBlank { other.imdbId },
         posterUrl = posterUrl.ifBlank { other.posterUrl },
         backdropUrl = backdropUrl.ifBlank { other.backdropUrl },
         episodeLabel = episodeLabel.ifBlank { other.episodeLabel },
@@ -227,6 +260,8 @@ object CanonicalLibrary {
         language = language.ifBlank { other.language },
         hasPersianDub = hasPersianDub || other.hasPersianDub,
         hasPersianSubtitle = hasPersianSubtitle || other.hasPersianSubtitle,
+        maxQualityHeight = maxOf(maxQualityHeight, other.maxQualityHeight),
+        qualityLabel = qualityLabel.ifBlank { other.qualityLabel },
         directors = directors.ifEmpty { other.directors },
         cast = cast.ifEmpty { other.cast }
     )
@@ -239,6 +274,14 @@ object CanonicalLibrary {
             (if (directors.isNotEmpty()) 2 else 0) +
             minOf(cast.size, 3) +
             (if (hasPersianDub) 1 else 0)
+    }
+
+    private fun autoQualityRank(height: Int): Int = when {
+        height >= 2160 -> 1080 // 4K remains manual; ordinary 1080 is the auto ceiling.
+        height >= 1080 -> 1080
+        height >= 720 -> 720
+        height >= 480 -> 480
+        else -> 0
     }
 
     private fun creditFingerprint(variants: List<SourceVariant>): String = variants
@@ -266,6 +309,8 @@ object CanonicalLibrary {
     private fun String.sha1(): String = MessageDigest.getInstance("SHA-1")
         .digest(toByteArray(Charsets.UTF_8))
         .joinToString("") { byte -> "%02x".format(byte) }
+
+    private const val FILMROOZ_ID = "filmrooz"
 }
 
 /** Text-only utilities shared by matching and search presentation. */

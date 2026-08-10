@@ -104,6 +104,8 @@ data class StreamingService(
     val artwork: String = "",
     val color: String = "#E50914",
     val type: ServiceType = ServiceType.STREAMING,
+    /** Supplemental providers enrich/search the library but do not need a large Home doorway. */
+    val showOnHome: Boolean = true,
     /** Optional service-specific scale used only on login / QR pages. */
     val loginZoomPercent: Int? = null,
     /** Optional UserAgentMode enum name: TV, DESKTOP, or MOBILE. */

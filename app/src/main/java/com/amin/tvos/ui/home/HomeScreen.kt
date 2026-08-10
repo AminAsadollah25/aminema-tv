@@ -47,7 +47,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
+import com.amin.tvos.data.CanonicalLibrary
 import com.amin.tvos.data.ContentMetadataPolicy
+import com.amin.tvos.data.model.CanonicalMedia
 import com.amin.tvos.data.model.CatalogFilter
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
@@ -91,6 +93,14 @@ fun HomeScreen(
     val catalogSections by viewModel.catalogSections.collectAsState()
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val titleMetadata by viewModel.titleMetadata.collectAsState()
+    val homeServices = remember(services) { services.filter { it.showOnHome } }
+    val providerDoorways = remember(services) {
+        services.filter {
+            it.id == HomeViewModel.IRANIAN_SERVICE_ID ||
+                it.id == HomeViewModel.INTERNATIONAL_SERVICE_ID ||
+                it.id == HomeViewModel.MYMOVIZ_SERVICE_ID
+        }
+    }
     val catalogItems = remember(catalogSections) {
         catalogSections
             .flatMap { it.all + it.movies + it.series + it.popularSeries + it.featured }
@@ -102,6 +112,93 @@ fun HomeScreen(
         catalogItems.associateBy {
             ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
         }
+    }
+    val iranianSection = catalogSections.firstOrNull {
+        it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
+    }
+    val filmRoozSection = catalogSections.firstOrNull {
+        it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
+    }
+    val myMovizSection = catalogSections.firstOrNull {
+        it.serviceId == HomeViewModel.MYMOVIZ_SERVICE_ID
+    }
+    val providerNames = remember(services) {
+        services.associate { service ->
+            service.id to service.sourceLabel.ifBlank { service.name }
+        }
+    }
+    val internationalCanonical = remember(
+        filmRoozSection, myMovizSection, titleMetadata, providerNames
+    ) {
+        fun merged(
+            filmRoozItems: List<CatalogItem>,
+            myMovizItems: List<CatalogItem>
+        ): List<CanonicalMedia> = CanonicalLibrary.mergeLatest(
+            providerLists = listOf(filmRoozItems, myMovizItems),
+            metadataByUrl = titleMetadata,
+            providerNames = providerNames,
+            limit = 24
+        )
+        Triple(
+            merged(
+                filmRoozSection?.all.orEmpty(),
+                myMovizSection?.all.orEmpty()
+            ),
+            merged(
+                filmRoozSection?.movies.orEmpty(),
+                myMovizSection?.movies.orEmpty()
+            ),
+            merged(
+                filmRoozSection?.series.orEmpty(),
+                myMovizSection?.series.orEmpty()
+            )
+        )
+    }
+    val internationalCanonicalAll = internationalCanonical.first
+    val internationalCanonicalMovies = internationalCanonical.second
+    val internationalCanonicalSeries = internationalCanonical.third
+    val canonicalMediaByUrl = remember(internationalCanonical) {
+        (internationalCanonicalAll + internationalCanonicalMovies + internationalCanonicalSeries)
+            .flatMap { media ->
+                media.variants.map { variant ->
+                    ContentMetadataPolicy.canonicalContentUrl(variant.item.contentUrl) to media
+                } + (
+                    ContentMetadataPolicy.canonicalContentUrl(
+                        media.representative.contentUrl
+                    ) to media
+                    )
+            }
+            .toMap()
+    }
+    val internationalSection = remember(
+        filmRoozSection,
+        myMovizSection,
+        internationalCanonicalAll,
+        internationalCanonicalMovies,
+        internationalCanonicalSeries
+    ) {
+        val bothUnavailable = filmRoozSection?.all.isNullOrEmpty() &&
+            myMovizSection?.all.isNullOrEmpty()
+        CatalogSection(
+            serviceId = HomeViewModel.INTERNATIONAL_SERVICE_ID,
+            all = internationalCanonicalAll.map(CanonicalMedia::representative),
+            movies = internationalCanonicalMovies.map(CanonicalMedia::representative),
+            series = internationalCanonicalSeries.map(CanonicalMedia::representative),
+            popularSeries = filmRoozSection?.popularSeries.orEmpty(),
+            featured = filmRoozSection?.featured.orEmpty(),
+            syncedAt = maxOf(
+                filmRoozSection?.syncedAt ?: 0L,
+                myMovizSection?.syncedAt ?: 0L
+            ),
+            error = if (bothUnavailable) {
+                listOfNotNull(
+                    filmRoozSection?.error?.takeIf(String::isNotBlank),
+                    myMovizSection?.error?.takeIf(String::isNotBlank)
+                ).joinToString(" • ")
+            } else {
+                ""
+            }
+        )
     }
     fun previewFor(item: MovieItem): CatalogItem {
         val key = ContentMetadataPolicy.canonicalContentUrl(item.url)
@@ -121,28 +218,46 @@ fun HomeScreen(
         context.startActivity(SpotlightActivity.intent(context, item))
 
     fun spotlightForCatalog(item: CatalogItem): SpotlightItem {
-        val meta = titleMetadata[ContentMetadataPolicy.canonicalContentUrl(item.contentUrl)]
+        val canonical = canonicalMediaByUrl[
+            ContentMetadataPolicy.canonicalContentUrl(item.contentUrl)
+        ]
+        val representative = canonical?.representative ?: item
+        val selectedVariant = canonical?.variants?.firstOrNull {
+            ContentMetadataPolicy.isSameTopLevelPage(
+                it.item.contentUrl,
+                representative.contentUrl
+            )
+        }
+        val selected = selectedVariant?.item ?: representative
+        val meta = titleMetadata[ContentMetadataPolicy.canonicalContentUrl(selected.contentUrl)]
         return SpotlightItem(
-            title = item.title,
-            kind = item.kind,
-            contentUrl = item.contentUrl,
-            posterUrl = item.posterUrl.ifBlank { meta?.posterUrl.orEmpty() },
-            backdropUrl = item.backdropUrl.ifBlank { meta?.backdropUrl.orEmpty() },
-            serviceId = item.serviceId,
-            serviceName = serviceName(item.serviceId),
-            summary = meta?.summary?.takeIf { it.isNotBlank() } ?: item.summary,
-            year = meta?.year?.takeIf { it.isNotBlank() } ?: item.year,
-            genres = meta?.genres?.takeIf { it.isNotEmpty() } ?: item.genres,
-            rating = meta?.rating?.takeIf { it.isNotBlank() } ?: item.rating,
-            runtime = meta?.runtime?.takeIf { it.isNotBlank() } ?: item.runtime,
-            episodeLabel = item.episodeLabel,
-            country = meta?.country?.takeIf { it.isNotBlank() } ?: item.country,
-            language = meta?.language?.takeIf { it.isNotBlank() } ?: item.language,
-            hasPersianDub = meta?.hasPersianDub == true || item.hasPersianDub,
-            hasPersianSubtitle = meta?.hasPersianSubtitle == true || item.hasPersianSubtitle,
-            directors = meta?.directors?.takeIf { it.isNotEmpty() } ?: item.directors,
-            cast = meta?.cast?.takeIf { it.isNotEmpty() } ?: item.cast,
-            directPlay = item.kind == CatalogKind.MOVIE
+            title = representative.title,
+            kind = representative.kind,
+            contentUrl = selected.contentUrl,
+            posterUrl = representative.posterUrl.ifBlank { meta?.posterUrl.orEmpty() },
+            backdropUrl = representative.backdropUrl.ifBlank { meta?.backdropUrl.orEmpty() },
+            serviceId = selected.serviceId,
+            serviceName = selectedVariant?.providerName.orEmpty().ifBlank {
+                serviceName(selected.serviceId)
+            },
+            summary = meta?.summary?.takeIf { it.isNotBlank() } ?: representative.summary,
+            year = meta?.year?.takeIf { it.isNotBlank() } ?: representative.year,
+            genres = meta?.genres?.takeIf { it.isNotEmpty() } ?: representative.genres,
+            rating = meta?.rating?.takeIf { it.isNotBlank() } ?: representative.rating,
+            runtime = meta?.runtime?.takeIf { it.isNotBlank() } ?: representative.runtime,
+            episodeLabel = representative.episodeLabel,
+            country = meta?.country?.takeIf { it.isNotBlank() } ?: representative.country,
+            language = meta?.language?.takeIf { it.isNotBlank() } ?: representative.language,
+            hasPersianDub = meta?.hasPersianDub == true || representative.hasPersianDub,
+            hasPersianSubtitle = meta?.hasPersianSubtitle == true ||
+                representative.hasPersianSubtitle,
+            directors = meta?.directors?.takeIf { it.isNotEmpty() }
+                ?: representative.directors,
+            cast = meta?.cast?.takeIf { it.isNotEmpty() } ?: representative.cast,
+            directPlay = representative.kind == CatalogKind.MOVIE &&
+                services.firstOrNull { it.id == selected.serviceId }?.directPlay != null,
+            canonicalId = canonical?.canonicalId.orEmpty(),
+            sourceVariants = canonical?.variants.orEmpty()
         )
     }
 
@@ -294,13 +409,6 @@ fun HomeScreen(
             resumeStrategy = session.resumeStrategy,
             actionButtonTextPatterns = session.actionButtonTextPatterns
         )
-    }
-
-    val iranianSection = catalogSections.firstOrNull {
-        it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
-    }
-    val internationalSection = catalogSections.firstOrNull {
-        it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
     }
 
     /**
@@ -659,10 +767,10 @@ fun HomeScreen(
 
         // On a truly cold start there is no catalogue yet, so keep the two playful
         // cinema doorways close at hand until Home has enough content to build a Hero.
-        if (heroSlides.isEmpty() && services.isNotEmpty()) {
+        if (heroSlides.isEmpty() && homeServices.isNotEmpty()) {
             SectionRow(
                 title = "از اینجا شروع کن",
-                items = services,
+                items = homeServices,
                 key = { it.id },
                 showNavigation = false
             ) { service ->
@@ -806,14 +914,24 @@ fun HomeScreen(
                     },
                     onFilterChange = {},
                     onRefresh = {
-                        section?.serviceId?.let(onRefreshCatalog)
+                        section?.serviceId?.let { serviceId ->
+                            onRefreshCatalog(serviceId)
+                            if (serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID) {
+                                onRefreshCatalog(HomeViewModel.MYMOVIZ_SERVICE_ID)
+                            }
+                        }
                     },
                     onOpen = { openSpotlight(spotlightForCatalog(it)) },
                     onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
                     itemsOverride = items,
                     showFilters = false,
-                    isRefreshing = section?.serviceId?.let {
-                        it in refreshingCatalogServices
+                    isRefreshing = section?.serviceId?.let { serviceId ->
+                        serviceId in refreshingCatalogServices ||
+                            (
+                                serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID &&
+                                    HomeViewModel.MYMOVIZ_SERVICE_ID in
+                                    refreshingCatalogServices
+                                )
                     } == true
                 )
                 Spacer(Modifier.height(16.dp))
@@ -945,16 +1063,16 @@ fun HomeScreen(
         }
 
         // ---------- Provider doorways — deliberately last, useful but no longer dominant ----------
-        if (services.isNotEmpty() && heroSlides.isNotEmpty()) {
+        if (providerDoorways.isNotEmpty() && heroSlides.isNotEmpty()) {
             SectionRow(
                 title = "ورود مستقیم به سینماها",
-                items = services,
+                items = providerDoorways,
                 key = { it.id },
                 showNavigation = false
             ) { service ->
                 ServiceCard(service = service, onClick = { openService(service) })
             }
-        } else if (services.isEmpty()) {
+        } else if (providerDoorways.isEmpty()) {
             Text(
                 "هنوز سینمایی تنظیم نشده؛ از تنظیمات یک سرویس اضافه کن.",
                 color = TextSecondary,

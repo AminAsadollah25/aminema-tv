@@ -122,6 +122,11 @@ class CatalogRepository(private val context: Context) {
 
     private fun normalize(item: CatalogItem): CatalogItem =
         item.copy(
+            imdbId = item.imdbId.trim()
+                .takeIf { Regex("""tt\d{5,12}""").matches(it) }
+                .orEmpty(),
+            maxQualityHeight = item.maxQualityHeight.coerceIn(0, 4_320),
+            qualityLabel = cleanText(item.qualityLabel, 32),
             country = cleanText(item.country, 60),
             language = cleanText(item.language, 60),
             genres = item.genres

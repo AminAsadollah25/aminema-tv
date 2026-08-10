@@ -156,6 +156,28 @@ fun CatalogCard(
                         color = Color.White
                     )
                 }
+                if (item.hasPersianDub || item.hasPersianSubtitle) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                    ) {
+                        if (item.hasPersianDub) {
+                            LanguageBadge(
+                                text = "دوبله فارسی",
+                                color = Color(0xFF138A57)
+                            )
+                        }
+                        if (item.hasPersianSubtitle) {
+                            LanguageBadge(
+                                text = "زیرنویس فارسی",
+                                color = Color(0xFF2E6F9E),
+                                modifier = Modifier.padding(top = if (item.hasPersianDub) 5.dp else 0.dp)
+                            )
+                        }
+                    }
+                }
             }
             Text(
                 item.title,
@@ -188,4 +210,22 @@ fun CatalogCard(
             }
         }
     }
+}
+
+@Composable
+private fun LanguageBadge(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        color = Color.White,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.94f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    )
 }

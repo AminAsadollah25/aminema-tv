@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -112,6 +113,7 @@ fun SpotlightScreen(
     onAction: (SpotlightAction) -> Unit
 ) {
     val primaryFocus = remember { FocusRequester() }
+    var primaryActionReady by remember(item.contentUrl) { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     val contentVisibleState = remember { androidx.compose.animation.core.MutableTransitionState(false) }
@@ -121,11 +123,18 @@ fun SpotlightScreen(
         derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 50 }
     }
 
-    LaunchedEffect(item.contentUrl) {
+    LaunchedEffect(item.contentUrl, primaryActionReady, metadataLoading) {
         delay(150L)
         contentVisibleState.targetState = true
-        delay(100L)
-        primaryFocus.requestFocus()
+        if (!primaryActionReady || metadataLoading) return@LaunchedEffect
+        // AnimatedVisibility does not attach its focus node on the first composition.
+        // Metadata can also make the focused button move and auto-scroll the whole Hero.
+        // Wait for the stable layout, restore its top, then focus without opening mid-page.
+        delay(50L)
+        listState.scrollToItem(0, 0)
+        runCatching { primaryFocus.requestFocus() }
+        delay(50L)
+        listState.scrollToItem(0, 0)
     }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -404,7 +413,11 @@ fun SpotlightScreen(
                                                             )
                                                         },
                                                         primary = true,
-                                                        modifier = Modifier.focusRequester(primaryFocus),
+                                                        modifier = Modifier
+                                                            .focusRequester(primaryFocus)
+                                                            .onGloballyPositioned {
+                                                                primaryActionReady = true
+                                                            },
                                                         onClick = {
                                                             if (item.primaryAction == SpotlightAction.SELECT_EPISODE) {
                                                                 coroutineScope.launch {
@@ -826,10 +839,11 @@ private fun SourceSelector(
     }
 }
 
-private fun primaryLabel(item: SpotlightItem): String = when {
-    item.primaryAction == SpotlightAction.CONTINUE -> "ادامه تماشا"
-    item.kind == CatalogKind.SERIES -> "انتخاب قسمت"
-    else -> "تماشا"
+private fun primaryLabel(item: SpotlightItem): String = when (item.primaryAction) {
+    SpotlightAction.CONTINUE -> "ادامه تماشا"
+    SpotlightAction.SELECT_EPISODE -> "انتخاب قسمت"
+    SpotlightAction.LATEST_EPISODE -> "پخش آخرین قسمت"
+    SpotlightAction.WATCH -> "تماشا"
 }
 
 private fun formatDuration(milliseconds: Long): String {

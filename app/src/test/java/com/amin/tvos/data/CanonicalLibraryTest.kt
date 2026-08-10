@@ -136,6 +136,77 @@ class CanonicalLibraryTest {
         assertTrue(result.single().canonicalId.startsWith("aminema:"))
     }
 
+    @Test
+    fun latestMergeInterleavesProvidersAndRemovesVerifiedDuplicate() {
+        val filmRooz = listOf(
+            movie("Shared", "https://film.test/post/film/1/", "filmrooz", "tt1000001"),
+            movie("Film only", "https://film.test/post/film/2/", "filmrooz", "tt1000002")
+        )
+        val myMoviz = listOf(
+            movie("Shared title", "https://movie.test/_modern/title/9/shared/", "mymoviz", "tt1000001"),
+            movie("My only", "https://movie.test/_modern/title/10/only/", "mymoviz", "tt1000003")
+        )
+
+        val result = CanonicalLibrary.mergeLatest(
+            providerLists = listOf(filmRooz, myMoviz),
+            limit = 24
+        )
+
+        assertEquals(3, result.size)
+        assertEquals(2, result.first().variants.size)
+        assertEquals("Film only", result[1].representative.title)
+        assertEquals("My only", result[2].representative.title)
+    }
+
+    @Test
+    fun dubbedMovieBeatsHigherQualityOriginalSource() {
+        val filmRooz = movie(
+            "Movie",
+            "https://film.test/post/film/1/",
+            "filmrooz",
+            "tt2000001",
+            dubbed = false,
+            quality = 1080
+        )
+        val myMoviz = movie(
+            "Movie",
+            "https://movie.test/_modern/title/2/movie/",
+            "mymoviz",
+            "tt2000001",
+            dubbed = true,
+            quality = 720
+        )
+
+        val result = CanonicalLibrary.canonicalize(listOf(filmRooz, myMoviz)).single()
+
+        assertEquals("mymoviz", result.representative.serviceId)
+        assertTrue(result.representative.hasPersianDub)
+    }
+
+    @Test
+    fun filmRoozWinsWhenDubAndAutomaticQualityAreEqual() {
+        val filmRooz = movie(
+            "Movie",
+            "https://film.test/post/film/1/",
+            "filmrooz",
+            "tt3000001",
+            dubbed = true,
+            quality = 1080
+        )
+        val myMoviz = movie(
+            "Movie",
+            "https://movie.test/_modern/title/2/movie/",
+            "mymoviz",
+            "tt3000001",
+            dubbed = true,
+            quality = 1080
+        )
+
+        val result = CanonicalLibrary.canonicalize(listOf(myMoviz, filmRooz)).single()
+
+        assertEquals("filmrooz", result.representative.serviceId)
+    }
+
     private fun item(
         title: String,
         url: String,
@@ -147,5 +218,22 @@ class CanonicalLibraryTest {
         contentUrl = url,
         serviceId = serviceId,
         year = year
+    )
+
+    private fun movie(
+        title: String,
+        url: String,
+        serviceId: String,
+        imdbId: String,
+        dubbed: Boolean = false,
+        quality: Int = 0
+    ) = CatalogItem(
+        title = title,
+        kind = CatalogKind.MOVIE,
+        contentUrl = url,
+        serviceId = serviceId,
+        imdbId = imdbId,
+        hasPersianDub = dubbed,
+        maxQualityHeight = quality
     )
 }

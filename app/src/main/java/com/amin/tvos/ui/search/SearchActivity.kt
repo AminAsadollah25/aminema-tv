@@ -80,8 +80,9 @@ class SearchActivity : ComponentActivity() {
     private var query by mutableStateOf("")
     private var persianLayout by mutableStateOf(true)
     private var keyboardVisible by mutableStateOf(true)
-    private var iranian by mutableStateOf(SearchGroup(IRANIAN_ID))
-    private var international by mutableStateOf(SearchGroup(INTERNATIONAL_ID))
+    private var groups by mutableStateOf(
+        SEARCH_SERVICE_IDS.associateWith(::SearchGroup)
+    )
 
     private lateinit var engines: Map<String, SiteSearchEngine>
     private val app get() = application as AminTvApp
@@ -91,8 +92,8 @@ class SearchActivity : ComponentActivity() {
         hideSystemUi()
 
         val root = FrameLayout(this)
-        // Each service gets its own engine so a slow site never delays the other.
-        engines = listOf(IRANIAN_ID, INTERNATIONAL_ID).associateWith { serviceId ->
+        // Each service gets its own engine so a slow site never delays the others.
+        engines = SEARCH_SERVICE_IDS.associateWith { serviceId ->
             SiteSearchEngine(
                 context = this,
                 onResults = { id, results -> runOnUiThread { applyResults(id, results) } },
@@ -145,27 +146,30 @@ class SearchActivity : ComponentActivity() {
     }
 
     private fun applyResults(serviceId: String, results: List<SearchResult>) {
-        val group = SearchGroup(serviceId, results, loading = false, searched = true)
-        if (serviceId == IRANIAN_ID) iranian = group else international = group
+        groups = groups + (
+            serviceId to SearchGroup(serviceId, results, loading = false, searched = true)
+            )
     }
 
     private fun applyFailure(serviceId: String, reason: String) {
-        val group = SearchGroup(serviceId, emptyList(), false, reason, searched = true)
-        if (serviceId == IRANIAN_ID) iranian = group else international = group
+        groups = groups + (
+            serviceId to SearchGroup(serviceId, emptyList(), false, reason, searched = true)
+            )
     }
 
     private fun runSearch() {
         val trimmed = query.trim()
         if (trimmed.length < 2) return
         keyboardVisible = false
-        listOf(IRANIAN_ID, INTERNATIONAL_ID).forEach { serviceId ->
+        SEARCH_SERVICE_IDS.forEach { serviceId ->
             val service = app.servicesRepository.findById(serviceId)
             if (service == null) {
                 applyFailure(serviceId, "سرویس تنظیم نشده است")
                 return@forEach
             }
-            val group = SearchGroup(serviceId, loading = true, searched = true)
-            if (serviceId == IRANIAN_ID) iranian = group else international = group
+            groups = groups + (
+                serviceId to SearchGroup(serviceId, loading = true, searched = true)
+                )
             engines[serviceId]?.search(service, trimmed)
         }
     }
@@ -201,7 +205,8 @@ class SearchActivity : ComponentActivity() {
                     directors = representative.directors,
                     cast = representative.cast,
                     primaryAction = representative.kind.defaultSpotlightAction(),
-                    directPlay = representative.kind == CatalogKind.MOVIE,
+                    directPlay = representative.kind == CatalogKind.MOVIE &&
+                        app.servicesRepository.findById(selectedVariant.providerId)?.directPlay != null,
                     canonicalId = media.canonicalId,
                     sourceVariants = media.variants
                 )
@@ -212,16 +217,16 @@ class SearchActivity : ComponentActivity() {
     @Composable
     private fun SearchScreen() {
         val titleMetadata by app.catalogRepository.titleMetadata.collectAsState()
-        val providerNames = remember(iranian, international) {
-            listOf(IRANIAN_ID, INTERNATIONAL_ID).associateWith { id ->
+        val providerNames = remember(groups) {
+            SEARCH_SERVICE_IDS.associateWith { id ->
                 app.servicesRepository.findById(id)?.let { service ->
                     service.sourceLabel.ifBlank { service.name }
                 }.orEmpty()
             }
         }
-        val canonicalResults = remember(iranian, international, titleMetadata, providerNames) {
+        val canonicalResults = remember(groups, titleMetadata, providerNames) {
             CanonicalLibrary.fromSearchResults(
-                results = iranian.results + international.results,
+                results = SEARCH_SERVICE_IDS.flatMap { groups[it]?.results.orEmpty() },
                 metadataByUrl = titleMetadata,
                 providerNames = providerNames
             )
@@ -265,7 +270,7 @@ class SearchActivity : ComponentActivity() {
                     Column {
                         Text("جستجو", style = MaterialTheme.typography.displayMedium)
                         Text(
-                            "یک جستجو، هر دو آرشیو",
+                            "یک جستجو، همه آرشیوها",
                             style = MaterialTheme.typography.bodyLarge,
                             color = TextSecondary
                         )
@@ -290,7 +295,7 @@ class SearchActivity : ComponentActivity() {
                 CollapsedSearchBar(query = query) { keyboardVisible = true }
             }
 
-            if (iranian.searched || international.searched) {
+            if (groups.values.any { it.searched }) {
                 Spacer(Modifier.height(24.dp))
                 UnifiedResultGroup(canonicalResults)
             }
@@ -339,8 +344,8 @@ class SearchActivity : ComponentActivity() {
     @Composable
     private fun UnifiedResultGroup(results: List<CanonicalMedia>) {
         val scrollState = rememberScrollState()
-        val loading = iranian.loading || international.loading
-        val errors = listOf(iranian, international)
+        val loading = groups.values.any { it.loading }
+        val errors = SEARCH_SERVICE_IDS.mapNotNull(groups::get)
             .filter { it.error.isNotBlank() }
             .joinToString("  •  ") { group ->
                 val name = app.servicesRepository.findById(group.serviceId)?.name
@@ -426,5 +431,7 @@ class SearchActivity : ComponentActivity() {
     private companion object {
         const val IRANIAN_ID = "parsiflix"
         const val INTERNATIONAL_ID = "filmrooz"
+        const val MYMOVIZ_ID = "mymoviz"
+        val SEARCH_SERVICE_IDS = listOf(IRANIAN_ID, INTERNATIONAL_ID, MYMOVIZ_ID)
     }
 }

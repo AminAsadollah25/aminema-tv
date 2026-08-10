@@ -28,7 +28,7 @@ import org.json.JSONObject
 /**
  * Loads the season/episode structure of a series from its provider title page.
  * Uses the same invisible-WebView + JS-bridge pattern as SpotlightMetadataLoader.
- * Supports FilmRooz and Parsiflix season/episode DOM structures.
+ * Supports FilmRooz, Parsiflix and MyMoviz season/episode DOM structures.
  */
 class EpisodeLoader(
     private val activity: ComponentActivity,
@@ -102,7 +102,11 @@ class EpisodeLoader(
                 // relative to the actual page completion instead of racing a short global
                 // timeout. A null bridge result is retried because SPA episode controls may
                 // hydrate after the document itself has finished loading.
-                val delay = if (item.serviceId == "parsiflix") 2_000L else 1_200L
+                val delay = when (item.serviceId) {
+                    "parsiflix" -> 2_000L
+                    "mymoviz" -> 1_500L
+                    else -> 1_200L
+                }
                 queueExtraction(source, delay)
             }
 
@@ -238,7 +242,8 @@ class EpisodeLoader(
 
         /**
          * Extracts season/episode structure.
-         * Supports FilmRooz (#cseason select) and Parsiflix (API-driven) DOM patterns.
+         * Supports FilmRooz (#cseason select), Parsiflix (API-driven) and
+         * MyMoviz (visible season tabs + visible episode play controls).
          */
         val EXTRACT_SCRIPT = """
             (async function() {
@@ -252,6 +257,93 @@ class EpisodeLoader(
                   result = result.replace(new RegExp(ar[i], 'g'), String(i));
                 }
                 return result;
+              }
+
+              function wait(ms) {
+                return new Promise(function(resolve) { setTimeout(resolve, ms); });
+              }
+
+              function episodeNumberFromText(value) {
+                var text = toEnglishDigits(clean(value));
+                var match = text.match(/قسمت\s*(\d+)/i) ||
+                            text.match(/[Ee]pisode\s*(\d+)/i) ||
+                            text.match(/^(\d+)$/);
+                return match ? parseInt(match[1], 10) : 0;
+              }
+
+              // ── MyMoviz modern pattern ───────────────────────────────────
+              // Season tabs are rendered immediately. The episode panel is
+              // hydrated after a season click, so each season is read only
+              // after its own visible episode details exist. The payload is
+              // semantic (season + episode); it never contains a media URL.
+              async function myMovizEditions() {
+                if (!/mymoviz/i.test(location.hostname)) return null;
+                var seasonButtons = Array.from(
+                  document.querySelectorAll('.mv-tv__season[data-season]')
+                );
+                var panel = document.querySelector('#mv-tv-panel');
+                if (!seasonButtons.length || !panel) return null;
+
+                var seasons = [];
+                for (var i = 0; i < seasonButtons.length; i++) {
+                  var seasonButton = seasonButtons[i];
+                  var seasonNum = toEnglishDigits(
+                    seasonButton.getAttribute('data-season') || String(i + 1)
+                  );
+                  seasonButton.click();
+
+                  var episodeElements = [];
+                  for (var attempt = 0; attempt < 12; attempt++) {
+                    await wait(attempt === 0 ? 650 : 300);
+                    episodeElements = Array.from(
+                      panel.querySelectorAll('details.mv-ep')
+                    );
+                    if (episodeElements.length) break;
+                  }
+
+                  var episodes = [];
+                  episodeElements.forEach(function(details) {
+                    var numberLabel = details.querySelector('.mv-ep__no');
+                    var epNum = episodeNumberFromText(
+                      numberLabel ? numberLabel.textContent : details.textContent
+                    );
+                    if (!epNum || episodes.some(function(ep) { return ep._order === epNum; })) return;
+                    var playControls = Array.from(
+                      details.querySelectorAll('a.mv-eprow__btn--play')
+                    );
+                    var trackButton = details.querySelector('.mv-eptrack');
+                    episodes.push({
+                      id: seasonNum + '-ep-' + epNum,
+                      title: 'قسمت ' + epNum,
+                      actionPayload: '#mymoviz-s' + seasonNum + '-epnum-' + epNum,
+                      isAvailableOnline: playControls.length > 0,
+                      isWatched: !!trackButton &&
+                        trackButton.getAttribute('aria-pressed') === 'true',
+                      _order: epNum
+                    });
+                  });
+
+                  episodes.sort(function(a, b) { return a._order - b._order; });
+                  if (episodes.length) {
+                    var firstNode = seasonButton.childNodes[0];
+                    var seasonText = clean(firstNode ? firstNode.textContent : '');
+                    seasons.push({
+                      id: seasonNum,
+                      name: seasonText || ('فصل ' + seasonNum),
+                      episodes: episodes
+                    });
+                  }
+                }
+
+                if (!seasons.length) return null;
+                return [{
+                  id: 'mymoviz-online',
+                  label: 'پخش آنلاین',
+                  language: 'دوبله فارسی / زبان اصلی',
+                  resolution: '1080p / 720p',
+                  isDefault: true,
+                  seasons: seasons
+                }];
               }
 
               // ── FilmRooz pattern ──────────────────────────────────────────
@@ -533,7 +625,8 @@ class EpisodeLoader(
               }
 
               try {
-                var editions = filmRoozEditions() ||
+                var editions = await myMovizEditions() ||
+                               filmRoozEditions() ||
                                parsiflixDomEditions();
                 AminEpisode.result(editions ? JSON.stringify({ editions: editions }) : null);
               } catch(e) {

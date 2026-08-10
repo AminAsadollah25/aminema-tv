@@ -118,6 +118,15 @@ class MainActivity : ComponentActivity() {
                                     delay(250L)
                                 }
                                 catalogSync.refresh(HomeViewModel.INTERNATIONAL_SERVICE_ID)
+                                while (
+                                    HomeViewModel.INTERNATIONAL_SERVICE_ID in
+                                    app.catalogRepository.refreshingServices.value
+                                ) {
+                                    delay(250L)
+                                }
+                                // MyMoviz catalogue/search is public. Login remains deferred
+                                // until the separately-tested watch flow is implemented.
+                                catalogSync.refresh(HomeViewModel.MYMOVIZ_SERVICE_ID)
                             }
                         }
 

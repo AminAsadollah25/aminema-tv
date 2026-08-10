@@ -668,3 +668,57 @@ ParsiFlix از JSON کاتالوگ خودش و FilmRooz از ساختار واق
 `CinematicHoverPreview` پس از 520ms Hover/Focus ظاهر می‌شود، Layout را جابه‌جا
 نمی‌کند، Episode plot یا Video autoplay ندارد و روی Focus move هیچ Request
 شبکه‌ای نمی‌زند.
+
+## ۱۰. Candidate محلی 0.17.0 — MyMoviz و کتابخانه چندمنبعی
+
+این Candidate هنوز Commit/Tag/Release نشده است. سرویس `mymoviz` بدون حذف یا
+بازنویسی تنظیمات نصب‌های قبلی به `services.json` و `ServicesRepository` اضافه
+شده، اما Shortcut بزرگ مستقلی روی Home ندارد. Catalog، Search و Detail عمومی
+بدون Login کار می‌کنند؛ Login فقط در مرحله بعد، برای Probe واقعی Watch/Playback
+لازم خواهد شد.
+
+### ۱۰.۱ داده و ادغام
+
+- `CatalogBackgroundSync` فهرست عمومی فیلم و سریال MyMoviz را مستقل از دو
+  Provider دیگر به‌روزرسانی می‌کند؛ خطای یک سرویس Refresh سرویس‌های دیگر را
+  متوقف نمی‌کند.
+- `CanonicalLibrary.mergeLatest()` خروجی FilmRooz و MyMoviz را بدون تکرار و با
+  توزیع متعادل در ریل‌های «فیلم خارجی» و «سریال خارجی» ادغام می‌کند.
+- تطبیق ترجیحاً با IMDb ID و سپس Canonical title/year انجام می‌شود.
+- برای فیلم: نسخه دوبله، سپس بهترین کیفیت حداکثر 1080p، سپس FilmRooz در شرایط
+  برابر اولویت دارد. برای سریال، تگ دوبله سطح عنوان به‌عنوان شاهد دوبله بودن
+  آخرین قسمت استفاده نمی‌شود؛ Resolver قسمت‌به‌قسمت به 0.17.2 موکول شده است.
+- Search سه‌منبعی است و ورودی‌هایی مثل `spiderman` را برای MyMoviz به فرم
+  `spider man` نیز امتحان می‌کند.
+
+### ۱۰.۲ مرز ایمن Playback
+
+برای MyMoviz هنوز Native Episode Navigator یا Direct Play فعال نشده است.
+کلیک سریال فقط Detail عمومی Provider را باز می‌کند. هیچ Selector یا Stream URL
+حدس زده نمی‌شود. مرحله 0.17.1 باید فقط بعد از Login مالک، ساختار Watch و رفتار
+Cookie/Session را در همان پروفایل موجود مشاهده کند؛ App data، Cookie و Login
+نباید پاک شوند.
+
+### ۱۰.۳ اصلاحات UI و پذیرش
+
+- `CatalogCard` روی خود پوستر تگ سبز «دوبله فارسی» و تگ آبی «زیرنویس فارسی»
+  را نشان می‌دهد. هر دو می‌توانند هم‌زمان ظاهر شوند و در نبود داده معتبر چیزی
+  حدس زده نمی‌شود. برای سریال، این فعلاً Availability سطح عنوان است، نه آخرین
+  قسمت دوبله‌شده.
+- Crash بالقوه `FocusRequester is not initialized` و جهش Hero پس از رسیدن
+  Metadata async اصلاح شده‌اند.
+- پذیرش Emulator: ParsiFlix=10، FilmRooz=23 و MyMoviz=24 عنوان بدون خطای Sync؛
+  جستجوی `spiderman` و بازشدن Detail عمومی MyMoviz موفق؛ Badgeها بدون هم‌پوشانی
+  روی پوستر تأیید شدند.
+- Gate نهایی `testDebugUnitTest + lintDebug + assembleDebug` موفق است: 30 تست،
+  صفر Failure و Android Lint صفر Issue. نصب با `adb install -r` انجام شد و
+  Login/Cookieهای موجود حفظ شدند.
+
+### ۱۰.۴ ثبات پنل Canonical هنگام تغییر منبع
+
+Spider-Man 3 نشان داد MyMoviz امتیاز کاربران 9.2 و IMDb صریح 6.2 دارد؛ Parser
+قبلی schema aggregateRating را اشتباهاً IMDb می‌نامید. اکنون لینک صریح IMDb
+اولویت دارد. `withPlaybackSource()` نیز انتخاب Provider را فقط به Routing پخش
+محدود می‌کند و Metadata/Artwork/Badgeهای پنل را ثابت نگه می‌دارد. Regex دوبله
+FilmRooz عبارت‌های `دوبله`، `دو زبانه/دوزبانه` و `صوت فارسی` را پوشش می‌دهد.
+Gate پس از این اصلاح 30 تست، صفر Failure و Lint صفر Issue است.

@@ -451,6 +451,17 @@ class SpotlightMetadataLoader(
                 var match = clean(values.filter(Boolean).join(' ')).match(/tt\d{5,12}/i);
                 return match ? match[0].toLowerCase() : '';
               }
+              function explicitImdbRating() {
+                var anchors = Array.from(
+                  document.querySelectorAll('a[href*="imdb.com/title/tt"]')
+                );
+                for (var i = 0; i < anchors.length; i += 1) {
+                  var text = clean(anchors[i].textContent);
+                  var match = text.match(/IMDb\s*([۰-۹0-9]+(?:[.٫][۰-۹0-9]+)?)/i);
+                  if (match) return match[1];
+                }
+                return '';
+              }
 
               // Give client-rendered title pages one final short hydration window.
               await new Promise(function(resolve) { setTimeout(resolve, 650); });
@@ -466,7 +477,9 @@ class SpotlightMetadataLoader(
                 )) || schema.datePublished || schema.dateCreated || titleText
               );
               var yearMatch = publishedText.match(/(?:13|14|19|20)[0-9۰-۹]{2}/);
-              var rating = clean(
+              // MyMoviz exposes its own user score next to a separate IMDb score. Its schema
+              // aggregateRating is the former, so an explicit IMDb-labelled link must win.
+              var rating = explicitImdbRating() || clean(
                 (provider && (
                   provider.imdbRating || provider.rating || provider.rate
                 )) || (schema.aggregateRating && schema.aggregateRating.ratingValue)
@@ -573,7 +586,9 @@ class SpotlightMetadataLoader(
                 runtime: runtime.slice(0, 24),
                 country: country.slice(0, 60),
                 language: language.slice(0, 60),
-                hasPersianDub: /دوبله\s*(?:اختصاصی\s*)?فارسی/i.test(audioText),
+                hasPersianDub:
+                  /دوبله(?:\s*(?:اختصاصی\s*)?فارسی)?|دو\s*زبانه|دوزبانه|صوت\s*فارسی/i
+                    .test(audioText.replace(/بدون\s*(?:دوبله|صوت\s*فارسی)/gi, '')),
                 hasPersianSubtitle:
                   /زیرنویس\s*(?:چسبیده\s*)?فارسی|با\s*زیرنویس\s*فارسی/i.test(audioText),
                 directors: directors.slice(0, 3),

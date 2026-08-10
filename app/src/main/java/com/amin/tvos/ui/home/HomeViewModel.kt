@@ -311,6 +311,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         /** Internal adapter ids; Home only ever shows «ایرانی» and «خارجی». */
         const val IRANIAN_SERVICE_ID = "parsiflix"
         const val INTERNATIONAL_SERVICE_ID = "filmrooz"
+        const val MYMOVIZ_SERVICE_ID = "mymoviz"
     }
 
     private fun isServiceRoot(current: String, home: String): Boolean =
