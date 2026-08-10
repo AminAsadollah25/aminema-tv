@@ -23,7 +23,9 @@ import com.amin.tvos.data.model.SeriesEdition
 import com.amin.tvos.data.model.Season
 import com.amin.tvos.data.model.SpotlightAction
 import com.amin.tvos.data.model.SpotlightItem
+import com.amin.tvos.data.model.SourceVariant
 import com.amin.tvos.data.model.TitleMetadata
+import com.amin.tvos.data.model.defaultSpotlightAction
 import com.amin.tvos.data.model.isDecisionComplete
 import com.amin.tvos.data.model.withMetadata
 import com.amin.tvos.ui.theme.AminTvTheme
@@ -79,6 +81,7 @@ class SpotlightActivity : ComponentActivity() {
                     showEpisodeNavigator = showEpisodeNavigator,
                     onBack = { finish() },
                     onToggleFavorite = { spotlightViewModel.toggleFavorite(item) },
+                    onSourceSelected = ::selectSource,
                     onAction = { action ->
                         when (action) {
                             SpotlightAction.WATCH, SpotlightAction.CONTINUE -> {
@@ -126,9 +129,10 @@ class SpotlightActivity : ComponentActivity() {
             app.servicesRepository.load()
             app.catalogRepository.load()
             val cached = app.catalogRepository.metadataFor(initial.contentUrl)
-            if (cached != null) {
+            if (cached != null && isCurrentSource(initial)) {
                 spotlightItem = (spotlightItem ?: initial).withMetadata(cached)
             }
+            if (!isCurrentSource(initial)) return@launch
             // A fresh synopsis-only record is not complete. Retry the provider's ordinary
             // title metadata so newly supported credits can appear without clearing app data.
             val cacheIsFresh = cached?.isDecisionComplete() == true &&
@@ -149,6 +153,7 @@ class SpotlightActivity : ComponentActivity() {
                 onLoaded = { metadata ->
                     lifecycleScope.launch {
                         app.catalogRepository.saveTitleMetadata(metadata)
+                        if (!isCurrentSource(initial)) return@launch
                         val merged = app.catalogRepository.metadataFor(initial.contentUrl)
                             ?: metadata
                         spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
@@ -161,6 +166,7 @@ class SpotlightActivity : ComponentActivity() {
                 },
                 onFailed = {
                     lifecycleScope.launch {
+                        if (!isCurrentSource(initial)) return@launch
                         completeFromPublicSource(initial, cached)
                     }
                 }
@@ -173,13 +179,14 @@ class SpotlightActivity : ComponentActivity() {
         initial: SpotlightItem,
         known: TitleMetadata?
     ) {
-        if (isFinishing || isDestroyed) return
+        if (isFinishing || isDestroyed || !isCurrentSource(initial)) return
         if (!PublicTitleMetadataEnricher.shouldLookup(known, initial)) {
             metadataLoading = false
             return
         }
         metadataLoading = true
         val external = publicMetadataEnricher.lookup(initial, known)
+        if (!isCurrentSource(initial)) return
         val attempted = external ?: TitleMetadata(
             contentUrl = initial.contentUrl,
             externalLookupAt = System.currentTimeMillis(),
@@ -210,15 +217,83 @@ class SpotlightActivity : ComponentActivity() {
                 lifecycleScope.launch {
                     val app = application as AminTvApp
                     app.catalogRepository.saveTitleMetadata(metadata)
+                    if (!isCurrentSource(initial)) return@launch
                     app.catalogRepository.metadataFor(initial.contentUrl)?.let { merged ->
                         spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
                     }
                     metadataLoading = false
                 }
             },
-            onFailed = { metadataLoading = false }
+            onFailed = {
+                if (isCurrentSource(initial)) metadataLoading = false
+            }
         ).also { it.load(initial) }
     }
+
+    /**
+     * Switches only the ordinary provider title page behind the canonical card.
+     * Existing cookies, provider sessions and persistent library files are untouched.
+     */
+    private fun selectSource(source: SourceVariant) {
+        val current = spotlightItem ?: return
+        if (ContentMetadataPolicy.isSameTopLevelPage(current.contentUrl, source.item.contentUrl)) {
+            return
+        }
+
+        metadataLoader?.destroy()
+        metadataLoader = null
+        sheydaMetadataLoader?.destroy()
+        sheydaMetadataLoader = null
+        episodeLoader?.destroy()
+        episodeLoader = null
+        metadataLoading = false
+        availableEditions = emptyList()
+        episodeNavLoading = false
+        episodeNavFailed = false
+
+        val variant = source.item
+        val switched = current.copy(
+            title = variant.title,
+            kind = variant.kind,
+            contentUrl = variant.contentUrl,
+            posterUrl = variant.posterUrl.ifBlank { current.posterUrl },
+            backdropUrl = variant.backdropUrl.ifBlank { current.backdropUrl },
+            serviceId = source.providerId,
+            serviceName = source.providerName,
+            summary = variant.summary.ifBlank { current.summary },
+            year = variant.year.ifBlank { current.year },
+            genres = variant.genres.ifEmpty { current.genres },
+            rating = variant.rating.ifBlank { current.rating },
+            runtime = variant.runtime.ifBlank { current.runtime },
+            episodeLabel = variant.episodeLabel,
+            country = variant.country.ifBlank { current.country },
+            language = variant.language.ifBlank { current.language },
+            hasPersianDub = variant.hasPersianDub,
+            hasPersianSubtitle = variant.hasPersianSubtitle,
+            directors = variant.directors.ifEmpty { current.directors },
+            cast = variant.cast.ifEmpty { current.cast },
+            // Switching provider deliberately drops provider-specific resume state. Series must
+            // still return to the native navigator instead of opening the provider page directly.
+            primaryAction = variant.kind.defaultSpotlightAction(),
+            browserStartUrl = variant.contentUrl,
+            resumePosition = 0L,
+            duration = 0L,
+            editionTimelineId = "",
+            autoResume = false,
+            directPlay = variant.kind == CatalogKind.MOVIE,
+            resumeStrategy = null,
+            actionButtonTextPatterns = emptyList()
+        )
+        spotlightItem = switched
+        showEpisodeNavigator = switched.kind == CatalogKind.SERIES
+        if (showEpisodeNavigator) startEpisodeLoad(switched)
+        enrichMetadata(switched)
+    }
+
+    private fun isCurrentSource(candidate: SpotlightItem): Boolean =
+        spotlightItem?.let { current ->
+            ContentMetadataPolicy.isSameTopLevelPage(current.contentUrl, candidate.contentUrl)
+        } == true
 
     private fun needsIranianCompletion(
         initial: SpotlightItem,

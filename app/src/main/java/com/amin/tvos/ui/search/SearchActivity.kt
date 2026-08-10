@@ -31,8 +31,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,11 +49,14 @@ import androidx.lifecycle.lifecycleScope
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.MainActivity
 import com.amin.tvos.browser.SiteSearchEngine
-import com.amin.tvos.data.model.CatalogItem
+import com.amin.tvos.data.CanonicalLibrary
+import com.amin.tvos.data.ContentMetadataPolicy
+import com.amin.tvos.data.model.CanonicalMedia
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.SearchGroup
 import com.amin.tvos.data.model.SearchResult
 import com.amin.tvos.data.model.SpotlightItem
+import com.amin.tvos.data.model.defaultSpotlightAction
 import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.RailNavigationControls
 import com.amin.tvos.ui.components.CatalogCard
@@ -67,8 +72,8 @@ import kotlinx.coroutines.launch
 /**
  * Unified search across the user's own services.
  *
- * One query is sent to each website's own search and the hits are shown in two groups.
- * Clicking a hit opens only that title's normal detail page.
+ * One query is sent to each website's own search, then verified duplicates are collapsed into
+ * one canonical card. Every provider page remains available from Spotlight as a source choice.
  */
 class SearchActivity : ComponentActivity() {
 
@@ -124,7 +129,10 @@ class SearchActivity : ComponentActivity() {
             override fun handleOnBackPressed() = returnToHome()
         })
 
-        lifecycleScope.launch { app.servicesRepository.load() }
+        lifecycleScope.launch {
+            app.servicesRepository.load()
+            app.catalogRepository.load()
+        }
     }
 
     private fun returnToHome() {
@@ -162,20 +170,40 @@ class SearchActivity : ComponentActivity() {
         }
     }
 
-    private fun open(result: SearchResult) {
+    private fun open(media: CanonicalMedia) {
+        val representative = media.representative
+        val selectedVariant = media.variants.firstOrNull {
+            ContentMetadataPolicy.isSameTopLevelPage(
+                it.item.contentUrl,
+                representative.contentUrl
+            )
+        } ?: media.variants.first()
         startActivity(
             SpotlightActivity.intent(
                 context = this,
                 item = SpotlightItem(
-                    title = result.title,
-                    kind = result.kind,
-                    contentUrl = result.contentUrl,
-                    posterUrl = result.posterUrl,
-                    serviceId = result.serviceId,
-                    serviceName = app.servicesRepository.findById(result.serviceId)?.name.orEmpty(),
-                    // Search currently returns compact cards; the title page deliberately
-                    // leaves unknown metadata empty rather than inventing it.
-                    directPlay = result.kind == CatalogKind.MOVIE
+                    title = representative.title,
+                    kind = representative.kind,
+                    contentUrl = selectedVariant.item.contentUrl,
+                    posterUrl = representative.posterUrl,
+                    backdropUrl = representative.backdropUrl,
+                    serviceId = selectedVariant.providerId,
+                    serviceName = selectedVariant.providerName,
+                    summary = representative.summary,
+                    year = representative.year,
+                    genres = representative.genres,
+                    rating = representative.rating,
+                    runtime = representative.runtime,
+                    country = representative.country,
+                    language = representative.language,
+                    hasPersianDub = representative.hasPersianDub,
+                    hasPersianSubtitle = representative.hasPersianSubtitle,
+                    directors = representative.directors,
+                    cast = representative.cast,
+                    primaryAction = representative.kind.defaultSpotlightAction(),
+                    directPlay = representative.kind == CatalogKind.MOVIE,
+                    canonicalId = media.canonicalId,
+                    sourceVariants = media.variants
                 )
             )
         )
@@ -183,6 +211,21 @@ class SearchActivity : ComponentActivity() {
 
     @Composable
     private fun SearchScreen() {
+        val titleMetadata by app.catalogRepository.titleMetadata.collectAsState()
+        val providerNames = remember(iranian, international) {
+            listOf(IRANIAN_ID, INTERNATIONAL_ID).associateWith { id ->
+                app.servicesRepository.findById(id)?.let { service ->
+                    service.sourceLabel.ifBlank { service.name }
+                }.orEmpty()
+            }
+        }
+        val canonicalResults = remember(iranian, international, titleMetadata, providerNames) {
+            CanonicalLibrary.fromSearchResults(
+                results = iranian.results + international.results,
+                metadataByUrl = titleMetadata,
+                providerNames = providerNames
+            )
+        }
         Column(
             Modifier
                 .fillMaxSize()
@@ -249,9 +292,7 @@ class SearchActivity : ComponentActivity() {
 
             if (iranian.searched || international.searched) {
                 Spacer(Modifier.height(24.dp))
-                ResultGroup("نتایج ایرانی", iranian)
-                Spacer(Modifier.height(20.dp))
-                ResultGroup("نتایج خارجی", international)
+                UnifiedResultGroup(canonicalResults)
             }
             Spacer(Modifier.height(32.dp))
         }
@@ -296,16 +337,24 @@ class SearchActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ResultGroup(title: String, group: SearchGroup) {
+    private fun UnifiedResultGroup(results: List<CanonicalMedia>) {
         val scrollState = rememberScrollState()
+        val loading = iranian.loading || international.loading
+        val errors = listOf(iranian, international)
+            .filter { it.error.isNotBlank() }
+            .joinToString("  •  ") { group ->
+                val name = app.servicesRepository.findById(group.serviceId)?.name
+                    .orEmpty().ifBlank { group.serviceId }
+                "$name: ${group.error}"
+            }
         Column(Modifier.fillMaxWidth()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(title, style = MaterialTheme.typography.headlineMedium)
+                Text("نتایج همه آرشیوها", style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.width(16.dp))
-                if (group.loading) {
+                if (loading) {
                     CircularProgressIndicator(
                         color = CinemaRed,
                         modifier = Modifier.height(22.dp).width(22.dp)
@@ -315,27 +364,23 @@ class SearchActivity : ComponentActivity() {
                 RailNavigationControls(scrollState)
             }
             Spacer(Modifier.height(10.dp))
-            when {
-                group.error.isNotBlank() -> Text(
-                    "این بخش جستجو نشد: ${group.error}",
+            if (errors.isNotBlank()) {
+                Text(
+                    "یک آرشیو پاسخ نداد؛ نتیجه‌های آرشیو دیگر حفظ شد.  $errors",
                     color = CinemaRed,
                     style = MaterialTheme.typography.bodyMedium
                 )
-
-                group.loading -> Text(
+                Spacer(Modifier.height(8.dp))
+            }
+            when {
+                loading && results.isEmpty() -> Text(
                     "در حال جستجو…",
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyLarge
                 )
 
-                !group.searched -> Text(
-                    "هنوز جستجویی انجام نشده است.",
-                    color = TextSecondary,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                group.results.isEmpty() -> Text(
-                    emptyMessage(group.serviceId),
+                results.isEmpty() -> Text(
+                    "چیزی در آرشیوهای پاسخ‌داده پیدا نشد.",
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -344,33 +389,21 @@ class SearchActivity : ComponentActivity() {
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     modifier = Modifier.horizontalScroll(scrollState)
                 ) {
-                    group.results.forEach { result ->
+                    results.forEach { media ->
                         CatalogCard(
-                            item = CatalogItem(
-                                title = result.title,
-                                kind = result.kind,
-                                contentUrl = result.contentUrl,
-                                posterUrl = result.posterUrl,
-                                serviceId = result.serviceId
-                            ),
-                            onClick = { open(result) }
+                            item = media.representative,
+                            footerLabel = if (media.variants.size > 1) {
+                                "${media.variants.size} منبع در دسترس"
+                            } else {
+                                media.variants.firstOrNull()?.providerName.orEmpty()
+                            },
+                            onClick = { open(media) }
                         )
                     }
                 }
             }
         }
     }
-
-    /**
-     * The Iranian service only indexes Persian titles, so a Latin query legitimately finds
-     * nothing there. Say so instead of leaving an unexplained empty row.
-     */
-    private fun emptyMessage(serviceId: String): String =
-        if (serviceId == IRANIAN_ID && query.trim().any { it in 'a'..'z' || it in 'A'..'Z' }) {
-            "چیزی پیدا نشد. این بخش فقط با نام فارسی جستجو می‌کند."
-        } else {
-            "چیزی پیدا نشد."
-        }
 
     private fun hideSystemUi() {
         WindowInsetsControllerCompat(window, window.decorView).apply {

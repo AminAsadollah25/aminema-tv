@@ -193,6 +193,14 @@ Android TV به 1080p H.264/AAC نرمال شده است. مرجع این Releas
 - انتقال Continue/Favorite/Recent از Provider card به CanonicalMedia.
 - بخش کم‌حجم `نسخه‌های موجود` در Spotlight بدون شلوغ‌کردن Home.
 
+**وضعیت Candidate در ۱۰ اوت ۲۰۲۶:** هسته تطبیق، Search یکپارچه و Source
+selector ساخته و با Query واقعی `لیسانسه ها` پذیرفته شد. دو صفحه عادی
+ParsiFlix/FilmRooz به یک کارت با دو منبع تبدیل شدند. Match تنها با IMDb،
+عنوان+سال+نوع، یا عنوان+نوع همراه با هم‌پوشانی معتبر عوامل انجام می‌شود؛ عنوان
+تنها Merge نمی‌شود. اتصال Continue/Favorite/Recent به Canonical ID هنوز عمداً
+انجام نشده، چون نیازمند Migration سازگار با داده‌های موجود است و باید در یک
+گام جدا و برگشت‌پذیر پیش از Release نهایی شود.
+
 ### 0.16.7 — My Series
 
 - Follow دستی سریال و Baseline `تا فصل/قسمت دیدم` به‌عنوان مسیر سریع.

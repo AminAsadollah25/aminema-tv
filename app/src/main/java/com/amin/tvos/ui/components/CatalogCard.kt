@@ -102,7 +102,9 @@ private fun posterRequest(
 fun CatalogCard(
     item: CatalogItem,
     onClick: () -> Unit,
-    onFocused: (Boolean) -> Unit = {}
+    onFocused: (Boolean) -> Unit = {},
+    /** Optional canonical/source status; ordinary rails keep their existing episode footer. */
+    footerLabel: String? = null
 ) {
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     FocusableCard(
@@ -171,9 +173,12 @@ fun CatalogCard(
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (item.kind == CatalogKind.SERIES && item.episodeLabel.isNotBlank()) {
+                val footer = footerLabel ?: item.episodeLabel.takeIf {
+                    item.kind == CatalogKind.SERIES && it.isNotBlank()
+                }.orEmpty()
+                if (footer.isNotBlank()) {
                     Text(
-                        item.episodeLabel,
+                        footer,
                         style = MaterialTheme.typography.labelLarge,
                         color = if (focused) Color.White.copy(alpha = 0.8f) else TextSecondary,
                         maxLines = 1,

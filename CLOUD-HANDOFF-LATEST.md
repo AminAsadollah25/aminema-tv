@@ -441,6 +441,35 @@ Hydrateشدن Detail DOM تغییر می‌داد و callback دیررس عنو�
 12. **0.18.1 — Reliability, Keyboard & Provider Health**
 13. **0.19.0 — Geek Mode**
 
+## Candidate محلی 0.16.6 — Canonical Library و Dedupe، 2026-08-10
+
+- وضعیت Git: روی `main` و پایه `3d7d171`؛ تغییرات هنوز Commit/Push/Tag/Release
+  نشده‌اند.
+- نسخه Candidate: `0.16.6 / versionCode 39`.
+- مدل تازه `CanonicalMedia + SourceVariant` هویت محتوا را از صفحه Provider جدا
+  می‌کند؛ این مدل فعلاً In-memory است و هیچ Migration روی `library.json`،
+  Continue، Favorite، Recent، Cookie یا Session انجام نمی‌دهد.
+- Search اکنون خروجی دو Provider فعلی را در یک Rail ترکیب می‌کند. Duplicate
+  فقط با IMDb، یا Title+Year+Kind، یا Title+Kind همراه Credit overlap معتبر
+  Merge می‌شود؛ Title-only جدا می‌ماند.
+- نمونه پذیرش واقعی «لیسانسه‌ها»:
+  - ParsiFlix: `https://app.parsiflix.com/medias/series/338`
+  - FilmRooz: `https://sean.robert-redford.net/post/series/56308/لیسانسه-ها`
+  - نتیجه مطلوب: یک کارت، دو Source و انتخاب منبع در Spotlight.
+- `sourceLabel` به تنظیم سرویس اضافه شد تا UI نام Provider یعنی ParsiFlix و
+  FilmRooz را نشان دهد، نه نام دسته فیلم ایرانی/خارجی.
+- انتخاب منبع Metadata/Episode Loader قبلی را Destroy و Loader منبع جدید را با
+  Guard URL اجرا می‌کند. Source chooser خارج Hero است تا Layout ثابت 1080p
+  نریزد و دکمه انتخاب قسمت به Index واقعی Episode Navigator اسکرول می‌کند.
+- QA امولاتور یک خطای Action را پیدا و بست: Series در Search Canonical و پس از
+  Source switch اکنون از قرارداد مشترک `defaultSpotlightAction()` استفاده
+  می‌کند و همیشه به Navigator بومی می‌رود، نه Provider page. این مسیر با Mouse
+  و D-pad/OK روی FilmRooz و ParsiFlix تأیید شد.
+- آداپتر سایت سوم، Dub-first resolver و Canonical bridge برای
+  Continue/Favorite/Recent هنوز Pending هستند. قبل از Provider سوم باید QA
+  نهایی 0.16.6 و سپس Coverage Lab انجام شود.
+- جزئیات: `DEVELOPMENT_LOG_0.16.6.md` و `TEST_REPORT_0.16.6.md`.
+
 ### Series Lab تکمیل تصویری — FilmRooz، ۲ اوت ۲۰۲۶
 
 مرجع کامل `SERIES_LAB_FILMROOZ.md` است. فصل از Dropdown انتخاب می‌شود؛ سپس

@@ -78,9 +78,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.AwardEvent
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.PersonRef
+import com.amin.tvos.data.model.SourceVariant
 import com.amin.tvos.data.model.SpotlightAction
 import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.ui.components.FocusableCard
@@ -106,6 +108,7 @@ fun SpotlightScreen(
     episodeNavigatorContent: @Composable () -> Unit = {},
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onSourceSelected: (SourceVariant) -> Unit = {},
     onAction: (SpotlightAction) -> Unit
 ) {
     val primaryFocus = remember { FocusRequester() }
@@ -405,7 +408,12 @@ fun SpotlightScreen(
                                                         onClick = {
                                                             if (item.primaryAction == SpotlightAction.SELECT_EPISODE) {
                                                                 coroutineScope.launch {
-                                                                    listState.animateScrollToItem(1)
+                                                                    // Multi-source titles insert the source chooser between
+                                                                    // the Hero and episodes; keep the primary action pointed
+                                                                    // at the actual episode navigator in both layouts.
+                                                                    val episodeItemIndex =
+                                                                        if (item.sourceVariants.size > 1) 2 else 1
+                                                                    listState.animateScrollToItem(episodeItemIndex)
                                                                 }
                                                             } else {
                                                                 onAction(item.primaryAction)
@@ -433,7 +441,21 @@ fun SpotlightScreen(
                     }
                 }
 
-                // ITEM 1: Episodes (If Series)
+                // Source choice stays outside the fixed Hero skeleton so adding providers can
+                // never push the title/summary/actions below the visible 1080p decision area.
+                if (item.sourceVariants.size > 1) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 72.dp, vertical = 18.dp)
+                        ) {
+                            SourceSelector(item, onSourceSelected)
+                        }
+                    }
+                }
+
+                // Episodes (If Series)
                 if (item.kind == CatalogKind.SERIES && showEpisodeNavigator) {
                     item {
                         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 72.dp, vertical = 24.dp)) {
@@ -749,6 +771,55 @@ private fun SpotlightButton(
                     color = if (primary && focused) Color.White else if (primary) Color.White else if (focused) Ink else Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+/** Compact TV-first source choice; it appears only for a verified canonical duplicate. */
+@Composable
+private fun SourceSelector(
+    item: SpotlightItem,
+    onSourceSelected: (SourceVariant) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .background(Ink.copy(alpha = 0.86f), RoundedCornerShape(24.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            "منبع تماشا",
+            color = TextPrimary,
+            style = MaterialTheme.typography.labelLarge
+        )
+        item.sourceVariants.forEach { source ->
+            val selected = ContentMetadataPolicy.isSameTopLevelPage(
+                item.contentUrl,
+                source.item.contentUrl
+            )
+            FocusableCard(
+                shape = RoundedCornerShape(50),
+                focusedScale = 1.04f,
+                onClick = { onSourceSelected(source) }
+            ) { focused ->
+                Text(
+                    source.providerName.ifBlank { source.providerId },
+                    color = if (selected || focused) Color.White else TextSecondary,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    modifier = Modifier
+                        .background(
+                            when {
+                                focused -> CinemaRed
+                                selected -> CinemaRed.copy(alpha = 0.62f)
+                                else -> Color.White.copy(alpha = 0.08f)
+                            },
+                            RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 9.dp)
                 )
             }
         }

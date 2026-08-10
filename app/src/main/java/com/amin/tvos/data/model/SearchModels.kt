@@ -6,7 +6,9 @@ data class SearchResult(
     val kind: CatalogKind,
     val contentUrl: String,
     val posterUrl: String,
-    val serviceId: String
+    val serviceId: String,
+    /** Release year only when the provider's visible result already includes it. */
+    val year: String = ""
 )
 
 /** Per-service state of a single query, so one slow or broken site never blocks the other. */

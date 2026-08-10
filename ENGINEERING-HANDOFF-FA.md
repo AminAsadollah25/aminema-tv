@@ -529,6 +529,34 @@ Probe کند چیزی که یک بار قطعی کشف شده.
   و Fatal Exception صفر است.
 - جزئیات: `DEVELOPMENT_LOG_0.16.5.1.md` و `TEST_REPORT_0.16.5.1.md`.
 
+## ۱۴. پایه کتابخانه Canonical و Dedupe — Candidate 0.16.6
+
+- `CanonicalMedia` یک عنوان مستقل از Provider است و `SourceVariant` فقط صفحه
+  عادی همان عنوان در یک Provider را نگه می‌دارد. هیچ Media URL، Token، Cookie،
+  Manifest یا DRM وارد مدل نمی‌شود.
+- Match محافظه‌کارانه است: Same URL، IMDb+Kind، Title+Year+Kind، یا
+  Title+Kind+Credit overlap. عنوان تنها Merge نمی‌شود؛ IMDb/سال متعارض و صفحات
+  متفاوت یک Provider جدا می‌مانند.
+- Grouping در برابر Bridge متناقض IMDb محافظت شده است تا یک رکورد بدون ID دو
+  عنوان دارای ID متفاوت را Transitively یکی نکند.
+- `CanonicalText` حروف ی/ک عربی، نیم‌فاصله، خط تیره، فاصله و ارقام فارسی/عربی
+  را نرمال می‌کند. سال فقط وقتی از عنوان حذف می‌شود که داخل پرانتز/براکت باشد.
+- Search یک Rail Canonical دارد؛ Failure یک Provider نتیجه Provider دیگر را
+  حفظ می‌کند. کارت چندمنبعی تعداد Source را نشان می‌دهد.
+- `SpotlightItem` با Defaultهای سازگار `canonicalId/sourceVariants` را حمل
+  می‌کند. Source switching فقط Loaderهای موقت را عوض می‌کند و Persistent state
+  را تغییر نمی‌دهد.
+- `CatalogKind.defaultSpotlightAction()` قرارداد مشترک Action بدون Resume است:
+  Series همیشه `SELECT_EPISODE` و Movie همیشه `WATCH`. هر دو مسیر ساخت Search
+  و Source switch باید از همین قرارداد استفاده کنند؛ در غیر این صورت Label
+  انتخاب قسمت می‌تواند با Action بازکردن Browser ناسازگار شود.
+- `sourceLabel` برای نام نمایشی Provider از نام دسته جداست و روی تنظیمات ذخیره
+  قدیمی فقط به‌صورت Fill-empty Merge می‌شود.
+- نمونه واقعی Regression، «لیسانسه‌ها» در ParsiFlix و FilmRooz است. تست‌های
+  Matcher و Serialization اضافه شده‌اند.
+- Migration کتابخانه/Continue/Favorite/Recent و Provider سوم آگاهانه Pending
+  هستند؛ مرحله بعد باید Bridge برگشت‌پذیر و Coverage Lab باشد.
+
 ---
 
 ## ۹. قابلیت اطمینان Playback و Continue بین‌دستگاهی (0.12.1)

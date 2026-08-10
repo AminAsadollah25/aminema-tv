@@ -67,6 +67,7 @@ class ServicesRepository(private val context: Context) {
                 } else {
                     current.subtitle
                 },
+                sourceLabel = current.sourceLabel.ifBlank { defaults.sourceLabel },
                 artwork = if (
                     current.artwork.isBlank() ||
                     current.artwork in setOf("service_parsiflix", "service_filmrooz")

@@ -17,6 +17,10 @@ enum class SpotlightAction {
     LATEST_EPISODE
 }
 
+/** Safe default when a title has no provider-specific resume action. */
+fun CatalogKind.defaultSpotlightAction(): SpotlightAction =
+    if (this == CatalogKind.SERIES) SpotlightAction.SELECT_EPISODE else SpotlightAction.WATCH
+
 /**
  * Everything the native title page needs.
  *
@@ -57,7 +61,15 @@ data class SpotlightItem(
     val autoResume: Boolean = false,
     val directPlay: Boolean = false,
     val resumeStrategy: ResumeStrategy? = null,
-    val actionButtonTextPatterns: List<String> = emptyList()
+    val actionButtonTextPatterns: List<String> = emptyList(),
+    /** Stable in-memory identity shared by provider variants; empty for legacy entries. */
+    val canonicalId: String = "",
+    /**
+     * Alternative normal provider title pages for the same verified movie/series.
+     * Defaults preserve every old Intent/cache payload and no persistent library migration is
+     * performed in v0.16.6.
+     */
+    val sourceVariants: List<SourceVariant> = emptyList()
 )
 
 /** Cached visible metadata read from one normal provider detail page. */

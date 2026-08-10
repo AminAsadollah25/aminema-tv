@@ -98,6 +98,8 @@ data class StreamingService(
     val icon: String = "",
     /** Optional short label displayed on the cinematic home card. */
     val subtitle: String = "",
+    /** Explicit provider label used only when a canonical title offers multiple sources. */
+    val sourceLabel: String = "",
     /** Drawable resource name or remote image URL for the service card. */
     val artwork: String = "",
     val color: String = "#E50914",

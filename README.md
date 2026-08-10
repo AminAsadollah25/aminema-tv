@@ -263,7 +263,9 @@ task root.
 
 1. **0.16.6 — Canonical Library & Dedupe:** one card per title across
    ParsiFlix/FilmRooz, source variants, and normalized searches such as
-   `spiderman` / `spider man` / `spider-man`.
+   `spiderman` / `spider man` / `spider-man`. The local candidate now merges
+   verified Search duplicates and exposes provider choices in Spotlight; the
+   non-destructive Continue/Favorite/Recent bridge remains before release.
 2. **0.16.7 — My Series:** followed shows, manual watched baseline, new episode
    and new season indicators, then provider-account progress where reliable.
 3. **0.16.8 — Cinematic Promo Feed:** provider carousels join the new Hero;

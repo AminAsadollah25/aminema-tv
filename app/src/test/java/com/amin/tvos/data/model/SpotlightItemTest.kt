@@ -99,4 +99,35 @@ class SpotlightItemTest {
         assertTrue(restored.hasPersianDub)
         assertTrue(restored.hasPersianSubtitle)
     }
+
+    @Test
+    fun canonicalPayloadPreservesProviderChoices() {
+        val sourceItem = CatalogItem(
+            title = "لیسانسه ها",
+            kind = CatalogKind.SERIES,
+            contentUrl = "https://example.test/series/licensees",
+            serviceId = "example"
+        )
+        val original = SpotlightItem(
+            title = sourceItem.title,
+            kind = sourceItem.kind,
+            contentUrl = sourceItem.contentUrl,
+            serviceId = sourceItem.serviceId,
+            canonicalId = "aminema:test",
+            sourceVariants = listOf(
+                SourceVariant("example", "سرویس نمونه", sourceItem, "tt9191330")
+            )
+        )
+
+        val restored = json.decodeFromString<SpotlightItem>(json.encodeToString(original))
+
+        assertEquals("aminema:test", restored.canonicalId)
+        assertEquals(sourceItem.contentUrl, restored.sourceVariants.single().item.contentUrl)
+    }
+
+    @Test
+    fun seriesWithoutResumeUsesEpisodeNavigatorAsItsSafeAction() {
+        assertEquals(SpotlightAction.SELECT_EPISODE, CatalogKind.SERIES.defaultSpotlightAction())
+        assertEquals(SpotlightAction.WATCH, CatalogKind.MOVIE.defaultSpotlightAction())
+    }
 }
