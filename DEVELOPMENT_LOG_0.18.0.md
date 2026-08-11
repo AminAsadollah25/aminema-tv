@@ -76,5 +76,9 @@ authentication tokens, or DRM data.
 ## Release state
 
 - Release approval was given after emulator QA.
-- The commit, tag, GitHub Release URL, APK asset and SHA-256 asset are recorded
-  in the final release handoff after publication.
+- Release commit: `85ae6501c1cdc232b860db1fbee803c1a878c791`
+- Tag: `v0.18.0`
+- GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.0`
+- APK asset: `Aminema-0.18.0-debug.apk`
+- SHA-256 asset: `Aminema-0.18.0-debug.apk.sha256`
+- APK SHA-256: `91a0a663c54086b4e45cd2895c5dfacc4311cea7642839b47ab9509f0b64eaa8`

@@ -23,10 +23,12 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - محصول: **Aminema**
 - نسخه کد: **0.18.0 / versionCode 42 — Live TV Playback Polish**
 - وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
-- Commit کد Release و هدف Tag: پس از انتشار در همین سند ثبت می‌شود.
+- Commit کد Release و هدف Tag: `85ae6501c1cdc232b860db1fbee803c1a878c791`
 - Tag: `v0.18.0`
 - GitHub Latest: **v0.18.0 همراه APK و SHA-256**
-- Release منتشرشده فعلی: پس از راستی‌آزمایی GitHub در همین سند ثبت می‌شود.
+- Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.0`
+- APK: `Aminema-0.18.0-debug.apk`؛ SHA-256:
+  `91a0a663c54086b4e45cd2895c5dfacc4311cea7642839b47ab9509f0b64eaa8`
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
