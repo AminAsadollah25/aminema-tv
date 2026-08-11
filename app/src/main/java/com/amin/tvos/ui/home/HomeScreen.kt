@@ -315,22 +315,6 @@ fun HomeScreen(
     val secondaryQuickLinks = remember(services) {
         services.flatMap { service -> service.quickLinks.filterNot { it.prominent }.map { service to it } }
     }
-    val liveSources = remember(services) {
-        services.flatMap { service ->
-            service.liveTv?.channels.orEmpty().map { channel -> service to channel }
-        }
-    }
-
-    fun openLiveChannel(service: StreamingService, channel: LiveChannel) =
-        context.startActivity(
-            BrowserActivity.intent(
-                context = context,
-                serviceId = service.id,
-                url = service.url.trimEnd('/') + channel.path,
-                contentTitle = channel.name,
-                liveTheaterMode = true
-            )
-        )
 
     fun spotlightForPlayback(
         session: PlaybackSession,
@@ -645,6 +629,28 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("جستجو", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                FocusableCard(
+                    shape = RoundedCornerShape(50),
+                    onClick = {
+                        context.startActivity(
+                            android.content.Intent(context, com.amin.tvos.ui.livetv.LiveTvActivity::class.java)
+                        )
+                    }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.SmartDisplay,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("پخش زنده", style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 Spacer(Modifier.width(10.dp))
@@ -986,14 +992,7 @@ fun HomeScreen(
             }
         }
 
-        // ---------- Native Live TV — one click opens the selected channel fullscreen ----------
-        LiveTvSectionRow(
-            sources = liveSources,
-            onOpen = { service, channel -> openLiveChannel(service, channel) }
-        )
-        if (liveSources.isNotEmpty()) {
-            Spacer(Modifier.height(16.dp))
-        }
+        // ---------- Native Live TV removed (Moved to dedicated tab) ----------
 
         // ---------- Secondary quick links (e.g. YouTube tab) — lower priority, lower down ----------
         if (secondaryQuickLinks.isNotEmpty()) {

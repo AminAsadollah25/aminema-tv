@@ -58,6 +58,8 @@
             android:exported="false"
             android:screenOrientation="landscape" />
 
+        <activity android:name=".ui.livetv.LiveTvActivity" />
+
         <activity
             android:name=".ui.spotlight.SpotlightActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"

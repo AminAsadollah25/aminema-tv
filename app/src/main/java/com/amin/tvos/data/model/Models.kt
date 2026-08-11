@@ -72,12 +72,19 @@ data class QuickLink(
  * discovered from the service's own visible channel cards.
  */
 @Serializable
+data class LivePlayerOption(
+    val id: String,
+    val label: String
+)
+
+@Serializable
 data class LiveChannel(
     val id: String,
     val name: String,
     /** Appended to the owning service's `url`. */
     val path: String,
-    val logoUrl: String
+    val logoUrl: String,
+    val category: String = ""
 )
 
 /**
@@ -86,7 +93,9 @@ data class LiveChannel(
  */
 @Serializable
 data class LiveTvConfig(
-    val channels: List<LiveChannel> = emptyList()
+    val channels: List<LiveChannel> = emptyList(),
+    /** Visible player choices offered by the provider's normal channel page. */
+    val playerOptions: List<LivePlayerOption> = emptyList()
 )
 
 /** A streaming service configured via services.json — never hardcoded. */

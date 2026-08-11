@@ -7,11 +7,13 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-نسخه جاری `0.16.5.1 / code 38 — Cinematic Intro Refresh` است. ویدئوی جدید
+نسخه جاری `0.18.0 / code 42 — Live TV Playback Polish` است. پخش زندهٔ
+ParsaTV با Embed رسمی، پخش خودکار، تشخیص واقعی پخش و حالت تمام‌صفحهٔ پلیرهای
+مختلف تثبیت شده است. ویدئوی جدید
 ۸.۲ ثانیه‌ای با Mascot جای Intro قبلی را گرفته و برای Fast Start و سازگاری
 Android TV به 1080p H.264/AAC نرمال شده است. مرجع این Release فایل‌های
-`DEVELOPMENT_LOG_0.16.5.1.md`، `TEST_REPORT_0.16.5.1.md` و
-`RELEASE_NOTES_0.16.5.1.md` است و همراه APK/SHA-256 در GitHub منتشر شد.
+`DEVELOPMENT_LOG_0.18.0.md` و `RELEASE_NOTES_0.18.0.md` است و همراه APK/SHA-256
+در GitHub منتشر شد.
 
 ## 0.14.5 — Cinema Polish — انجام و منتشر شد
 
@@ -274,8 +276,9 @@ ParsiFlix/FilmRooz به یک کارت با دو منبع تبدیل شدند. Ma
 - اعلان کم‌تعداد هنگام پیدا شدن اثر جدید در Catalog Sync.
 - `افزودن فیلم‌های این شخص به Home` به‌صورت Rail قابل‌حذف.
 
-### 0.18.0 — Cinema Library & Personal Home
+### 0.18.0 — Cinema Library & Personal Home — در 0.18.0 منتشر شد؛ موارد زیر صف بعدی‌اند
 
+- Live TV ParsaTV، Embed، پخش خودکار و Theater Mode در این نسخه تکمیل شد.
 - View All برای Latest/Continue/Recent/Favorites/My Series.
 - Grid و Filter فیلم/سریال، دوبله، ژانر، سال و وضعیت پخش.
 - مقصد `برای من`: Continue، قسمت بعدی، سریال‌های من، لیست من و اعلان‌ها.

@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Base64
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -25,6 +26,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebResourceResponse
 import android.widget.FrameLayout
 import android.widget.Toast
 import android.view.inputmethod.InputMethodManager
@@ -83,6 +85,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
         private const val EXTRA_DIRECT_PLAY = "direct_play"
         private const val EXTRA_LIVE_THEATER_MODE = "live_theater_mode"
+        private const val EXTRA_LIVE_PLAYER_ID = "live_player_id"
         private const val EXTRA_SM_SEASON = "sm_season"
         private const val EXTRA_SM_QUALITY = "sm_quality"
         private const val EXTRA_SM_EPISODE = "sm_episode"
@@ -103,6 +106,7 @@ class BrowserActivity : ComponentActivity() {
             resumeStrategyOverride: ResumeStrategy? = null,
             actionButtonTextPatterns: List<String> = emptyList(),
             liveTheaterMode: Boolean = false,
+            livePlayerId: String? = null,
             smSeason: String? = null,
             smQuality: String? = null,
             smEpisode: String? = null
@@ -117,6 +121,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
+                .putExtra(EXTRA_LIVE_PLAYER_ID, livePlayerId)
                 .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
                 .putExtra(EXTRA_SM_SEASON, smSeason)
                 .putExtra(EXTRA_SM_QUALITY, smQuality)
@@ -134,6 +139,7 @@ class BrowserActivity : ComponentActivity() {
     private lateinit var mouseKeyboard: MouseKeyboardOverlay
     private lateinit var quickMenu: QuickMenuOverlay
     lateinit var playbackSessionController: PlaybackSessionController
+    private var livePrePlayOverlay: LivePrePlayOverlay? = null
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -159,13 +165,23 @@ class BrowserActivity : ComponentActivity() {
     private var lastContinueAttemptAt = 0L
     private var liveTheaterModeRequested = false
     private var liveTheaterModeApplied = false
+    private var liveProviderPageUrl = ""
+    private var liveOptimizedPageUrl = ""
+    private var liveEmbedFallbackUsed = false
+    private var livePlaybackConfirmed = false
+    private var requestedLivePlayerId: String? = null
+    private var livePlayerCandidates: List<String> = emptyList()
+    private var livePlayerAttemptIndex = -1
+    private var livePlayerAttemptToken = 0L
+    private var liveFallbackScheduledToken = Long.MIN_VALUE
+    private var livePlayerSelectionApplied = false
     private var requestedResumeStrategy: ResumeStrategy? = null
     private var requestedActionButtonPatterns: List<String> = emptyList()
     private var smSeason: String? = null
     private var smQuality: String? = null
     private var smEpisode: String? = null
     private var episodeSelectionDispatched = false
-    
+
     private var keyboardOpenSuppressedUntil = 0L
     private var keyboardSessionSequence = 0L
     private var keyboardSession = BrowserKeyboardSession()
@@ -217,6 +233,7 @@ class BrowserActivity : ComponentActivity() {
 
         serviceId = intent.getStringExtra(EXTRA_SERVICE_ID).orEmpty()
         val startUrl = intent.getStringExtra(EXTRA_URL).orEmpty()
+        liveProviderPageUrl = startUrl
         requestedResumePosition = intent.getLongExtra(EXTRA_RESUME_POSITION, 0L)
         lastContentUrl = intent.getStringExtra(EXTRA_CONTENT_URL).orEmpty()
         lastContentTitle = intent.getStringExtra(EXTRA_CONTENT_TITLE).orEmpty()
@@ -225,6 +242,7 @@ class BrowserActivity : ComponentActivity() {
         directPlayRequested = intent.getBooleanExtra(EXTRA_DIRECT_PLAY, false)
         liveTheaterModeRequested =
             intent.getBooleanExtra(EXTRA_LIVE_THEATER_MODE, false)
+        requestedLivePlayerId = intent.getStringExtra(EXTRA_LIVE_PLAYER_ID)
         requestedResumeStrategy = intent.getStringExtra(EXTRA_RESUME_STRATEGY)
             ?.let { name ->
                 ResumeStrategy.entries.firstOrNull { it.name == name }
@@ -332,12 +350,27 @@ class BrowserActivity : ComponentActivity() {
             }
             serviceName = serviceProfile?.name ?: serviceId
             serviceAdapter = serviceProfile?.let(::ServiceAdapter)
+            if (liveTheaterModeRequested) {
+                // The provider's JW/HLS/HTML5 list describes player engines for a custom
+                // URL form, not real mirrors for every channel. Start with the provider's
+                // own default and only add server controls that are actually present.
+                livePlayerCandidates = listOfNotNull(
+                    requestedLivePlayerId?.trim()?.takeIf { it.isNotBlank() }
+                )
+                livePlayerAttemptIndex = if (livePlayerCandidates.isEmpty()) -1 else 0
+                liveOptimizedPageUrl = optimizedLivePageUrl(startUrl)
+            }
             loginZoomPercent = serviceProfile?.loginZoomPercent
                 ?: app.settingsRepository.browserZoom.first()
             applyUserAgent()
 
             if (savedInstanceState == null) {
-                webView.loadUrl(startUrl)
+                val targetUrl = liveOptimizedPageUrl.ifBlank { startUrl }
+                if (targetUrl != startUrl && startUrl.isNotBlank()) {
+                    webView.loadUrl(targetUrl, mapOf("Referer" to startUrl))
+                } else {
+                    webView.loadUrl(targetUrl)
+                }
             } else {
                 webView.restoreState(savedInstanceState)
             }
@@ -372,17 +405,68 @@ class BrowserActivity : ComponentActivity() {
         webView.addJavascriptInterface(KeyboardBridge(), "AminKeyboard")
         webView.addJavascriptInterface(PlaybackBridge(), "AminPlayback")
         webView.addJavascriptInterface(PosterBridge(), "AminPoster")
+        webView.addJavascriptInterface(LiveOverlayBridge(), "AminLiveOverlay")
+
+        if (liveTheaterModeRequested) {
+            livePrePlayOverlay = LivePrePlayOverlay(
+                context = this,
+                channelName = lastContentTitle.ifBlank { serviceName.ifBlank { "پخش زنده" } },
+                posterUrl = lastContentPoster,
+                onStartRequested = ::startLiveFromOverlay
+            ).also { overlay ->
+                root.addView(
+                    overlay,
+                    FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+                overlay.showConnecting()
+            }
+        }
 
         webView.webViewClient = object : WebViewClient() {
+
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                if (serviceId != "parsatv") {
+                    return super.shouldInterceptRequest(view, request)
+                }
+                val url = request.url.toString().lowercase()
+                val adDomains = listOf(
+                    "yektanet.com", "mediaad.org", "sabavision.com", "clickyab.com",
+                    "tapsell.ir", "tavoos.net", "poshtiban.com", "doubleclick.net",
+                    "googlesyndication.com", "google-analytics.com", "ad.ir", "adro.ir",
+                    "anjammidam.com/banner", "kaprila.com", "magnetadservices.com",
+                    "mgid.com", "popads.net", "exoclick.com", "propellerads.com"
+                )
+                val isAd = adDomains.any { url.contains(it) }
+
+                if (isAd) {
+                    return WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(ByteArray(0)))
+                }
+
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
                 errorView.visibility = View.GONE
+                if (liveTheaterModeRequested) {
+                    livePlaybackConfirmed = false
+                    liveTheaterModeApplied = false
+                    livePlayerSelectionApplied = false
+                    livePlayerAttemptToken += 1
+                    liveFallbackScheduledToken = Long.MIN_VALUE
+                    livePrePlayOverlay?.showConnecting()
+                }
                 observePlaybackNavigation(url)
                 currentTitle = ""
                 currentPoster = ""
                 currentResumePosition = 0L
                 currentDuration = 0L
                 currentIsPlayable = false
-                liveTheaterModeApplied = false
                 if (serviceAdapter?.isPlaybackUrl(url) != true) {
                     playbackAutoStartConfirmed = false
                     playbackAutoStartScheduledUrl = ""
@@ -393,10 +477,26 @@ class BrowserActivity : ComponentActivity() {
                         "if(document.body)document.body.style.zoom='100%';",
                     null
                 )
+                if (liveTheaterModeRequested) {
+                    // Do not wait for ads, analytics or Cloudflare's trailing iframe to
+                    // finish. The first-party embed mounts its player much earlier.
+                    view.postDelayed({ scheduleLiveTheaterMode(view) }, 180L)
+                    view.postDelayed({ startLiveAutomatically(view) }, 220L)
+                }
+            }
+
+            override fun onPageCommitVisible(view: WebView, url: String) {
+                super.onPageCommitVisible(view, url)
+                if (liveTheaterModeRequested) {
+                    scheduleLiveTheaterMode(view)
+                    startLiveAutomatically(view)
+                }
             }
 
             override fun onPageFinished(view: WebView, url: String) {
                 CookieManager.getInstance().flush()
+                installParsaTvAdGuard(view)
+                validateOptimizedLivePage(view, url)
                 observePlaybackNavigation(url)
                 if (isLoginRoute(url)) cancelPlaybackAutomation()
                 installAdaptivePageScale(view)
@@ -408,7 +508,10 @@ class BrowserActivity : ComponentActivity() {
                 scheduleSiteContinue(view)
                 scheduleDirectPlay(view)
                 scheduleLiveTheaterMode(view)
-                
+                startLiveAutomatically(view)
+                scheduleLivePlayerSelection(view)
+                scheduleLivePlayerFallback(view, livePlayerAttemptToken)
+
                 if (
                     smSeason != null &&
                     smEpisode != null &&
@@ -427,6 +530,7 @@ class BrowserActivity : ComponentActivity() {
                 view.postDelayed({ installAdaptivePageScale(view) }, 350)
                 view.postDelayed({ installMouseKeyboardBridge(view) }, 400)
                 view.postDelayed({ installPlaybackBridge(view) }, 450)
+                view.postDelayed({ installParsaTvAdGuard(view) }, 500)
                 url?.let { changedUrl ->
                     observePlaybackNavigation(changedUrl)
                     view.postDelayed(
@@ -438,6 +542,12 @@ class BrowserActivity : ComponentActivity() {
                     view.postDelayed({ scheduleSiteContinue(view) }, 1_200)
                     view.postDelayed({ scheduleDirectPlay(view) }, 1_200)
                     view.postDelayed({ scheduleLiveTheaterMode(view) }, 1_250)
+                    view.postDelayed({ startLiveAutomatically(view) }, 1_275)
+                    view.postDelayed({ scheduleLivePlayerSelection(view) }, 1_350)
+                    view.postDelayed(
+                        { scheduleLivePlayerFallback(view, livePlayerAttemptToken) },
+                        1_400
+                    )
                 }
             }
 
@@ -447,6 +557,12 @@ class BrowserActivity : ComponentActivity() {
                 error: WebResourceError
             ) {
                 if (request.isForMainFrame) {
+                    if (
+                        liveTheaterModeRequested &&
+                        request.url.toString().contains("/embed.php", ignoreCase = true) &&
+                        fallbackToProviderLivePage(view)
+                    ) return
+                    livePrePlayOverlay?.visibility = View.GONE
                     cancelPlaybackAutomation()
                     lastFailedUrl = request.url.toString()
                     errorView.show(
@@ -461,13 +577,37 @@ class BrowserActivity : ComponentActivity() {
                 handler: SslErrorHandler,
                 error: SslError
             ) {
-                handler.cancel()
-                cancelPlaybackAutomation()
-                lastFailedUrl = webView.url
-                errorView.show(
-                    title = "Secure connection failed",
-                    message = "This site's security certificate could not be verified."
+                val errorHost = runCatching { Uri.parse(error.url).host }.getOrNull()
+                val pageHost = runCatching { Uri.parse(view.url.orEmpty()).host }.getOrNull()
+                val sameHost = !errorHost.isNullOrBlank() && errorHost == pageHost
+                Log.w(
+                    "AminemaSSL",
+                    "SSL error code=${error.primaryError} host=$errorHost pageHost=$pageHost url=${error.url}"
                 )
+
+                // ParsaTV's visible JWPlayer page loads its player modules from this
+                // separate CDN. The Android TV WebView rejects that CDN certificate even
+                // though the normal provider page is reachable. Allow only this exact,
+                // non-page subresource host so JWPlayer can initialize; never accept a
+                // certificate error for the provider page or an arbitrary host.
+                val trustedParsaPlayerCdn =
+                    serviceId == "parsatv" &&
+                        errorHost == "ssl.p.jwpcdn.com" &&
+                        !sameHost
+                if (trustedParsaPlayerCdn) {
+                    Log.w("AminemaSSL", "Allowing known ParsaTV JWPlayer CDN subresource")
+                    handler.proceed()
+                    return
+                }
+                handler.cancel()
+                if (sameHost) {
+                    cancelPlaybackAutomation()
+                    lastFailedUrl = error.url
+                    errorView.show(
+                        title = "Secure connection failed",
+                        message = "گواهی امنیتی این سایت قابل تأیید نیست. تاریخ دستگاه و نسخه WebView را بررسی کنید."
+                    )
+                }
             }
         }
 
@@ -515,6 +655,73 @@ class BrowserActivity : ComponentActivity() {
             ?.let { value -> UserAgentMode.entries.firstOrNull { it.name == value } }
             ?: app.settingsRepository.userAgentMode.first()
         configuredMode.value?.let { webView.settings.userAgentString = it }
+    }
+
+    /**
+     * ParsaTV publishes a first-party embed page for every channel. It contains only the
+     * provider player, starts it automatically and avoids loading the full directory page.
+     * The original channel page is passed as Referer; no media URL is read or constructed.
+     */
+    private fun optimizedLivePageUrl(pageUrl: String): String {
+        if (serviceId != "parsatv" || !liveTheaterModeRequested) return pageUrl
+        val marker = "/name="
+        val channelName = pageUrl.substringAfter(marker, "")
+            .substringBefore('?')
+            .substringBefore('#')
+            .trim('/')
+        if (channelName.isBlank()) return pageUrl
+        val source = Uri.parse(pageUrl)
+        return Uri.Builder()
+            .scheme(source.scheme ?: "https")
+            .authority(source.authority ?: "www.parsatv.com")
+            .appendPath("embed.php")
+            .appendQueryParameter("name", channelName)
+            .appendQueryParameter("auto", "true")
+            .build()
+            .toString()
+    }
+
+    private fun validateOptimizedLivePage(view: WebView, pageUrl: String) {
+        if (
+            !liveTheaterModeRequested ||
+            !pageUrl.contains("/embed.php", ignoreCase = true) ||
+            liveEmbedFallbackUsed
+        ) return
+        view.postDelayed({
+            view.evaluateJavascript(
+                """
+                    (function() {
+                      var hasPlayer = !!document.querySelector(
+                        '#jwliveplayer,.jwplayer,video,iframe[allowfullscreen]'
+                      );
+                      var text = (document.body && document.body.innerText || '').toLowerCase();
+                      var rejected = text.indexOf('please visit the page from its main source') >= 0 ||
+                                     text.indexOf('error 404') >= 0;
+                      return JSON.stringify({hasPlayer:hasPlayer,rejected:rejected});
+                    })();
+                """.trimIndent()
+            ) { raw ->
+                val result = decodeJavascriptJson(raw)
+                if (
+                    result?.optBoolean("rejected") == true ||
+                    result?.optBoolean("hasPlayer") == false
+                ) {
+                    fallbackToProviderLivePage(view)
+                }
+            }
+        }, 650L)
+    }
+
+    private fun fallbackToProviderLivePage(view: WebView): Boolean {
+        if (
+            liveEmbedFallbackUsed ||
+            liveProviderPageUrl.isBlank() ||
+            liveProviderPageUrl == view.url
+        ) return false
+        liveEmbedFallbackUsed = true
+        livePrePlayOverlay?.showConnecting()
+        view.loadUrl(liveProviderPageUrl)
+        return true
     }
 
     /**
@@ -869,6 +1076,20 @@ class BrowserActivity : ComponentActivity() {
                     lastContentPoster = localUrl
                     currentPoster = localUrl
                 }
+            }
+        }
+    }
+
+    private inner class LiveOverlayBridge {
+        @JavascriptInterface
+        fun playing() {
+            runOnUiThread {
+                if (livePlaybackConfirmed) return@runOnUiThread
+                livePlaybackConfirmed = true
+                livePlayerAttemptToken += 1
+                liveFallbackScheduledToken = Long.MIN_VALUE
+                livePrePlayOverlay?.hideWhenPlaying()
+                hideSystemUi()
             }
         }
     }
@@ -1372,47 +1593,535 @@ class BrowserActivity : ComponentActivity() {
     }
 
     private fun scheduleLiveTheaterMode(view: WebView = webView) {
-        if (!liveTheaterModeRequested || liveTheaterModeApplied) return
-        // The live page is a React SPA and its HTML5 video may mount after the route.
-        // Retrying is cheaper and more reliable than guessing a site-specific DOM wrapper.
-        listOf(250L, 900L, 1_800L, 3_200L, 5_500L).forEach { delay ->
+        if (!liveTheaterModeRequested) return
+        // Players and same-origin iframe wrappers can mount after onPageFinished. The
+        // coordinator is idempotent, so these retries also cover a provider-side swap.
+        listOf(0L, 250L, 700L, 1_400L, 2_600L, 4_200L).forEach { delay ->
             view.postDelayed({ applyLiveTheaterMode(view) }, delay)
         }
     }
 
     /**
-     * Turns the service's own visible HTML5 video into a one-tap TV experience.
-     *
-     * Browser fullscreen APIs normally require a second user gesture. A fixed, viewport-size
-     * video avoids that restriction while keeping playback, authentication and the stream
-     * entirely under the website's control. No media URL, token, DRM value or request is read.
+     * ParsaTV can mount an MGID overlay after the initial page load. Keep this
+     * provider-scoped and target only identifiable ad containers; generic
+     * banners or player controls must never be hidden globally.
      */
-    private fun applyLiveTheaterMode(view: WebView = webView) {
-        if (!liveTheaterModeRequested || liveTheaterModeApplied) return
+    private fun installParsaTvAdGuard(view: WebView = webView) {
+        if (serviceId != "parsatv") return
         val script = """
             (function() {
-              var video = document.querySelector('video');
-              if (!video) return 'no-video';
-
-              document.documentElement.style.setProperty('overflow', 'hidden', 'important');
-              if (document.body) {
-                document.body.style.setProperty('overflow', 'hidden', 'important');
-                document.body.style.setProperty('background', '#000', 'important');
+              if (window.__aminParsaAdGuardInstalled) return;
+              window.__aminParsaAdGuardInstalled = true;
+              var selectors = [
+                '[id*="mgid" i]', '[class*="mgid" i]', '[data-mgid]',
+                '[id*="mgbox" i]', '[class*="mgbox" i]',
+                'iframe[src*="mgid" i]', '[data-ad-provider*="mgid" i]'
+              ];
+              var css = selectors.join(',') +
+                '{display:none !important;visibility:hidden !important;opacity:0 !important;pointer-events:none !important;}';
+              function hideKnownAds() {
+                try {
+                  document.querySelectorAll(selectors.join(',')).forEach(function(el) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                    el.style.setProperty('pointer-events', 'none', 'important');
+                  });
+                } catch (_) {}
               }
-              [
-                ['position', 'fixed'], ['inset', '0'], ['width', '100vw'],
-                ['height', '100vh'], ['max-width', 'none'], ['max-height', 'none'],
-                ['margin', '0'], ['padding', '0'], ['z-index', '2147483647'],
-                ['object-fit', 'contain'], ['background', '#000']
-              ].forEach(function(pair) {
-                video.style.setProperty(pair[0], pair[1], 'important');
-              });
-              video.controls = true;
               try {
-                var play = video.play();
-                if (play && play.catch) play.catch(function() {});
+                var style = document.createElement('style');
+                style.setAttribute('data-aminema-parsa-ad-guard', 'true');
+                style.textContent = css;
+                (document.head || document.documentElement).appendChild(style);
               } catch (_) {}
-              return 'applied';
+              hideKnownAds();
+              var timer = 0;
+              new MutationObserver(function() {
+                clearTimeout(timer);
+                timer = setTimeout(hideKnownAds, 80);
+              }).observe(document.documentElement, {childList:true, subtree:true, attributes:true});
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script, null)
+    }
+
+    /** Clicks only the provider's visible player choice, never a media URL. */
+    private fun scheduleLivePlayerSelection(view: WebView = webView) {
+        if (
+            !liveTheaterModeRequested ||
+            livePlaybackConfirmed ||
+            livePlayerSelectionApplied
+        ) return
+        val playerId = requestedLivePlayerId?.trim().orEmpty()
+        if (playerId.isBlank()) return
+        tryApplyLivePlayer(view, livePlayerAttemptToken, retry = 0)
+    }
+
+    /**
+     * Some channel pages call their controls Server 1/Server 2 rather than using the
+     * provider names in services.json. Discover only visible, human-facing player controls
+     * and add their normalized labels to the fallback queue. No href, src or media value is
+     * read or retained.
+     */
+    private fun discoverLivePlayerControls(view: WebView, afterDiscovery: () -> Unit) {
+        if (!liveTheaterModeRequested) return
+        val script = """
+            (function() {
+              function visible(el) {
+                if (!el) return false;
+                var r = el.getBoundingClientRect();
+                var s = getComputedStyle(el);
+                return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
+              }
+              function digits(value) {
+                return String(value || '').replace(/[۰-۹]/g, function(ch) {
+                  return '۰۱۲۳۴۵۶۷۸۹'.indexOf(ch);
+                });
+              }
+              function normalize(value) {
+                return digits(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
+              }
+              function documents() {
+                var result = [];
+                var seen = [];
+                function visit(win, depth) {
+                  if (!win || depth > 3) return;
+                  var doc;
+                  try { doc = win.document; void doc.body; } catch (_) { return; }
+                  if (!doc || seen.indexOf(doc) >= 0) return;
+                  seen.push(doc);
+                  result.push(doc);
+                  Array.from(doc.querySelectorAll('iframe')).forEach(function(frame) {
+                    try { visit(frame.contentWindow, depth + 1); } catch (_) {}
+                  });
+                }
+                visit(window, 0);
+                return result;
+              }
+              var result = [];
+              var seen = {};
+              // JW/HLS/HTML5 options in ParsaTV's custom-URL form are engines, not
+              // mirrors for this channel. Only accept controls explicitly labelled
+              // as a server/source/backup.
+              var re = /(server|سرور|source|منبع|mirror|backup|جایگزین)/i;
+              documents().forEach(function(doc) {
+                Array.from(doc.querySelectorAll(
+                  'a,button,[role="button"],input[type="button"],input[type="submit"],' +
+                  '[class*="server" i],[class*="source" i],[class*="mirror" i]'
+                )).forEach(function(el) {
+                  if (!visible(el)) return;
+                  var label = (el.innerText || el.textContent || el.value || '').trim();
+                  if (!label || label.length > 28 || !re.test(label)) return;
+                  var id = normalize(label);
+                  if (!id || seen[id]) return;
+                  seen[id] = true;
+                  result.push({id:id,label:label});
+                });
+              });
+              return JSON.stringify(result);
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { raw ->
+            runCatching {
+                val decoded = JSONTokener(raw.orEmpty()).nextValue() as? String
+                val parsed = decoded?.let(::JSONArray)
+                val discovered = buildList {
+                    for (index in 0 until (parsed?.length() ?: 0)) {
+                        val item = parsed?.optJSONObject(index) ?: continue
+                        item.optString("id").trim().takeIf { it.isNotBlank() }?.let(::add)
+                    }
+                }
+                if (discovered.isNotEmpty()) {
+                    livePlayerCandidates = (livePlayerCandidates + discovered).distinct()
+                }
+            }
+            afterDiscovery()
+        }
+    }
+
+    private fun applyLivePlayerSelection(
+        view: WebView,
+        playerId: String,
+        onApplied: (Boolean) -> Unit
+    ) {
+        if (livePlaybackConfirmed || playerId.isBlank()) {
+            onApplied(false)
+            return
+        }
+        val wanted = JSONObject.quote(playerId.lowercase())
+        val script = """
+            (function() {
+              var wanted = $wanted;
+              function digits(value) {
+                return String(value || '').replace(/[۰-۹]/g, function(ch) {
+                  return '۰۱۲۳۴۵۶۷۸۹'.indexOf(ch);
+                });
+              }
+              function normalize(value) {
+                return digits(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
+              }
+              function visible(el) {
+                if (!el) return false;
+                var r = el.getBoundingClientRect();
+                var s = getComputedStyle(el);
+                return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
+              }
+              function text(el) {
+                return (el.innerText || el.textContent || '').trim().toLowerCase();
+              }
+              function findIn(win, depth) {
+                if (!win || depth > 3) return null;
+                var doc;
+                try { doc = win.document; void doc.body; } catch (_) { return null; }
+                var candidates = Array.from(doc.querySelectorAll(
+                  'a,button,[role="button"],input[type="button"],input[type="submit"],' +
+                  '[class*="server" i],[class*="source" i],[class*="mirror" i],span,div'
+                ));
+                var target = candidates.find(function(el) {
+                  if (!visible(el)) return false;
+                  var value = text(el);
+                  var data = String(
+                    el.getAttribute('data-player') ||
+                    el.getAttribute('data-server') ||
+                    el.getAttribute('data-source') || ''
+                  ).toLowerCase();
+                  return normalize(value) === normalize(wanted) ||
+                         normalize(data) === normalize(wanted);
+                });
+                if (target) return target.closest(
+                  'a,button,[role="button"],input[type="button"],input[type="submit"]'
+                ) || target;
+                var frames = Array.from(doc.querySelectorAll('iframe'));
+                for (var i = 0; i < frames.length; i++) {
+                  var nested = null;
+                  try { nested = findIn(frames[i].contentWindow, depth + 1); } catch (_) {}
+                  if (nested) return nested;
+                }
+                return null;
+              }
+              var clickable = findIn(window, 0);
+              if (!clickable) return 'not-found';
+              clickable.click();
+              return 'clicked';
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            onApplied(result?.contains("clicked") == true)
+        }
+    }
+
+    private fun scheduleLivePlayerFallback(view: WebView, token: Long) {
+        if (
+            !liveTheaterModeRequested ||
+            livePlaybackConfirmed ||
+            liveFallbackScheduledToken == token
+        ) return
+        liveFallbackScheduledToken = token
+        view.postDelayed({
+            if (token != livePlayerAttemptToken || isFinishing || isDestroyed) return@postDelayed
+            probeLivePlayer(view) { ready ->
+                if (!ready) {
+                    discoverLivePlayerControls(view) {
+                        advanceToNextLivePlayer(view, token)
+                    }
+                }
+            }
+        }, 4_200L)
+    }
+
+    /** Success means a real playing state, never merely a mounted video or iframe. */
+    private fun probeLivePlayer(view: WebView, onResult: (Boolean) -> Unit) {
+        val script = """
+            (function() {
+              return !!(
+                window.__aminLiveCoordinator &&
+                window.__aminLiveCoordinator.probe &&
+                window.__aminLiveCoordinator.probe()
+              );
+            })();
+        """.trimIndent()
+        view.evaluateJavascript(script) { result ->
+            onResult(result?.trim() == "true")
+        }
+    }
+
+    private fun advanceToNextLivePlayer(view: WebView, token: Long) {
+        if (
+            token != livePlayerAttemptToken ||
+            livePlaybackConfirmed ||
+            isFinishing ||
+            isDestroyed
+        ) return
+        val nextIndex = livePlayerAttemptIndex + 1
+        if (nextIndex >= livePlayerCandidates.size) {
+            // Keep the optimized player in place and offer one explicit retry. This is
+            // preferable to looping over unrelated JW/HLS engine names or opening a
+            // second, ad-heavy provider page.
+            livePrePlayOverlay?.showManualStart()
+            return
+        }
+        livePlayerAttemptIndex = nextIndex
+        requestedLivePlayerId = livePlayerCandidates[nextIndex]
+        livePlayerSelectionApplied = false
+        livePlayerAttemptToken += 1
+        liveFallbackScheduledToken = Long.MIN_VALUE
+        val nextToken = livePlayerAttemptToken
+        Toast.makeText(
+            this,
+            "سرور بعدی در حال امتحان است: ${requestedLivePlayerId}",
+            Toast.LENGTH_SHORT
+        ).show()
+        tryApplyLivePlayer(view, nextToken, retry = 0)
+    }
+
+    private fun tryApplyLivePlayer(view: WebView, token: Long, retry: Int) {
+        if (
+            token != livePlayerAttemptToken ||
+            livePlaybackConfirmed ||
+            isFinishing ||
+            isDestroyed
+        ) return
+        applyLivePlayerSelection(view, requestedLivePlayerId.orEmpty()) { applied ->
+            if (token != livePlayerAttemptToken || livePlaybackConfirmed) return@applyLivePlayerSelection
+            if (applied) {
+                livePlayerSelectionApplied = true
+                liveTheaterModeApplied = false
+                scheduleLiveTheaterMode(view)
+                startLiveAutomatically(view)
+                scheduleLivePlayerFallback(view, token)
+            } else if (retry < 2) {
+                view.postDelayed(
+                    { tryApplyLivePlayer(view, token, retry + 1) },
+                    if (retry == 0) 350L else 800L
+                )
+            } else {
+                advanceToNextLivePlayer(view, token)
+            }
+        }
+    }
+
+    /**
+     * Installs one provider-scoped coordinator for native-feeling live playback.
+     *
+     * It handles HTML5, JWPlayer and same-origin iframe wrappers, expands the actual player
+     * surface to the TV viewport and reports success only after a real playing state. It does
+     * not read, extract, store or log a media URL, token or DRM value.
+     */
+    private fun applyLiveTheaterMode(view: WebView = webView) {
+        if (!liveTheaterModeRequested) return
+        val script = """
+            (function() {
+              if (!window.__aminLiveCoordinator) {
+                var armedVideos = new WeakSet();
+                var lastTimes = new WeakMap();
+                var confirmed = false;
+                var mutationPasses = 0;
+
+                function visible(el) {
+                  if (!el) return false;
+                  var r = el.getBoundingClientRect();
+                  var s = getComputedStyle(el);
+                  return r.width > 80 && r.height > 45 &&
+                         s.display !== 'none' && s.visibility !== 'hidden' &&
+                         Number(s.opacity || 1) > 0.02;
+                }
+
+                function looksLikeAd(el) {
+                  var value = (
+                    (el.id || '') + ' ' +
+                    (typeof el.className === 'string' ? el.className : '') + ' ' +
+                    (el.getAttribute('data-ad-provider') || '')
+                  ).toLowerCase();
+                  return /mgid|mgbox|advert|ad-container|ad_wrapper/.test(value);
+                }
+
+                function reachableWindows() {
+                  var result = [];
+                  var seen = [];
+                  function visit(win, depth) {
+                    if (!win || depth > 3) return;
+                    var doc;
+                    try { doc = win.document; void doc.body; } catch (_) { return; }
+                    if (!doc || seen.indexOf(doc) >= 0) return;
+                    seen.push(doc);
+                    result.push(win);
+                    Array.from(doc.querySelectorAll('iframe')).forEach(function(frame) {
+                      try { visit(frame.contentWindow, depth + 1); } catch (_) {}
+                    });
+                  }
+                  visit(window, 0);
+                  return result;
+                }
+
+                function notifyPlaying() {
+                  if (confirmed) return;
+                  confirmed = true;
+                  try {
+                    var host = window.top || window;
+                    if (host.AminLiveOverlay && host.AminLiveOverlay.playing) {
+                      host.AminLiveOverlay.playing();
+                    }
+                  } catch (_) {}
+                }
+
+                function armVideo(video) {
+                  if (!video || armedVideos.has(video)) return;
+                  armedVideos.add(video);
+                  video.addEventListener('playing', notifyPlaying);
+                  video.addEventListener('timeupdate', function() {
+                    if (!video.paused && video.readyState >= 2) notifyPlaying();
+                  });
+                }
+
+                function jwPlayers(win) {
+                  var result = [];
+                  function add(player) {
+                    if (player && result.indexOf(player) < 0) result.push(player);
+                  }
+                  try { add(win.player_instance); } catch (_) {}
+                  try {
+                    if (typeof win.jwplayer === 'function') add(win.jwplayer());
+                  } catch (_) {}
+                  return result;
+                }
+
+                function probe() {
+                  if (confirmed) return true;
+                  var playing = reachableWindows().some(function(win) {
+                    var doc = win.document;
+                    var videoPlaying = Array.from(doc.querySelectorAll('video')).some(function(video) {
+                      if (!visible(video)) return false;
+                      armVideo(video);
+                      var now = Number(video.currentTime || 0);
+                      var before = lastTimes.get(video);
+                      lastTimes.set(video, now);
+                      var frames = Number(video.webkitDecodedFrameCount || 0);
+                      return !video.paused && video.readyState >= 2 &&
+                        (frames > 0 || now > 0 || (before != null && now > before + 0.04));
+                    });
+                    if (videoPlaying) return true;
+                    return jwPlayers(win).some(function(player) {
+                      try { return String(player.getState()).toLowerCase() === 'playing'; }
+                      catch (_) { return false; }
+                    });
+                  });
+                  if (playing) notifyPlaying();
+                  return playing;
+                }
+
+                function surfaceFor(doc) {
+                  var selectors = [
+                    '#jwliveplayer', '.jwplayer', '.video-js', '.plyr',
+                    'video', 'iframe[allowfullscreen]',
+                    'iframe[src*="/streams/" i]', '[class*="player-container" i]',
+                    '[class*="player-wrapper" i]'
+                  ].join(',');
+                  var candidates = Array.from(doc.querySelectorAll(selectors)).filter(function(el) {
+                    return visible(el) && !looksLikeAd(el);
+                  });
+                  candidates.sort(function(a, b) {
+                    var ar = a.getBoundingClientRect();
+                    var br = b.getBoundingClientRect();
+                    return (br.width * br.height) - (ar.width * ar.height);
+                  });
+                  return candidates[0] || null;
+                }
+
+                function fillViewport(doc, target) {
+                  if (!target) return false;
+                  try {
+                    doc.documentElement.style.setProperty('overflow', 'hidden', 'important');
+                    doc.documentElement.style.setProperty('background', '#000', 'important');
+                    if (doc.body) {
+                      doc.body.style.setProperty('overflow', 'hidden', 'important');
+                      doc.body.style.setProperty('background', '#000', 'important');
+                      doc.body.style.setProperty('margin', '0', 'important');
+                    }
+                    [
+                      ['position', 'fixed'], ['top', '0'], ['right', '0'],
+                      ['bottom', '0'], ['left', '0'], ['width', '100vw'],
+                      ['height', '100vh'], ['max-width', 'none'], ['max-height', 'none'],
+                      ['margin', '0'], ['padding', '0'], ['z-index', '2147483647'],
+                      ['object-fit', 'contain'], ['background', '#000'],
+                      ['border', '0'], ['border-radius', '0']
+                    ].forEach(function(pair) {
+                      target.style.setProperty(pair[0], pair[1], 'important');
+                    });
+                    if (target.tagName === 'VIDEO') target.controls = true;
+                    if (target.tagName === 'IFRAME') {
+                      target.setAttribute('allowfullscreen', 'true');
+                      target.setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
+                    }
+                    return true;
+                  } catch (_) { return false; }
+                }
+
+                function theater() {
+                  var applied = false;
+                  reachableWindows().forEach(function(win) {
+                    try { applied = fillViewport(win.document, surfaceFor(win.document)) || applied; }
+                    catch (_) {}
+                  });
+                  return applied;
+                }
+
+                function start() {
+                  theater();
+                  reachableWindows().forEach(function(win) {
+                    var doc = win.document;
+                    Array.from(doc.querySelectorAll('video')).forEach(function(video) {
+                      if (!visible(video)) return;
+                      armVideo(video);
+                      video.controls = true;
+                      try {
+                        var promise = video.play();
+                        if (promise && promise.catch) promise.catch(function() {});
+                      } catch (_) {}
+                    });
+                    jwPlayers(win).forEach(function(player) {
+                      try { player.on('play', notifyPlaying); } catch (_) {}
+                      try { player.play(true); } catch (_) {}
+                    });
+                    var surface = surfaceFor(doc);
+                    if (surface) {
+                      var play = surface.querySelector(
+                        '.jw-icon-display,.jw-display-icon-container,.jw-icon-playback,' +
+                        '.vjs-big-play-button,.plyr__control--overlaid,' +
+                        'button[aria-label*="play" i],button[title*="play" i]'
+                      );
+                      if (play && visible(play)) {
+                        try { play.click(); } catch (_) {}
+                      }
+                    }
+                  });
+                  setTimeout(probe, 180);
+                  setTimeout(probe, 650);
+                  return true;
+                }
+
+                window.__aminLiveCoordinator = {
+                  theater: theater,
+                  start: start,
+                  probe: probe
+                };
+
+                var timer = 0;
+                new MutationObserver(function() {
+                  if (confirmed || mutationPasses >= 18) return;
+                  clearTimeout(timer);
+                  timer = setTimeout(function() {
+                    mutationPasses += 1;
+                    theater();
+                    start();
+                  }, 90);
+                }).observe(document.documentElement, {
+                  childList: true, subtree: true, attributes: true,
+                  attributeFilter: ['class', 'style']
+                });
+              }
+              var applied = window.__aminLiveCoordinator.theater();
+              window.__aminLiveCoordinator.start();
+              return applied ? 'applied' : 'waiting';
             })();
         """.trimIndent()
         view.evaluateJavascript(script) { result ->
@@ -1422,6 +2131,35 @@ class BrowserActivity : ComponentActivity() {
                 hideSystemUi()
             }
         }
+    }
+
+    private fun startLiveAutomatically(view: WebView = webView) {
+        if (!liveTheaterModeRequested || livePlaybackConfirmed) return
+        livePrePlayOverlay?.showConnecting()
+        listOf(0L, 220L, 650L, 1_250L, 2_100L, 3_300L).forEach { delay ->
+            view.postDelayed({
+                if (!livePlaybackConfirmed && !isFinishing && !isDestroyed) {
+                    applyLiveTheaterMode(view)
+                    view.evaluateJavascript(
+                        "window.__aminLiveCoordinator&&window.__aminLiveCoordinator.start();",
+                        null
+                    )
+                }
+            }, delay)
+        }
+    }
+
+    private fun startLiveFromOverlay() {
+        livePrePlayOverlay?.showStarting()
+        applyLiveTheaterMode(webView)
+        startLiveAutomatically(webView)
+        // If a cross-origin provider frame cannot expose its playing event, reveal its
+        // already-expanded controls after the explicit retry instead of blocking the user.
+        livePrePlayOverlay?.postDelayed({
+            if (!livePlaybackConfirmed && livePrePlayOverlay?.visibility == View.VISIBLE) {
+                livePrePlayOverlay?.revealProviderPlayer()
+            }
+        }, 3_200L)
     }
 
     private fun scheduleDirectPlay(view: WebView = webView) {

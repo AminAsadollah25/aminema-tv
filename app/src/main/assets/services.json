@@ -243,8 +243,15 @@
       "(/|#)(login|signin|sign-in|auth|account|profile|settings)(/|$|[?#])"
     ],
     "directPlay": {
-      "preferredLanguages": ["dubbed-fa", "original"],
-      "preferredHeights": [1080, 720, 480],
+      "preferredLanguages": [
+        "dubbed-fa",
+        "original"
+      ],
+      "preferredHeights": [
+        1080,
+        720,
+        480
+      ],
       "autoPlayOnPlaybackPage": true
     },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
@@ -308,5 +315,1748 @@
     },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
     "resumeButtonTextPatterns": []
+  },
+  {
+    "id": "parsatv",
+    "name": "پخش زنده",
+    "url": "https://www.parsatv.com",
+    "icon": "filmrooz",
+    "subtitle": "تلویزیون زنده فارسی",
+    "sourceLabel": "ParsaTV",
+    "artwork": "service_international_cinema",
+    "color": "#C0392B",
+    "type": "LIVE_TV",
+    "showOnHome": false,
+    "userAgent": "DESKTOP",
+    "fullscreenSelectors": [
+      "button[aria-label*='fullscreen' i]",
+      "button[title*='fullscreen' i]",
+      "[class*='fullscreen' i]"
+    ],
+    "playerSelectors": [
+      "video",
+      "iframe[allowfullscreen]",
+      "[class*='player' i]"
+    ],
+    "searchSelectors": [],
+    "contentUrlPatterns": [],
+    "playbackUrlPatterns": [],
+    "excludedUrlPatterns": [],
+    "resumeStrategy": "OPEN_PLAYBACK_PAGE",
+    "resumeButtonTextPatterns": [],
+    "liveTv": {
+      "channels": [
+        {
+          "id": "parsatv-pars-tv",
+          "name": "Pars TV",
+          "path": "/name=Pars-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/parstv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-national-revolution-tv",
+          "name": "Iran National Revolution TV",
+          "path": "/name=Iran-National-Revolution-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/revolutiontv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-international-tv",
+          "name": "Iran International TV",
+          "path": "/name=Iran-International-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranintl.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-dej-tv",
+          "name": "DEJ TV",
+          "path": "/name=DEJ-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/dejtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mihan-tv",
+          "name": "Mihan TV",
+          "path": "/name=Mihan-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mihantv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mellig-tv",
+          "name": "MelliG TV",
+          "path": "/name=MelliG-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/melligtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-novin-tv",
+          "name": "Novin TV",
+          "path": "/name=Novin-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/novintv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-nahade-azadi",
+          "name": "Nahade Azadi",
+          "path": "/name=Nahade-Azadi",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nahadeazadi.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-aryaee",
+          "name": "Iran Aryaee",
+          "path": "/name=Iran-Aryaee",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranearyaee.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-wire-tv",
+          "name": "Iran Wire TV",
+          "path": "/name=Iran-Wire-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranwiretv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-channel-one",
+          "name": "Channel One",
+          "path": "/name=Channel-One",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/kanalyek.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-irane-farda",
+          "name": "Irane Farda",
+          "path": "/name=Irane-Farda",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranefarda.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-radio-farda-tv",
+          "name": "Radio Farda TV",
+          "path": "/name=Radio-Farda-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/radiofarda.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-bbc-persian",
+          "name": "BBC Persian",
+          "path": "/name=BBC-Persian",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/bbcpersian.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-voa-persian",
+          "name": "VOA Persian",
+          "path": "/name=VOA-Persian",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/voapersian.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-israel-pars-tv",
+          "name": "Israel Pars TV",
+          "path": "/name=Israel-Pars-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/israelparstv3.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-tv-israel",
+          "name": "Iran TV Israel",
+          "path": "/name=Iran-TV-Israel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irantvisrael.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-khabarbin-tv",
+          "name": "Khabarbin TV",
+          "path": "/name=Khabarbin-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/khabarbin.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-project-leon",
+          "name": "Project Leon",
+          "path": "/name=Project-Leon",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/projectleon.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-didgah-tv",
+          "name": "Didgah TV",
+          "path": "/name=Didgah-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/didgahtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-kanal-jadid",
+          "name": "Kanal Jadid",
+          "path": "/name=Kanal-Jadid",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/kanaljadid.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-simaye-azadi",
+          "name": "Simaye Azadi",
+          "path": "/name=Simaye-Azadi",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/simayeazadi.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-woman-tv",
+          "name": "Woman TV",
+          "path": "/name=Woman-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/womantv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gordafarid-tv",
+          "name": "GordAfarid TV",
+          "path": "/name=GordAfarid-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gordafaridtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-euronews-farsi",
+          "name": "Euronews Farsi",
+          "path": "/name=Euronews-Farsi",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/euronewstv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-alternative-shorai-tv",
+          "name": "Alternative Shorai TV",
+          "path": "/name=Alternative-Shorai-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/alternativeshoraitv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-pulse-media",
+          "name": "Pulse Media",
+          "path": "/name=Pulse-Media",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/pulsemedia.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-independent-tv",
+          "name": "Iran Independent TV",
+          "path": "/name=Iran-Independent-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranindependent.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-itn-tv",
+          "name": "ITN TV",
+          "path": "/name=ITN-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/itn.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-yourtime-tv",
+          "name": "YourTime TV",
+          "path": "/name=YourTime-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/yourtime.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ekran-movies",
+          "name": "Ekran Movies",
+          "path": "/name=Ekran-Movies",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ekran.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mtc",
+          "name": "MTC",
+          "path": "/name=MTC",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mtc.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-avang-tv",
+          "name": "Avang TV",
+          "path": "/name=Avang-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/avang.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-radio-javan-tv",
+          "name": "Radio Javan TV",
+          "path": "/name=Radio-Javan-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/rjtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-pmc",
+          "name": "PMC",
+          "path": "/name=PMC",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/pmc.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-navahang-tv",
+          "name": "Navahang TV",
+          "path": "/name=Navahang-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/navahang.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-high-vision",
+          "name": "High Vision",
+          "path": "/name=High-Vision",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/highvision.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-sun-music",
+          "name": "Sun Music",
+          "path": "/name=Sun-Music",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sunmusic.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-afn-music",
+          "name": "AFN Music",
+          "path": "/name=AFN-Music",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/afnl.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ravi-tv",
+          "name": "Ravi TV",
+          "path": "/name=Ravi-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ravitv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-tapesh",
+          "name": "Tapesh",
+          "path": "/name=Tapesh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/tapesh.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-tapesh-iran",
+          "name": "Tapesh Iran",
+          "path": "/name=Tapesh-Iran",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/tapesh.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-t2-tv",
+          "name": "T2 TV",
+          "path": "/name=T2-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/t2tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-t2-movies",
+          "name": "T2 Movies",
+          "path": "/name=T2-Movies",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/t2tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-t2-america",
+          "name": "T2 America",
+          "path": "/name=T2-America",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/t2tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-t2-international",
+          "name": "T2 International",
+          "path": "/name=T2-International",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/t2tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-4u-tv",
+          "name": "4U TV",
+          "path": "/name=4U-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/4u.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-4u-family",
+          "name": "4U Family",
+          "path": "/name=4U-Family",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/4u.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mbc-persia",
+          "name": "MBC Persia",
+          "path": "/name=MBC-Persia",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mbcpersia.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-oxir-tv",
+          "name": "Oxir TV",
+          "path": "/name=Oxir-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/oxirtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-payam-javan-tv",
+          "name": "Payam Javan TV",
+          "path": "/name=Payam-Javan-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/payamjavan.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-khatereh-tv",
+          "name": "Khatereh TV",
+          "path": "/name=Khatereh-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/khaterehtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-tasvire-iran",
+          "name": "Tasvire Iran",
+          "path": "/name=Tasvire-Iran",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/timtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-icc-tv",
+          "name": "ICC TV",
+          "path": "/name=ICC-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/icc.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-omid-e-iran",
+          "name": "Omid e Iran",
+          "path": "/name=Omid-e-Iran",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/omideiran.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-sl-1",
+          "name": "SL 1",
+          "path": "/name=SL-1",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sl.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-sl-2",
+          "name": "SL 2",
+          "path": "/name=SL-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sl.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-fx-tv-1",
+          "name": "FX TV 1",
+          "path": "/name=FX-TV-1",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fx1.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-fx-tv-2",
+          "name": "FX TV 2",
+          "path": "/name=FX-TV-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fx2.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-cinex",
+          "name": "Cinex",
+          "path": "/name=Cinex",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/cinex.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ava-family",
+          "name": "Ava Family",
+          "path": "/name=Ava-Family",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/avafamily.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ava-series",
+          "name": "Ava Series",
+          "path": "/name=Ava-Series",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/avaseries.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-tm-tv",
+          "name": "TM TV",
+          "path": "/name=TM-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/tmtelevision.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-net-tv",
+          "name": "Net TV",
+          "path": "/name=Net-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nettv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-afra-film",
+          "name": "Afra Film",
+          "path": "/name=Afra-Film",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/afrafilm.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-tv",
+          "name": "GEM TV",
+          "path": "/name=GEM-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemtv1.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-series",
+          "name": "GEM Series",
+          "path": "/name=GEM-Series",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemseries.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mifa-music",
+          "name": "Mifa Music",
+          "path": "/name=Mifa-Music",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemmifa.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-az",
+          "name": "GEM AZ",
+          "path": "/name=GEM-AZ",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemaz.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-24b",
+          "name": "GEM 24B",
+          "path": "/name=GEM-24B",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemgrouptv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-music",
+          "name": "GEM Music",
+          "path": "/name=GEM-Music",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-life",
+          "name": "GEM Life",
+          "path": "/name=GEM-Life",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemlife.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-film",
+          "name": "GEM Film",
+          "path": "/name=GEM-Film",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemfilm.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-rubix",
+          "name": "GEM Rubix",
+          "path": "/name=GEM-Rubix",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemrubix.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-river",
+          "name": "GEM River",
+          "path": "/name=GEM-River",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemriver.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-junior",
+          "name": "GEM Junior",
+          "path": "/name=GEM-Junior",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemjunior.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-kids",
+          "name": "GEM Kids",
+          "path": "/name=GEM-Kids",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemkids.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-classic",
+          "name": "GEM Classic",
+          "path": "/name=GEM-Classic",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemclassic.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-drama",
+          "name": "GEM Drama",
+          "path": "/name=GEM-Drama",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemdrama.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-comedy",
+          "name": "GEM Comedy",
+          "path": "/name=GEM-Comedy",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemcomedy.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-entertainment",
+          "name": "GEM Entertainment",
+          "path": "/name=GEM-Entertainment",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gementertainment.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-onyx",
+          "name": "GEM Onyx",
+          "path": "/name=GEM-Onyx",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemonyx.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-bollywood",
+          "name": "GEM Bollywood",
+          "path": "/name=GEM-Bollywood",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gembollywood.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-fit",
+          "name": "GEM Fit",
+          "path": "/name=GEM-Fit",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemfit.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-nature",
+          "name": "GEM Nature",
+          "path": "/name=GEM-Nature",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemnature.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-food",
+          "name": "GEM Food",
+          "path": "/name=GEM-Food",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemfood.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-pixel",
+          "name": "GEM Pixel",
+          "path": "/name=GEM-Pixel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-sport",
+          "name": "GEM Sport",
+          "path": "/name=GEM-Sport",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemsport.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mifa-music-plus",
+          "name": "Mifa Music Plus",
+          "path": "/name=Mifa-Music-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemmifaplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-tv-plus",
+          "name": "GEM TV Plus",
+          "path": "/name=GEM-TV-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemtvplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-series-plus",
+          "name": "GEM Series Plus",
+          "path": "/name=GEM-Series-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemseriesplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-drama-plus",
+          "name": "GEM Drama Plus",
+          "path": "/name=GEM-Drama-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemdrama.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-river-plus",
+          "name": "GEM River Plus",
+          "path": "/name=GEM-River-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemriverplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-rubix-plus",
+          "name": "GEM Rubix Plus",
+          "path": "/name=GEM-Rubix-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemrubixplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-documentary",
+          "name": "GEM Documentary",
+          "path": "/name=GEM-Documentary",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemdocumentary.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-royal-tv",
+          "name": "Royal TV",
+          "path": "/name=Royal-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/royaltv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-home-plus",
+          "name": "Home Plus",
+          "path": "/name=Home-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/homeplus.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-maah-tv",
+          "name": "Maah TV",
+          "path": "/name=Maah-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/maahtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-arax-tv",
+          "name": "Arax TV",
+          "path": "/name=Arax-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/araxtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-music",
+          "name": "Persiana Music",
+          "path": "/name=Persiana-Music",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianamusictv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-turkiye",
+          "name": "Persiana Turkiye",
+          "path": "/name=Persiana-Turkiye",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianaturkey.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-sonnati",
+          "name": "Persiana Sonnati",
+          "path": "/name=Persiana-Sonnati",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasonnatitv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-tv",
+          "name": "Persiana TV",
+          "path": "/name=Persiana-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianatv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-one",
+          "name": "Persiana One",
+          "path": "/name=Persiana-One",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianaone.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-series",
+          "name": "Persiana Series",
+          "path": "/name=Persiana-Series",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianatv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-korea",
+          "name": "Persiana Korea",
+          "path": "/name=Persiana-Korea",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianakorea.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-junior",
+          "name": "Persiana Junior",
+          "path": "/name=Persiana-Junior",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianajuniortv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-family",
+          "name": "Persiana Family",
+          "path": "/name=Persiana-Family",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianafamilytv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-iranian",
+          "name": "Persiana Iranian",
+          "path": "/name=Persiana-Iranian",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianairaniantv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-cinema",
+          "name": "Persiana Cinema",
+          "path": "/name=Persiana-Cinema",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianacinematv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-documentary",
+          "name": "Persiana Documentary",
+          "path": "/name=Persiana-Documentary",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianadocumentary.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-science",
+          "name": "Persiana Science",
+          "path": "/name=Persiana-Science",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianascience.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-nostalgia",
+          "name": "Persiana Nostalgia",
+          "path": "/name=Persiana-Nostalgia",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persiananostalgiatv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-comedy",
+          "name": "Persiana Comedy",
+          "path": "/name=Persiana-Comedy",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianacomedytv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-setmix",
+          "name": "Persiana SetMix",
+          "path": "/name=Persiana-SetMix",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasetmix.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-medical",
+          "name": "Persiana Medical",
+          "path": "/name=Persiana-Medical",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianamedical.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-fight",
+          "name": "Persiana Fight",
+          "path": "/name=Persiana-Fight",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianafighttv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-classic-tv",
+          "name": "Classic TV",
+          "path": "/name=Classic-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/classictv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ayeneh-tv",
+          "name": "Ayeneh TV",
+          "path": "/name=Ayeneh-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ayenehtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-meta-film",
+          "name": "Meta Film",
+          "path": "/name=Meta-Film",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/metafilm.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-porchooneh-tv",
+          "name": "Porchooneh TV",
+          "path": "/name=Porchooneh-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/porchooneh.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-cafe-film",
+          "name": "Cafe Film",
+          "path": "/name=Cafe-Film",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/cafefilm.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-cafe-trade-tv",
+          "name": "Cafe Trade TV",
+          "path": "/name=Cafe-Trade-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/cafetrade.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-erfan-halgheh",
+          "name": "Erfan Halgheh",
+          "path": "/name=Erfan-Halgheh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/erfanhalgheh.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-ganje-hozoor",
+          "name": "Ganje Hozoor",
+          "path": "/name=Ganje-Hozoor",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ganjehozoor.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-kalemeh-tv",
+          "name": "Kalemeh TV",
+          "path": "/name=Kalemeh-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/kalemehtv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-payvand-tv",
+          "name": "Payvand TV",
+          "path": "/name=Payvand-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/payvand.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-derakhte-zendegi",
+          "name": "Derakhte Zendegi",
+          "path": "/name=Derakhte-Zendegi",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/derakhtezendegi.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-iran-jewish-tv",
+          "name": "Iran Jewish TV",
+          "path": "/name=Iran-Jewish-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranjewishtv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-sedaye-israel",
+          "name": "Sedaye Israel",
+          "path": "/name=Sedaye-Israel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/iranisrael.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-rahe-nejat-tv",
+          "name": "Rahe Nejat TV",
+          "path": "/name=Rahe-Nejat-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/rahenejat.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-mohabat-tv",
+          "name": "Mohabat TV",
+          "path": "/name=Mohabat-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mohabattv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-payame-aramesh",
+          "name": "Payame Aramesh",
+          "path": "/name=Payame-Aramesh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/payamearamesh.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-icnet",
+          "name": "ICnet",
+          "path": "/name=ICnet",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/icnet1.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-icnet-2",
+          "name": "ICnet 2",
+          "path": "/name=ICnet-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/icnet2.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-icnet-3",
+          "name": "ICnet 3",
+          "path": "/name=ICnet-3",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/icnet3.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-omid-javedan",
+          "name": "Omid Javedan",
+          "path": "/name=Omid-Javedan",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/omidjavedan.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-nejat-tv",
+          "name": "Nejat TV",
+          "path": "/name=Nejat-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nejattv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-shabakeh-7",
+          "name": "Shabakeh 7",
+          "path": "/name=Shabakeh-7",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/shabake7.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-sat7-pars",
+          "name": "Sat7 Pars",
+          "path": "/name=Sat7-Pars",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sat7pars.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-afra-series",
+          "name": "Afra Series",
+          "path": "/name=Afra-Series",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/afraseries.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-travel",
+          "name": "GEM Travel",
+          "path": "/name=GEM-Travel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemtravel.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-gem-academy",
+          "name": "GEM Academy",
+          "path": "/name=GEM-Academy",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemgroup.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-royal-time-tv",
+          "name": "Royal Time TV",
+          "path": "/name=Royal-Time-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/royaltime.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-itc-tv",
+          "name": "ITC TV",
+          "path": "/name=ITC-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/itc.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-sports-1",
+          "name": "Persiana Sports 1",
+          "path": "/name=Persiana-Sports-1",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasporttv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-sports-2",
+          "name": "Persiana Sports 2",
+          "path": "/name=Persiana-Sports-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasporttv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-sports-3",
+          "name": "Persiana Sports 3",
+          "path": "/name=Persiana-Sports-3",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasporttv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-persiana-sports-4",
+          "name": "Persiana Sports 4",
+          "path": "/name=Persiana-Sports-4",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/persianasporttv.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-grand-toon",
+          "name": "Grand Toon",
+          "path": "/name=Grand-Toon",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/grandtoon.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-grand-cinema",
+          "name": "Grand Cinema",
+          "path": "/name=Grand-Cinema",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/grandcinema.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-grand-sport",
+          "name": "Grand Sport",
+          "path": "/name=Grand-Sport",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/grandsport.png",
+          "category": "persian"
+        },
+        {
+          "id": "parsatv-red-bull-tv",
+          "name": "Red Bull TV",
+          "path": "/name=Red-Bull-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/redbull.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-fubo-sports",
+          "name": "Fubo Sports",
+          "path": "/name=Fubo-Sports",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fubosports.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-horse-tv",
+          "name": "Horse TV",
+          "path": "/name=Horse-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/horsetv.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-acc-digital-network",
+          "name": "ACC Digital Network",
+          "path": "/name=ACC-Digital-Network",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/accdn.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-real-madrid-tv",
+          "name": "Real Madrid TV",
+          "path": "/name=Real-Madrid-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/realmadridtv.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-mavtv",
+          "name": "MAVTV",
+          "path": "/name=MAVTV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mavtv3.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-fifa-plus",
+          "name": "FIFA Plus",
+          "path": "/name=FIFA-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fifaplus.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-nba-tv",
+          "name": "NBA TV",
+          "path": "/name=NBA-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nbatv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-nhl-tv",
+          "name": "NHL TV",
+          "path": "/name=NHL-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nhltv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-mlb-tv",
+          "name": "MLB TV",
+          "path": "/name=MLB-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mlbtv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-nfl-tv",
+          "name": "NFL TV",
+          "path": "/name=NFL-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nfltv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-motorvision-tv",
+          "name": "Motorvision TV",
+          "path": "/name=Motorvision-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/motorvisiontv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-automoto-tv",
+          "name": "AutoMoto TV",
+          "path": "/name=AutoMoto-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/automototv.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-motorsports-1",
+          "name": "Motorsports 1",
+          "path": "/name=Motorsports-1",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/motorsports1.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-canal-motor",
+          "name": "Canal Motor",
+          "path": "/name=Canal-Motor",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/motorstv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-sports-grid",
+          "name": "Sports Grid",
+          "path": "/name=Sports-Grid",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sportsgrid.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-atg-tv",
+          "name": "ATG TV",
+          "path": "/name=ATG-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/atgtv.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-fite-247",
+          "name": "FITE 247",
+          "path": "/name=FITE-247",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fite247.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-racing-australia",
+          "name": "Racing Australia",
+          "path": "/name=Racing-Australia",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/racingcom.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-super-tennis",
+          "name": "Super Tennis",
+          "path": "/name=Super-Tennis",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/supertennis.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-cbs-sports",
+          "name": "CBS Sports",
+          "path": "/name=CBS-Sports",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/cbssports.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-30a-golf-kingdom",
+          "name": "30A Golf Kingdom",
+          "path": "/name=30A-Golf-Kingdom",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/30atv2.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-strongman",
+          "name": "Strongman",
+          "path": "/name=Strongman",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/strongman.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-bbc-top-gear",
+          "name": "BBC Top Gear",
+          "path": "/name=BBC-Top-Gear",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/bbctopgear.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-game-plus",
+          "name": "Game Plus",
+          "path": "/name=Game-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gametv.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-bein-sports-xtra",
+          "name": "beIN Sports Xtra",
+          "path": "/name=beIN-Sports-Xtra",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/beinsports.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-tennis-channel",
+          "name": "Tennis Channel",
+          "path": "/name=Tennis-Channel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/tennischannel2.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-billiard-tv",
+          "name": "Billiard TV",
+          "path": "/name=Billiard-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/billiardtv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-pokergo",
+          "name": "PokerGO",
+          "path": "/name=PokerGO",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/pokergo.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-kozoom-tv",
+          "name": "Kozoom TV",
+          "path": "/name=Kozoom-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/kozoomtv2.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-sportitalia",
+          "name": "Sportitalia",
+          "path": "/name=Sportitalia",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sportitalia.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-sochi-tv",
+          "name": "Sochi TV",
+          "path": "/name=Sochi-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sochi.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-women-sports-network",
+          "name": "Women Sports Network",
+          "path": "/name=Women-Sports-Network",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/womensportsnetowrk.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-sports-channel",
+          "name": "Sports Channel",
+          "path": "/name=Sports-Channel",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/sportstv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-pac-12-insider",
+          "name": "PAC 12 Insider",
+          "path": "/name=PAC-12-Insider",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/pac12.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-boxing-tv",
+          "name": "Boxing TV",
+          "path": "/name=Boxing-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/boxingtv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-turkmenistan-sport",
+          "name": "Turkmenistan Sport",
+          "path": "/name=Turkmenistan-Sport",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/turkmenistansport.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-world-of-freesports",
+          "name": "World Of Freesports",
+          "path": "/name=World-Of-Freesports",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/worldoffreesports.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-dazn-combat",
+          "name": "DAZN Combat",
+          "path": "/name=DAZN-Combat",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/dazncombat.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-glory-kickboxing",
+          "name": "Glory Kickboxing",
+          "path": "/name=Glory-Kickboxing",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/glorykickboxing.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-world-cup-ceremony",
+          "name": "World Cup Ceremony",
+          "path": "/name=World-Cup-Ceremony",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/worldcup3.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-fuel-tv",
+          "name": "Fuel TV",
+          "path": "/name=Fuel-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fueltv.png",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-unbeaten",
+          "name": "Unbeaten",
+          "path": "/name=Unbeaten",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/unbeaten.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-shooting-sports-life",
+          "name": "Shooting Sports Life",
+          "path": "/name=Shooting-Sports-Life",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/shootingsportslife.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-90-tv",
+          "name": "90 TV",
+          "path": "/name=90-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/varzesh3.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-live-score",
+          "name": "Live Score",
+          "path": "/name=Live-Score",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/livescore.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "parsatv-shabake-1",
+          "name": "Shabake 1",
+          "path": "/name=Shabake-1",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib1.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-2",
+          "name": "Shabake 2",
+          "path": "/name=Shabake-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib2.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabakeh-3",
+          "name": "Shabakeh 3",
+          "path": "/name=Shabakeh-3",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib3.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-4",
+          "name": "Shabake 4",
+          "path": "/name=Shabake-4",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib4.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-5",
+          "name": "Shabake 5",
+          "path": "/name=Shabake-5",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib5.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-varzesh",
+          "name": "Shabake Varzesh",
+          "path": "/name=Shabake-Varzesh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/varzeshtv.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-khabar",
+          "name": "Shabake Khabar",
+          "path": "/name=Shabake-Khabar",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irinn.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-khabar-2",
+          "name": "Shabake Khabar 2",
+          "path": "/name=Shabake-Khabar-2",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irinn2.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-mostanad",
+          "name": "Mostanad",
+          "path": "/name=Mostanad",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/mostanad.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-omid",
+          "name": "Omid",
+          "path": "/name=Omid",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/omid.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-pooya",
+          "name": "Pooya",
+          "path": "/name=Pooya",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/pooya.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-roya",
+          "name": "Roya",
+          "path": "/name=Roya",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/roya.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-nasim",
+          "name": "Nasim",
+          "path": "/name=Nasim",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/nasim.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-amouzesh",
+          "name": "Amouzesh",
+          "path": "/name=Amouzesh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/amouzesh.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-namayesh",
+          "name": "Namayesh",
+          "path": "/name=Namayesh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/namayesh.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-alkosar",
+          "name": "Alkosar",
+          "path": "/name=Alkosar",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/alkosar.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-tamasha",
+          "name": "Tamasha",
+          "path": "/name=Tamasha",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/tamasha.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-salamat",
+          "name": "Salamat",
+          "path": "/name=Salamat",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/salamat.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-press-tv",
+          "name": "Press TV",
+          "path": "/name=Press-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/presstv.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-press-tv-french",
+          "name": "Press TV French",
+          "path": "/name=Press-TV-French",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/presstv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-hispan-tv",
+          "name": "Hispan TV",
+          "path": "/name=Hispan-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/hispan.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ifilm-farsi",
+          "name": "iFilm Farsi",
+          "path": "/name=iFilm-Farsi",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ifilm.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ifilm-english",
+          "name": "iFilm English",
+          "path": "/name=iFilm-English",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ifilm.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ifilm-arabic",
+          "name": "iFilm Arabic",
+          "path": "/name=iFilm-Arabic",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ifilm.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ifilm-dari",
+          "name": "iFilm Dari",
+          "path": "/name=iFilm-Dari",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ifilm.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-alalam",
+          "name": "Alalam",
+          "path": "/name=Alalam",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/alalam.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-alalam-syria",
+          "name": "Alalam Syria",
+          "path": "/name=Alalam-Syria",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/alalam.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ofogh",
+          "name": "Ofogh",
+          "path": "/name=Ofogh",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ofough.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-quran",
+          "name": "Quran",
+          "path": "/name=Quran",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/quran.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-irna-tv",
+          "name": "IRNA TV",
+          "path": "/name=IRNA-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irna24.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-fadak-tv",
+          "name": "Fadak TV",
+          "path": "/name=Fadak-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/fadaktv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-labbayk",
+          "name": "Labbayk",
+          "path": "/name=Labbayk",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/labbayk.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-velayat-tv",
+          "name": "Velayat TV",
+          "path": "/name=Velayat-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/velayat.png",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-shabake-1-plus",
+          "name": "Shabake 1 Plus",
+          "path": "/name=Shabake-1-Plus",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/irib1.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-karbala-tv",
+          "name": "Karbala TV",
+          "path": "/name=Karbala-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/karbalatv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-imam-hossein",
+          "name": "Imam Hossein",
+          "path": "/name=Imam-Hossein",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/imamhossein.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-abalfadhl-tv",
+          "name": "Abalfadhl TV",
+          "path": "/name=Abalfadhl-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/abalfadhltv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-hadi-tv",
+          "name": "Hadi TV",
+          "path": "/name=Hadi-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/haditv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-marjaeyat-tv",
+          "name": "Marjaeyat TV",
+          "path": "/name=Marjaeyat-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/marjaeyattv.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-ahlebait-tv",
+          "name": "Ahlebait TV",
+          "path": "/name=Ahlebait-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/ahlebait.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-imam-reza",
+          "name": "Imam Reza",
+          "path": "/name=Imam-Reza",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/imamreza.jpg",
+          "category": "irib"
+        },
+        {
+          "id": "parsatv-rasoulallah-tv",
+          "name": "Rasoulallah TV",
+          "path": "/name=Rasoulallah-TV",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/rasoulallahtv.png",
+          "category": "irib"
+        }
+      ],
+      "playerOptions": [
+        {
+          "id": "jw7",
+          "label": "JW 7"
+        },
+        {
+          "id": "jw8",
+          "label": "JW 8"
+        },
+        {
+          "id": "js",
+          "label": "JS"
+        },
+        {
+          "id": "js7",
+          "label": "JS 7"
+        },
+        {
+          "id": "hls",
+          "label": "HLS"
+        },
+        {
+          "id": "html5",
+          "label": "HTML5"
+        },
+        {
+          "id": "clappr",
+          "label": "Clappr"
+        }
+      ]
+    }
   }
 ]

@@ -21,12 +21,12 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.16.5.1 / versionCode 38 — Cinematic Intro Refresh**
+- نسخه کد: **0.18.0 / versionCode 42 — Live TV Playback Polish**
 - وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
-- Commit کد Release و هدف Tag: `ddcd35f880a917c62ca90f2875ea1d1789fb7a0e`
-- Tag: `v0.16.5.1`
-- GitHub Latest: **v0.16.5.1 همراه APK و SHA-256**
-- Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.16.5.1`
+- Commit کد Release و هدف Tag: پس از انتشار در همین سند ثبت می‌شود.
+- Tag: `v0.18.0`
+- GitHub Latest: **v0.18.0 همراه APK و SHA-256**
+- Release منتشرشده فعلی: پس از راستی‌آزمایی GitHub در همین سند ثبت می‌شود.
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`

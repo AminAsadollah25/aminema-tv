@@ -15,8 +15,8 @@ android {
         applicationId = "com.amin.tvos"
         minSdk = 28          // Android 9+
         targetSdk = 35
-        versionCode = 41
-        versionName = "0.17.1"
+        versionCode = 42
+        versionName = "0.18.0"
     }
 
     androidResources {

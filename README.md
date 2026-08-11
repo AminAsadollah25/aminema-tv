@@ -4,18 +4,30 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Aminema 0.16.5.1 — Cinematic Intro Refresh** (`versionCode 38`)
+**Aminema 0.18.0 — Live TV Playback Polish** (`versionCode 42`)
 
-- Replaces the bundled cold-start video with the new 8.2-second Aminema mascot intro.
-- The supplied source is normalized to a fast-start 1080p H.264/AAC file for
-  broad Android 9+ TV decoder compatibility.
-- Mouse skip is made reliable by handling click/touch directly on the native
-  VideoView; remote/back skip, mute, the one-shot gate and watchdogs remain intact.
-- Clean build, unit tests, Lint, in-place install, full completion, remote skip
-  and mouse skip pass on the signed-in 1080p TV emulator.
-- Published as GitHub release `v0.16.5.1` with the tested APK and SHA-256 file.
+- Adds a dedicated ParsaTV Live TV destination with Persian, national, sports
+  and other channel categories.
+- Opens ParsaTV's first-party embed player for faster startup and keeps the
+  provider page as a safe fallback when the embed is unavailable.
+- Starts live playback automatically and expands HTML5, JWPlayer and
+  same-origin iframe players to the TV viewport without a manual fullscreen click.
+- Confirms real playback before hiding the native connection cover; a visible
+  but empty player is no longer treated as success.
+- Preserves provider cookies, sessions, local data and the existing WebView
+  security boundary. No media URLs or tokens are extracted or stored.
+- Unit tests, Lint, final APK build, mouse playback and D-pad/OK playback pass
+  on the signed-in 1920×1080 TV emulator.
+- Published as GitHub release `v0.18.0` with the tested APK and SHA-256 file.
 
 ## Previous release
+
+**Aminema 0.17.1 — MyMoviz Home Entry** (`versionCode 41`)
+
+- Adds MyMoviz beside ParsiFlix and FilmRooz in the direct service row.
+- Preserves the normal browser Login path and provider sessions.
+
+## Earlier release
 
 **Aminema 0.16.5 — Episode Loading Hotfix** (`versionCode 37`)
 
