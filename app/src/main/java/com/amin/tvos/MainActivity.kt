@@ -13,7 +13,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -30,6 +32,8 @@ import com.amin.tvos.intro.IntroPreferences
 import com.amin.tvos.browser.CatalogBackgroundSync
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
+import com.amin.tvos.ui.home.CatalogLibraryScreen
+import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.ui.settings.SettingsScreen
 import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.Ink
@@ -68,28 +72,77 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Box(Modifier.fillMaxSize()) {
                         val navController = rememberNavController()
+                        val homeViewModel: HomeViewModel = viewModel()
+                        val catalogSnapshot by homeViewModel.catalogSections.collectAsStateWithLifecycle()
+                        var libraryItemsSelector by remember {
+                            mutableStateOf<(List<com.amin.tvos.data.model.CatalogSection>) -> List<CatalogItem>>(
+                                { emptyList() }
+                            )
+                        }
+                        var libraryTitle by remember { mutableStateOf("کتابخانه") }
+                        var libraryServices by remember { mutableStateOf<Set<String>>(emptySet()) }
+                        var libraryOpenHandler by remember {
+                            mutableStateOf<(CatalogItem) -> Unit>({})
+                        }
                         NavHost(
                             navController = navController,
                             startDestination = "home",
                             modifier = Modifier.fillMaxSize().background(Ink)
                         ) {
                             composable("home") {
-                                val vm: HomeViewModel = viewModel()
                                 // Refresh library when returning from the browser
                                 val lifecycleOwner = LocalLifecycleOwner.current
                                 DisposableEffect(lifecycleOwner) {
                                     val observer = LifecycleEventObserver { _, event ->
-                                        if (event == Lifecycle.Event.ON_RESUME) vm.refresh()
+                                        if (event == Lifecycle.Event.ON_RESUME) homeViewModel.refresh()
                                     }
                                     lifecycleOwner.lifecycle.addObserver(observer)
                                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                                 }
                                 HomeScreen(
                                     onOpenSettings = { navController.navigate("settings") },
+                                    onOpenLibrary = { title, itemsSelector, openItem, services ->
+                                        libraryTitle = title
+                                        libraryItemsSelector = itemsSelector
+                                        libraryServices = services
+                                        libraryOpenHandler = openItem
+                                        navController.navigate("library")
+                                    },
                                     onRefreshCatalog = { serviceId ->
                                         catalogSync.refresh(serviceId)
                                     },
-                                    viewModel = vm
+                                    viewModel = homeViewModel
+                                )
+                            }
+                            composable("library") {
+                                CatalogLibraryScreen(
+                                    title = libraryTitle,
+                                    itemsProvider = { libraryItemsSelector(catalogSnapshot) },
+                                    catalogRevision = catalogSnapshot,
+                                    refreshingServices = homeViewModel.refreshingCatalogServices.collectAsStateWithLifecycle().value,
+                                    providerIds = libraryServices,
+                                    onRefresh = {
+                                        libraryServices.forEach { serviceId ->
+                                            catalogSync.refresh(serviceId)
+                                        }
+                                    },
+                                    onLoadMore = { pageLimit, onFinished ->
+                                        var remaining = libraryServices.size
+                                        fun providerFinished() {
+                                            remaining -= 1
+                                            if (remaining <= 0) onFinished()
+                                        }
+                                        libraryServices.forEach { serviceId ->
+                                            catalogSync.refresh(
+                                                serviceId,
+                                                pageLimit = pageLimit,
+                                                onFinished = ::providerFinished
+                                            )
+                                        }
+                                        if (remaining == 0) onFinished()
+                                    },
+                                    onBack = { navController.popBackStack() },
+                                    onOpen = libraryOpenHandler
                                 )
                             }
                             composable("settings") {

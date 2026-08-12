@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -40,28 +41,79 @@ class CatalogBackgroundSync(
 ) {
     private data class Slot(
         val webView: WebView,
-        val timeout: Runnable
+        val timeout: Runnable,
+        val pageLimit: Int,
+        val callbacks: MutableList<() -> Unit>
+    )
+
+    private data class PendingRefresh(
+        var pageLimit: Int,
+        val callbacks: MutableList<() -> Unit>
     )
 
     private val handler = Handler(Looper.getMainLooper())
     private val slots = mutableMapOf<String, Slot>()
+    private val pendingRefreshes = mutableMapOf<String, PendingRefresh>()
 
-    fun refresh(serviceId: String) {
-        if (serviceId !in SUPPORTED_IDS || slots.containsKey(serviceId)) return
+    fun refresh(
+        serviceId: String,
+        pageLimit: Int = DEFAULT_PAGE_LIMIT,
+        onFinished: (() -> Unit)? = null
+    ) {
+        if (serviceId !in SUPPORTED_IDS) {
+            onFinished?.invoke()
+            return
+        }
+        val rawRequestedLimit = pageLimit.coerceIn(DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT)
+        val cachedLimit = app.catalogRepository.section(serviceId)?.loadedPageLimit ?: 0
+        // View All grows MyMoviz in small, reliable batches. Even if several end-of-list
+        // signals arrive close together, never turn them into dozens of concurrent requests.
+        val requestedLimit = if (serviceId == MYMOVIZ_ID && rawRequestedLimit > cachedLimit) {
+            minOf(rawRequestedLimit, cachedLimit + MYMOVIZ_PAGE_BATCH)
+        } else {
+            rawRequestedLimit
+        }
+        val active = slots[serviceId]
+        if (active != null) {
+            if (requestedLimit <= active.pageLimit) {
+                onFinished?.let(active.callbacks::add)
+                Log.d(TAG, "join active service=$serviceId pages=${active.pageLimit}")
+            } else {
+                val pending = pendingRefreshes.getOrPut(serviceId) {
+                    PendingRefresh(requestedLimit, mutableListOf())
+                }
+                pending.pageLimit = maxOf(pending.pageLimit, requestedLimit)
+                onFinished?.let(pending.callbacks::add)
+                Log.d(
+                    TAG,
+                    "queue service=$serviceId active=${active.pageLimit} next=${pending.pageLimit}"
+                )
+            }
+            return
+        }
         val service = app.servicesRepository.findById(serviceId)
         if (service == null) {
             activity.lifecycleScope.launch {
                 app.catalogRepository.recordError(serviceId, "سرویس تنظیم نشده است")
+                onFinished?.invoke()
             }
             return
         }
 
         app.catalogRepository.setRefreshing(serviceId, true)
-        createWebView(service)
+        createWebView(
+            service,
+            requestedLimit,
+            mutableListOf<() -> Unit>().apply { onFinished?.let(::add) }
+        )
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun createWebView(service: StreamingService) {
+    private fun createWebView(
+        service: StreamingService,
+        pageLimit: Int,
+        callbacks: MutableList<() -> Unit>
+    ) {
         val serviceId = service.id
         val serviceHost = Uri.parse(service.url).host.orEmpty()
         var scriptStarted = false
@@ -106,14 +158,28 @@ class CatalogBackgroundSync(
                 }
                 view.postDelayed({
                     if (slots[serviceId]?.webView === view) {
-                        view.evaluateJavascript(scriptFor(serviceId), null)
+                        val cachedLimit = app.catalogRepository.section(serviceId)
+                            ?.loadedPageLimit
+                            ?: 0
+                        val pageStart = if (
+                            serviceId == MYMOVIZ_ID && pageLimit > cachedLimit
+                        ) {
+                            cachedLimit + 1
+                        } else {
+                            1
+                        }
+                        view.evaluateJavascript(
+                            scriptFor(serviceId, pageLimit, pageStart),
+                            null
+                        )
                     }
                 }, delay)
             }
         }
 
         val timeout = Runnable { fail(serviceId, webView, "timeout") }
-        slots[serviceId] = Slot(webView, timeout)
+        slots[serviceId] = Slot(webView, timeout, pageLimit, callbacks)
+        Log.d(TAG, "start service=$serviceId pages=$pageLimit")
         activity.addContentView(
             webView,
             FrameLayout.LayoutParams(2, 2, Gravity.BOTTOM or Gravity.END)
@@ -142,8 +208,15 @@ class CatalogBackgroundSync(
                     fail(expectedServiceId, source, "سرویس تنظیم نشده است")
                     return@post
                 }
-                val section = parseSection(service, payload.orEmpty())
+                val pageLimit = slots[expectedServiceId]?.pageLimit ?: DEFAULT_PAGE_LIMIT
+                val section = parseSection(service, payload.orEmpty(), pageLimit)
                 val accountSessions = parseAccountSessions(service, payload.orEmpty())
+                Log.d(
+                    TAG,
+                    "result service=$expectedServiceId pages=$pageLimit " +
+                        "movies=${section.movies.size} series=${section.series.size} " +
+                        "moreMovies=${section.hasMoreMovies} moreSeries=${section.hasMoreSeries}"
+                )
                 activity.lifecycleScope.launch {
                     app.catalogRepository.save(section)
                     // `null` means the account row was unavailable, so stale Continue data
@@ -182,11 +255,21 @@ class CatalogBackgroundSync(
         slots.remove(serviceId)
         handler.removeCallbacks(slot.timeout)
         app.catalogRepository.setRefreshing(serviceId, false)
+        slot.callbacks.forEach { callback -> runCatching(callback) }
         source.apply {
             stopLoading()
             removeJavascriptInterface("AminCatalog")
             (parent as? ViewGroup)?.removeView(this)
             destroy()
+        }
+        pendingRefreshes.remove(serviceId)?.let { pending ->
+            val service = app.servicesRepository.findById(serviceId)
+            if (service == null) {
+                pending.callbacks.forEach { callback -> runCatching(callback) }
+            } else {
+                app.catalogRepository.setRefreshing(serviceId, true)
+                createWebView(service, pending.pageLimit, pending.callbacks)
+            }
         }
     }
 
@@ -195,12 +278,20 @@ class CatalogBackgroundSync(
             complete(serviceId, slot.webView)
         }
         handler.removeCallbacksAndMessages(null)
+        pendingRefreshes.values
+            .flatMap(PendingRefresh::callbacks)
+            .forEach { callback -> runCatching(callback) }
+        pendingRefreshes.clear()
     }
 
     /**
      * Every bridge value is untrusted page output. Only normal same-host content pages survive.
      */
-    private fun parseSection(service: StreamingService, payload: String): CatalogSection {
+    private fun parseSection(
+        service: StreamingService,
+        payload: String,
+        loadedPageLimit: Int
+    ): CatalogSection {
         val adapter = ServiceAdapter(service)
         val serviceHost = Uri.parse(service.url).host
         val root = runCatching { JSONObject(payload) }.getOrNull()
@@ -337,7 +428,12 @@ class CatalogBackgroundSync(
             popularSeries = list("popularSeries"),
             featured = list("featured"),
             syncedAt = System.currentTimeMillis(),
-            error = ""
+            error = "",
+            loadedPageLimit = loadedPageLimit,
+            hasMoreAll = root.optBoolean("hasMoreAll"),
+            hasMoreMovies = root.optBoolean("hasMoreMovies"),
+            hasMoreSeries = root.optBoolean("hasMoreSeries"),
+            hasMorePopularSeries = root.optBoolean("hasMorePopularSeries")
         )
     }
 
@@ -391,20 +487,34 @@ class CatalogBackgroundSync(
     }
 
     private companion object {
+        const val TAG = "AminCatalogSync"
         const val PARSI_ID = "parsiflix"
         const val FILMROOZ_ID = "filmrooz"
         const val MYMOVIZ_ID = "mymoviz"
-        const val MAX_ITEMS = 24
+        // Home renders only the first few cards, while View All can use the larger cached set.
+        // Keep the cached window larger than the Home rails. The library still renders cards
+        // in small pages, while provider data can grow as the user keeps scrolling.
+        const val MAX_ITEMS = 2048
         const val MAX_ACCOUNT_ITEMS = 20
         const val TIMEOUT_MS = 35_000L
+        const val DEFAULT_PAGE_LIMIT = 4
+        const val MYMOVIZ_PAGE_BATCH = 4
+        // Keep a generous safety ceiling; the library requests the next window on demand.
+        const val MAX_PAGE_LIMIT = 200
         val SUPPORTED_IDS = setOf(PARSI_ID, FILMROOZ_ID, MYMOVIZ_ID)
 
-        fun scriptFor(serviceId: String): String =
-            when (serviceId) {
+        fun scriptFor(
+            serviceId: String,
+            pageLimit: Int,
+            pageStart: Int = 1
+        ): String =
+            (when (serviceId) {
                 PARSI_ID -> PARSI_SCRIPT
                 MYMOVIZ_ID -> MYMOVIZ_SCRIPT
                 else -> FILMROOZ_SCRIPT
-            }
+            }).replace("__AMIN_PAGE_LIMIT__", pageLimit.toString())
+                .replace("__AMIN_PAGE_START__", pageStart.toString())
+                .replace("__AMIN_MAX_ITEMS__", (pageLimit * 24).toString())
 
         val PARSI_SCRIPT = """
             (async function() {
@@ -533,17 +643,34 @@ class CatalogBackgroundSync(
                     };
                   });
 
-                async function typed(type) {
+                async function typed(type, pageNumber) {
                   var response = await fetch(
-                    'https://api.parsiflix.com/medias?type=' + type + '&page=1&size=24',
+                    'https://api.parsiflix.com/medias?type=' + type +
+                      '&page=' + pageNumber + '&size=96',
                     {headers: headers}
                   );
                   if (!response.ok) return [];
                   var data = await response.json();
-                  return (data.elements || []).slice(0, 24).map(map);
+                  return (data.elements || []).slice(0, 96).map(map);
                 }
-                var movies = await typed('MOVIE');
-                var series = await typed('SERIES');
+                async function pagedTyped(type) {
+                  var pages = [];
+                  var pageCount = Math.ceil(__AMIN_MAX_ITEMS__ / 96) + 2;
+                  for (var pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
+                    var result = await typed(type, pageNumber);
+                    if (!result.length) break;
+                    pages = pages.concat(result);
+                    if (result.length < 96) break;
+                  }
+                  return {
+                    items: pages.slice(0, __AMIN_MAX_ITEMS__),
+                    hasMore: pages.length > __AMIN_MAX_ITEMS__
+                  };
+                }
+                var movieResult = await pagedTyped('MOVIE');
+                var seriesResult = await pagedTyped('SERIES');
+                var movies = movieResult.items;
+                var series = seriesResult.items;
                 if (!all.length) {
                   all = movies.slice(0, 12).concat(series.slice(0, 12));
                 }
@@ -602,7 +729,9 @@ class CatalogBackgroundSync(
                   series: series,
                   popularSeries: [],
                   featured: featured,
-                  accountItems: accountItems
+                  accountItems: accountItems,
+                  hasMoreMovies: movieResult.hasMore,
+                  hasMoreSeries: seriesResult.hasMore
                 }));
               } catch (error) {
                 AminCatalog.failed('parsiflix', 'Service unavailable');
@@ -1061,9 +1190,31 @@ class CatalogBackgroundSync(
                 // Reconcile account history and public catalog metadata in the same
                 // invisible provider pass. Home never gets replaced by a sync screen.
                 var accountItems = await recentAccountItems();
-                var movies = await page('/archive/category/new-films/', 'MOVIE');
+                async function pagedArchive(basePath, kind) {
+                  var pages = [];
+                  var probeHasItems = false;
+                  for (var pageNumber = 1; pageNumber <= __AMIN_PAGE_LIMIT__ + 1; pageNumber++) {
+                    var path = pageNumber === 1
+                      ? basePath
+                      : basePath.replace(/\/$/, '') + '/page/' + pageNumber + '/';
+                    var result = await page(path, kind);
+                    if (!result.length) break;
+                    if (pageNumber <= __AMIN_PAGE_LIMIT__) {
+                      pages = pages.concat(result);
+                    } else {
+                      probeHasItems = true;
+                    }
+                  }
+                  return {
+                    items: unique(pages).slice(0, __AMIN_MAX_ITEMS__),
+                    hasMore: probeHasItems
+                  };
+                }
+                var movieResult = await pagedArchive('/archive/category/new-films/', 'MOVIE');
+                var movies = movieResult.items;
                 // Release-ordered: old series return to the top whenever a new episode lands.
-                var series = await page('/archive/series/', 'SERIES');
+                var seriesResult = await pagedArchive('/archive/series/', 'SERIES');
+                var series = seriesResult.items;
                 // Curated/trending, intentionally separate from new episode releases.
                 var popularSeries = await page(
                   '/archive/playlist/show/most-popular-tv-shows/', 'SERIES'
@@ -1078,11 +1229,13 @@ class CatalogBackgroundSync(
                   if (series[i]) all.push(series[i]);
                 }
                 var payload = {
-                  all: unique(all).slice(0, 24),
+                  all: unique(all).slice(0, __AMIN_MAX_ITEMS__),
                   movies: unique(movies),
                   series: unique(series),
                   popularSeries: unique(popularSeries),
-                  featured: await featuredBanners()
+                  featured: await featuredBanners(),
+                  hasMoreMovies: movieResult.hasMore,
+                  hasMoreSeries: seriesResult.hasMore
                 };
                 if (accountItems !== null) payload.accountItems = accountItems;
                 AminCatalog.section('filmrooz', JSON.stringify(payload));
@@ -1092,10 +1245,7 @@ class CatalogBackgroundSync(
             })();
         """.trimIndent()
 
-        /**
-         * Public MyMoviz catalogue only. Two pages per type are enough to feed a balanced
-         * 24-card Home rail after cross-provider dedupe; no login or watch page is touched.
-         */
+        /** Public MyMoviz catalogue only; no login or watch page is touched. */
         val MYMOVIZ_SCRIPT = """
             (async function() {
               function clean(value) {
@@ -1227,12 +1377,37 @@ class CatalogBackgroundSync(
                 });
               }
               try {
-                var pages = await Promise.all([
-                  page('MOVIE', 1), page('MOVIE', 2),
-                  page('SERIES', 1), page('SERIES', 2)
-                ]);
-                var movies = unique(pages[0].concat(pages[1])).slice(0, 24);
-                var series = unique(pages[2].concat(pages[3])).slice(0, 24);
+                // Fetch only the next four-page window. The former implementation launched
+                // up to 82 requests at once and silently lost many responses, then still
+                // recorded the requested end page as loaded.
+                var moviePages = [];
+                var seriesPages = [];
+                for (
+                  var pageNumber = __AMIN_PAGE_START__;
+                  pageNumber <= __AMIN_PAGE_LIMIT__ + 1;
+                  pageNumber++
+                ) {
+                  var pair = await Promise.all([
+                    page('MOVIE', pageNumber),
+                    page('SERIES', pageNumber)
+                  ]);
+                  moviePages.push(pair[0]);
+                  seriesPages.push(pair[1]);
+                }
+                var movieProbe = moviePages.pop() || [];
+                var seriesProbe = seriesPages.pop() || [];
+                var allMovies = unique([].concat.apply([], moviePages));
+                var allSeries = unique([].concat.apply([], seriesPages));
+                var movieResult = {
+                  items: allMovies.slice(0, __AMIN_MAX_ITEMS__),
+                  hasMore: movieProbe.length > 0
+                };
+                var seriesResult = {
+                  items: allSeries.slice(0, __AMIN_MAX_ITEMS__),
+                  hasMore: seriesProbe.length > 0
+                };
+                var movies = movieResult.items;
+                var series = seriesResult.items;
                 if (!movies.length && !series.length) {
                   AminCatalog.failed('mymoviz', 'Empty catalog');
                   return;
@@ -1243,11 +1418,13 @@ class CatalogBackgroundSync(
                   if (series[i]) all.push(series[i]);
                 }
                 AminCatalog.section('mymoviz', JSON.stringify({
-                  all: unique(all).slice(0, 24),
+                  all: unique(all).slice(0, __AMIN_MAX_ITEMS__),
                   movies: movies,
                   series: series,
                   popularSeries: [],
-                  featured: []
+                  featured: [],
+                  hasMoreMovies: movieResult.hasMore,
+                  hasMoreSeries: seriesResult.hasMore
                 }));
               } catch (_) {
                 AminCatalog.failed('mymoviz', 'Service unavailable');

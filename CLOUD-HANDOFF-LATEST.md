@@ -21,8 +21,8 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.18.1 / versionCode 43 — Canonical Duplicate Fix**
-- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- نسخه کد: **0.18.2 / versionCode 44 — Infinite Catalog Continuation Fix**
+- وضعیت در این لحظه: **آمادهٔ انتشار گیت‌هاب؛ Commit/Tag/Release این چرخه هنوز در حال انجام است**
 - Commit کد Release و هدف Tag: `842caa36683d812d569b013ed011b606297b0bef`
 - Tag: `v0.18.1`
 - GitHub Latest: **v0.18.1 همراه APK و SHA-256**
@@ -35,9 +35,12 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.0`
 - APK: `Aminema-0.18.0-debug.apk`؛ SHA-256:
   `91a0a663c54086b4e45cd2895c5dfacc4311cea7642839b47ab9509f0b64eaa8`
-- تغییر فعلی: ادغام محافظه‌کارانهٔ تکراری‌های FilmRooz/MyMoviz با تست‌های
-  `Minions`, `Young Washington` و `Our Hero Balthazar`. موردهای مبهم و
-  عناوین ایرانی مشترک عمداً Merge نمی‌شوند.
+- تغییر فعلی: صفحهٔ کتابخانه از Snapshot قدیمی Home جدا شد؛ MyMoviz در پنجره‌های
+  چهارصفحه‌ای از بعد آخرین صفحهٔ ذخیره‌شده واکشی می‌شود؛ `loadedPageLimit` برای
+  ادامهٔ واقعی فهرست ذخیره می‌شود؛ ادغام محافظه‌کارانه و حذف تکراری‌ها حفظ شده است.
+- شواهد QA: سریال خارجی در امولاتور از ۲۰۸ به ۴۴۸ عنوان رشد کرد و کش MyMoviz
+  به ۴۴۰ سریال رسید. تست‌ها و Lint موفق‌اند. Login/Cookie/WebStorage/Library
+  و Continue پاک نشده‌اند.
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`

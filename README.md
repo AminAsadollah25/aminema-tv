@@ -4,6 +4,22 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
+**Aminema 0.18.2 — Infinite Catalog Continuation Fix** (`versionCode 44`)
+
+- Fixes the full-library counter staying at 208/248 titles while the provider
+  still had more archive pages.
+- The View All screen now reads live catalog state while it remains open.
+- MyMoviz archive loading is incremental: four pages per request, sequentially,
+  with the next request starting after the last stored page.
+- Stores the verified loaded page window and migrates older caches without
+  clearing catalog, login, cookie, WebStorage, Continue or Favorite data.
+- Deduplicates the merged FilmRooz/MyMoviz international library as before.
+- Verified on the 1920×1080 emulator: the foreign-series library grew from
+  208 to 448 visible titles and the cache reached 440 MyMoviz series.
+- Unit tests, Lint and Debug APK build pass.
+
+## Previous release
+
 **Aminema 0.18.1 — Canonical Duplicate Fix** (`versionCode 43`)
 
 - Merges verified cross-provider duplicates such as `Minions & Monsters` /

@@ -213,7 +213,7 @@ fun CatalogCard(
 }
 
 @Composable
-private fun LanguageBadge(
+fun LanguageBadge(
     text: String,
     color: Color,
     modifier: Modifier = Modifier

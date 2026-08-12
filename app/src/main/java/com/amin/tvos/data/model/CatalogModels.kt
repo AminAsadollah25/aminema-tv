@@ -121,7 +121,14 @@ data class CatalogSection(
     val featured: List<CatalogItem> = emptyList(),
     val syncedAt: Long = 0L,
     /** Adapter failure text for this service only; the other row stays usable. */
-    val error: String = ""
+    val error: String = "",
+    /** Largest provider page window successfully stored for this service. */
+    val loadedPageLimit: Int = 0,
+    /** True only when the provider confirmed another page/window is available. */
+    val hasMoreAll: Boolean = false,
+    val hasMoreMovies: Boolean = false,
+    val hasMoreSeries: Boolean = false,
+    val hasMorePopularSeries: Boolean = false
 ) {
     fun items(filter: CatalogFilter): List<CatalogItem> = when (filter) {
         CatalogFilter.ALL -> all

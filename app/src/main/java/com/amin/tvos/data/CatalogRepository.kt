@@ -86,11 +86,84 @@ class CatalogRepository(private val context: Context) {
         }
     }
 
-    /** Replaces one service's cached row, leaving every other service untouched. */
+    /**
+     * Updates one service without letting a later shallow refresh shrink a library window that
+     * the user already loaded. Provider order is preserved; older cached tail items are appended.
+     */
     suspend fun save(section: CatalogSection) = withContext(Dispatchers.IO) {
-        val normalized = normalize(section)
+        // Incoming adapter output carries an authoritative end-page marker. normalize() also
+        // repairs legacy on-disk caches, so retain the adapter marker here before merging.
+        val normalized = normalize(section).copy(loadedPageLimit = section.loadedPageLimit)
+        val existing = section(normalized.serviceId)
+        fun keepLoadedTail(
+            incoming: List<CatalogItem>,
+            cached: List<CatalogItem>
+        ): List<CatalogItem> = buildList {
+            addAll(incoming)
+            val seen = incoming
+                .map { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+                .toMutableSet()
+            cached.forEach { item ->
+                if (seen.add(ContentMetadataPolicy.canonicalContentUrl(item.contentUrl))) {
+                    add(item)
+                }
+            }
+        }
+        val complete = existing?.let { cached ->
+            // Caches written before loadedPageLimit existed can already contain a deep
+            // MyMoviz window. Its adapter contributes ten relevant titles per page, so infer
+            // that one time rather than restarting at page 4 and repeatedly reloading data
+            // already present in the library.
+            val inferredMyMovizPageLimit = if (cached.serviceId == MYMOVIZ_SERVICE_ID) {
+                val loadedItems = maxOf(
+                    cached.movies.size,
+                    cached.series.size
+                )
+                if (loadedItems == 0) 0 else {
+                    ((loadedItems + MYMOVIZ_ITEMS_PER_PAGE - 1) / MYMOVIZ_ITEMS_PER_PAGE)
+                        .coerceAtLeast(DEFAULT_PAGE_LIMIT)
+                }
+            } else {
+                0
+            }
+            // Older builds could claim page 40 after receiving only 200 titles. Never start
+            // the next batch beyond what the stored rows can substantiate.
+            val migratedCachedPageLimit = if (cached.serviceId == MYMOVIZ_SERVICE_ID) {
+                cached.loadedPageLimit
+                    .takeIf { it > 0 }
+                    ?.coerceAtMost(inferredMyMovizPageLimit)
+                    ?: inferredMyMovizPageLimit
+            } else cached.loadedPageLimit
+            val extendsCachedWindow = normalized.loadedPageLimit > migratedCachedPageLimit
+            fun mergeWindow(
+                incoming: List<CatalogItem>,
+                cachedItems: List<CatalogItem>
+            ): List<CatalogItem> = if (extendsCachedWindow) {
+                keepLoadedTail(cachedItems, incoming)
+            } else {
+                keepLoadedTail(incoming, cachedItems)
+            }
+            normalized.copy(
+                all = mergeWindow(normalized.all, cached.all),
+                movies = mergeWindow(normalized.movies, cached.movies),
+                series = mergeWindow(normalized.series, cached.series),
+                popularSeries = mergeWindow(
+                    normalized.popularSeries,
+                    cached.popularSeries
+                ),
+                featured = if (normalized.featured.isNotEmpty()) {
+                    normalized.featured
+                } else {
+                    cached.featured
+                },
+                loadedPageLimit = maxOf(
+                    normalized.loadedPageLimit,
+                    migratedCachedPageLimit
+                )
+            )
+        } ?: normalized
         val merged =
-            _sections.value.filterNot { it.serviceId == normalized.serviceId } + normalized
+            _sections.value.filterNot { it.serviceId == complete.serviceId } + complete
         persist(merged)
     }
 
@@ -111,14 +184,32 @@ class CatalogRepository(private val context: Context) {
     }
 
     /** Keeps old JSON caches visually clean after parser rules improve. */
-    private fun normalize(section: CatalogSection): CatalogSection =
-        section.copy(
+    private fun normalize(section: CatalogSection): CatalogSection {
+        val migratedPageLimit = if (section.serviceId == MYMOVIZ_SERVICE_ID) {
+            val loadedItems = maxOf(
+                section.movies.size,
+                section.series.size
+            )
+            val inferred = if (loadedItems == 0) 0 else {
+                ((loadedItems + MYMOVIZ_ITEMS_PER_PAGE - 1) / MYMOVIZ_ITEMS_PER_PAGE)
+                    .coerceAtLeast(DEFAULT_PAGE_LIMIT)
+            }
+            // A cumulative MyMoviz cache contains about ten relevant rows per fetched page.
+            // This repairs both old over-reported markers (40 pages / 200 rows) and an
+            // interrupted write whose marker trails the rows already persisted.
+            inferred
+        } else {
+            section.loadedPageLimit
+        }
+        return section.copy(
             all = section.all.map(::normalize),
             movies = section.movies.map(::normalize),
             series = section.series.map(::normalize),
             popularSeries = section.popularSeries.map(::normalize),
-            featured = section.featured.map(::normalize)
+            featured = section.featured.map(::normalize),
+            loadedPageLimit = migratedPageLimit
         )
+    }
 
     private fun normalize(item: CatalogItem): CatalogItem =
         item.copy(
@@ -205,5 +296,8 @@ class CatalogRepository(private val context: Context) {
 
     private companion object {
         const val MAX_TITLE_METADATA = 150
+        const val MYMOVIZ_SERVICE_ID = "mymoviz"
+        const val MYMOVIZ_ITEMS_PER_PAGE = 10
+        const val DEFAULT_PAGE_LIMIT = 4
     }
 }

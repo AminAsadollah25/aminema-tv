@@ -47,6 +47,7 @@ fun CatalogSectionRow(
     onFilterChange: (CatalogFilter) -> Unit,
     onRefresh: () -> Unit,
     onOpen: (CatalogItem) -> Unit,
+    onOpenAll: (() -> Unit)? = null,
     onPreview: (CatalogItem) -> Unit = {},
     itemsOverride: List<CatalogItem>? = null,
     showFilters: Boolean = true,
@@ -81,6 +82,20 @@ fun CatalogSectionRow(
                 }
             }
             Spacer(Modifier.weight(1f))
+            if (onOpenAll != null) {
+                FocusableCard(
+                    shape = RoundedCornerShape(50),
+                    onClick = onOpenAll
+                ) {
+                    Text(
+                        "نمایش بیشتر",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+            }
             section?.syncedAt?.takeIf { it > 0L }?.let { syncedAt ->
                 Text(
                     lastSyncLabel(syncedAt),

@@ -81,6 +81,12 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(
     onOpenSettings: () -> Unit,
+    onOpenLibrary: (
+        String,
+        (List<CatalogSection>) -> List<CatalogItem>,
+        (CatalogItem) -> Unit,
+        Set<String>
+    ) -> Unit,
     onRefreshCatalog: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -137,7 +143,9 @@ fun HomeScreen(
             providerLists = listOf(filmRoozItems, myMovizItems),
             metadataByUrl = titleMetadata,
             providerNames = providerNames,
-            limit = 24
+            // Keep the full provider window available to View All. Home rails still render only
+            // their compact preview; the library can now continue past the first 288 titles.
+            limit = 2048
         )
         Triple(
             merged(
@@ -199,6 +207,48 @@ fun HomeScreen(
                 ""
             }
         )
+    }
+
+    // A library route can stay open while provider pages are appended in the background.
+    // Pass a selector over the current repository snapshot instead of capturing the compact
+    // Home rail. Otherwise View All remains frozen at the item count that existed on click.
+    fun libraryItems(
+        sections: List<CatalogSection>,
+        kind: CatalogKind,
+        international: Boolean
+    ): List<CatalogItem> {
+        if (!international) {
+            val current = sections.firstOrNull {
+                it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
+            }
+            return when (kind) {
+                CatalogKind.MOVIE -> current?.movies.orEmpty()
+                CatalogKind.SERIES -> current?.series.orEmpty()
+            }
+        }
+
+        val filmRooz = sections.firstOrNull {
+            it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
+        }
+        val myMoviz = sections.firstOrNull {
+            it.serviceId == HomeViewModel.MYMOVIZ_SERVICE_ID
+        }
+        val providerLists = when (kind) {
+            CatalogKind.MOVIE -> listOf(
+                filmRooz?.movies.orEmpty(),
+                myMoviz?.movies.orEmpty()
+            )
+            CatalogKind.SERIES -> listOf(
+                filmRooz?.series.orEmpty(),
+                myMoviz?.series.orEmpty()
+            )
+        }
+        return CanonicalLibrary.mergeLatest(
+            providerLists = providerLists,
+            metadataByUrl = titleMetadata,
+            providerNames = providerNames,
+            limit = 2048
+        ).map(CanonicalMedia::representative)
     }
     fun previewFor(item: MovieItem): CatalogItem {
         val key = ContentMetadataPolicy.canonicalContentUrl(item.url)
@@ -910,6 +960,7 @@ fun HomeScreen(
                 CatalogKind.SERIES -> section?.series.orEmpty()
             }
             if (items.isNotEmpty()) {
+                val isInternational = title == "سریال خارجی" || title == "فیلم خارجی"
                 CatalogSectionRow(
                     title = title,
                     section = section,
@@ -928,6 +979,27 @@ fun HomeScreen(
                         }
                     },
                     onOpen = { openSpotlight(spotlightForCatalog(it)) },
+                    onOpenAll = {
+                        onOpenLibrary(
+                            title,
+                            { latestSections ->
+                                libraryItems(
+                                    sections = latestSections,
+                                    kind = kind,
+                                    international = isInternational
+                                )
+                            },
+                            { selected -> openSpotlight(spotlightForCatalog(selected)) },
+                            if (isInternational) {
+                                setOf(
+                                    HomeViewModel.INTERNATIONAL_SERVICE_ID,
+                                    HomeViewModel.MYMOVIZ_SERVICE_ID
+                                )
+                            } else {
+                                setOfNotNull(section?.serviceId)
+                            }
+                        )
+                    },
                     onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
                     itemsOverride = items,
                     showFilters = false,
@@ -953,6 +1025,18 @@ fun HomeScreen(
             onFilterChange = {},
             onRefresh = { onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID) },
             onOpen = { openSpotlight(spotlightForCatalog(it)) },
+            onOpenAll = {
+                onOpenLibrary(
+                    "سریال‌های برگزیده",
+                    { latestSections ->
+                        latestSections.firstOrNull {
+                            it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
+                        }?.popularSeries.orEmpty()
+                    },
+                    { selected -> openSpotlight(spotlightForCatalog(selected)) },
+                    setOf(HomeViewModel.INTERNATIONAL_SERVICE_ID)
+                )
+            },
             onPreview = { previewFromRail(it.posterUrl, it.contentUrl) },
             itemsOverride = internationalSection?.popularSeries.orEmpty(),
             showFilters = false,
