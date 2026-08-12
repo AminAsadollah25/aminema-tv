@@ -30,6 +30,15 @@ enum class CanonicalMatchConfidence {
     /** Normalised title, release year and movie/series kind all agree. */
     TITLE_YEAR_KIND,
 
+    /** Exact title/kind match where providers differ by at most one publication year. */
+    TITLE_YEAR_DRIFT,
+
+    /** One provider adds a clear subtitle while title, year and kind agree. */
+    TITLE_ALIAS_YEAR,
+
+    /** Clear subtitle alias with the same small one-year publication drift. */
+    TITLE_ALIAS_YEAR_DRIFT,
+
     /** Title/kind agree and verified director/cast evidence overlaps. */
     TITLE_CREDITS_KIND,
 

@@ -189,17 +189,30 @@ object CanonicalLibrary {
 
         val firstTitle = CanonicalText.normalizeTitle(first.item.title)
         val secondTitle = CanonicalText.normalizeTitle(second.item.title)
-        if (firstTitle.isBlank() || firstTitle != secondTitle) {
+        val titleAlias = CanonicalText.isClearSubtitleAlias(
+            first.item.title,
+            second.item.title
+        )
+        if (firstTitle.isBlank() || (firstTitle != secondTitle && !titleAlias)) {
             return CanonicalMatchConfidence.INDEPENDENT
         }
 
         val firstYear = CanonicalText.normalizeYear(first.item.year)
         val secondYear = CanonicalText.normalizeYear(second.item.year)
         if (firstYear.isNotBlank() && secondYear.isNotBlank()) {
-            return if (firstYear == secondYear) {
-                CanonicalMatchConfidence.TITLE_YEAR_KIND
-            } else {
-                CanonicalMatchConfidence.INDEPENDENT
+            val firstYearNumber = firstYear.toIntOrNull()
+            val secondYearNumber = secondYear.toIntOrNull()
+            if (firstYearNumber == null || secondYearNumber == null) {
+                return CanonicalMatchConfidence.INDEPENDENT
+            }
+            val yearDifference = kotlin.math.abs(firstYearNumber - secondYearNumber)
+            return when {
+                !titleAlias && yearDifference == 0 -> CanonicalMatchConfidence.TITLE_YEAR_KIND
+                !titleAlias && yearDifference == 1 -> CanonicalMatchConfidence.TITLE_YEAR_DRIFT
+                titleAlias && yearDifference == 0 -> CanonicalMatchConfidence.TITLE_ALIAS_YEAR
+                titleAlias && yearDifference == 1 ->
+                    CanonicalMatchConfidence.TITLE_ALIAS_YEAR_DRIFT
+                else -> CanonicalMatchConfidence.INDEPENDENT
             }
         }
 
@@ -296,6 +309,9 @@ object CanonicalLibrary {
         get() = when (this) {
             CanonicalMatchConfidence.IMDb -> 4
             CanonicalMatchConfidence.TITLE_YEAR_KIND -> 3
+            CanonicalMatchConfidence.TITLE_ALIAS_YEAR -> 3
+            CanonicalMatchConfidence.TITLE_YEAR_DRIFT -> 2
+            CanonicalMatchConfidence.TITLE_ALIAS_YEAR_DRIFT -> 2
             CanonicalMatchConfidence.TITLE_CREDITS_KIND -> 2
             CanonicalMatchConfidence.SAME_SOURCE_PAGE -> 1
             CanonicalMatchConfidence.INDEPENDENT -> 0
@@ -335,12 +351,39 @@ object CanonicalText {
         val folded = Normalizer.normalize(displayTitle(value), Normalizer.Form.NFKD)
             .lowercase(Locale.ROOT)
             .toLatinDigits()
+            .replace("&", " and ")
             .replace('ي', 'ی')
             .replace('ى', 'ی')
             .replace('ك', 'ک')
             .replace('ة', 'ه')
             .replace('ۀ', 'ه')
         return folded.filter { it.isLetterOrDigit() }
+    }
+
+    /**
+     * Detects a clear editorial subtitle alias such as
+     * `Young Washington: A Founder's Story` vs `Young Washington`.
+     *
+     * This intentionally avoids fuzzy similarity: only an explicit subtitle delimiter may
+     * be removed, and the shorter title must be the complete prefix of the longer one.
+     */
+    fun isClearSubtitleAlias(first: String, second: String): Boolean {
+        val firstTitle = normalizeTitle(first)
+        val secondTitle = normalizeTitle(second)
+        if (firstTitle.isBlank() || secondTitle.isBlank() || firstTitle == secondTitle) {
+            return false
+        }
+        val firstCore = subtitleCore(first)
+        val secondCore = subtitleCore(second)
+        return firstCore.isNotBlank() && secondCore.isNotBlank() &&
+            (firstCore == secondTitle || secondCore == firstTitle)
+    }
+
+    private fun subtitleCore(value: String): String {
+        val core = value.trim().split(
+            Regex("\\s*[:：]\\s*|\\s+[–—-]\\s+")
+        ).firstOrNull().orEmpty()
+        return normalizeTitle(core)
     }
 
     private fun String.toLatinDigits(): String = map { character ->

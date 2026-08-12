@@ -27,6 +27,10 @@ class CanonicalLibraryTest {
             CanonicalText.normalizeTitle("Spider-Man"),
             CanonicalText.normalizeTitle("spiderman")
         )
+        assertEquals(
+            CanonicalText.normalizeTitle("Minions & Monsters"),
+            CanonicalText.normalizeTitle("Minions And Monsters")
+        )
     }
 
     @Test
@@ -72,6 +76,72 @@ class CanonicalLibraryTest {
     fun conflictingYearsStaySeparateEvenWhenTitlesMatch() {
         val first = item("Same Name", "https://one.test/title/1", "one", year = "2019")
         val second = item("Same Name", "https://two.test/title/2", "two", year = "2024")
+
+        assertEquals(2, CanonicalLibrary.canonicalize(listOf(first, second)).size)
+    }
+
+    @Test
+    fun oneYearReleaseDriftDoesNotDuplicateAnExactCrossProviderTitle() {
+        val filmRooz = movie(
+            "Our Hero, Balthazar (2025)",
+            "https://film.test/post/film/1/our-hero-balthazar/",
+            "filmrooz",
+            "",
+            year = "2025"
+        )
+        val myMoviz = movie(
+            "Our Hero Balthazar",
+            "https://movie.test/_modern/title/2/our-hero-balthazar-2026",
+            "mymoviz",
+            "",
+            year = "2026"
+        )
+
+        val result = CanonicalLibrary.canonicalize(listOf(filmRooz, myMoviz))
+
+        assertEquals(1, result.size)
+        assertEquals(CanonicalMatchConfidence.TITLE_YEAR_DRIFT, result.single().matchConfidence)
+    }
+
+    @Test
+    fun clearSubtitleAliasDoesNotDuplicateYoungWashington() {
+        val filmRooz = movie(
+            "Young Washington: A Founder's Story (2026)",
+            "https://film.test/post/film/1/young-washington/",
+            "filmrooz",
+            "",
+            year = "2026"
+        )
+        val myMoviz = movie(
+            "Young Washington",
+            "https://movie.test/_modern/title/2/young-washington-2026",
+            "mymoviz",
+            "",
+            year = "2026"
+        )
+
+        val result = CanonicalLibrary.canonicalize(listOf(filmRooz, myMoviz))
+
+        assertEquals(1, result.size)
+        assertEquals(CanonicalMatchConfidence.TITLE_ALIAS_YEAR, result.single().matchConfidence)
+    }
+
+    @Test
+    fun titleAliasWithDifferentYearsStillStaysSeparateWhenDriftIsLarge() {
+        val first = movie(
+            "Young Washington: A Founder's Story",
+            "https://one.test/title/1",
+            "one",
+            "",
+            year = "2010"
+        )
+        val second = movie(
+            "Young Washington",
+            "https://two.test/title/2",
+            "two",
+            "",
+            year = "2024"
+        )
 
         assertEquals(2, CanonicalLibrary.canonicalize(listOf(first, second)).size)
     }
@@ -226,7 +296,8 @@ class CanonicalLibraryTest {
         serviceId: String,
         imdbId: String,
         dubbed: Boolean = false,
-        quality: Int = 0
+        quality: Int = 0,
+        year: String = ""
     ) = CatalogItem(
         title = title,
         kind = CatalogKind.MOVIE,
@@ -234,6 +305,7 @@ class CanonicalLibraryTest {
         serviceId = serviceId,
         imdbId = imdbId,
         hasPersianDub = dubbed,
-        maxQualityHeight = quality
+        maxQualityHeight = quality,
+        year = year
     )
 }

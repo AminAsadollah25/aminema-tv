@@ -4,6 +4,20 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
+**Aminema 0.18.1 — Canonical Duplicate Fix** (`versionCode 43`)
+
+- Merges verified cross-provider duplicates such as `Minions & Monsters` /
+  `Minions And Monsters`, `Young Washington` and `Our Hero Balthazar`.
+- Accepts only explicit subtitle aliases and a maximum one-year provider
+  publication drift; ambiguous titles and large year conflicts remain separate.
+- Keeps the Iranian and international catalog boundaries intact, including
+  rare Iranian titles that also appear on an international provider.
+- Adds regression tests for the three observed duplicate patterns and the
+  protective non-merge case.
+- Login sessions, cookies, library data and provider behavior are unchanged.
+
+## Previous release
+
 **Aminema 0.18.0 — Live TV Playback Polish** (`versionCode 42`)
 
 - Adds a dedicated ParsaTV Live TV destination with Persian, national, sports
@@ -20,7 +34,7 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
   on the signed-in 1920×1080 TV emulator.
 - Published as GitHub release `v0.18.0` with the tested APK and SHA-256 file.
 
-## Previous release
+## Earlier release
 
 **Aminema 0.17.1 — MyMoviz Home Entry** (`versionCode 41`)
 

@@ -21,14 +21,17 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.18.0 / versionCode 42 — Live TV Playback Polish**
-- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- نسخه کد: **0.18.1 / versionCode 43 — Canonical Duplicate Fix**
+- وضعیت در این لحظه: **در حال انتشار؛ تست و Build موفق**
 - Commit کد Release و هدف Tag: `85ae6501c1cdc232b860db1fbee803c1a878c791`
 - Tag: `v0.18.0`
 - GitHub Latest: **v0.18.0 همراه APK و SHA-256**
 - Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.0`
 - APK: `Aminema-0.18.0-debug.apk`؛ SHA-256:
   `91a0a663c54086b4e45cd2895c5dfacc4311cea7642839b47ab9509f0b64eaa8`
+- تغییر فعلی: ادغام محافظه‌کارانهٔ تکراری‌های FilmRooz/MyMoviz با تست‌های
+  `Minions`, `Young Washington` و `Our Hero Balthazar`. موردهای مبهم و
+  عناوین ایرانی مشترک عمداً Merge نمی‌شوند.
 - شاخه: `main`
 - مخزن: `https://github.com/AminAsadollah25/aminema-tv`
 - Package نصب: `com.amin.tvos.debug`
