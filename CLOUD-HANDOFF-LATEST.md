@@ -22,7 +22,11 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 
 - محصول: **Aminema**
 - نسخه کد: **0.18.2 / versionCode 44 — Infinite Catalog Continuation Fix**
-- وضعیت در این لحظه: **آمادهٔ انتشار گیت‌هاب؛ Commit/Tag/Release این چرخه هنوز در حال انجام است**
+- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- Commit: `434bc4a`; Tag: `v0.18.2`
+- GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.2`
+- APK: `Aminema-0.18.2-debug.apk`; SHA-256:
+  `d1205bf93d8ca63f7908ba49e0c79a140b342236283e8a5beead07b451f171d3`
 - Commit کد Release و هدف Tag: `842caa36683d812d569b013ed011b606297b0bef`
 - Tag: `v0.18.1`
 - GitHub Latest: **v0.18.1 همراه APK و SHA-256**
