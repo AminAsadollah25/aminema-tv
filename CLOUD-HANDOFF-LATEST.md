@@ -22,7 +22,13 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 
 - محصول: **Aminema**
 - نسخه کد: **0.18.1 / versionCode 43 — Canonical Duplicate Fix**
-- وضعیت در این لحظه: **در حال انتشار؛ تست و Build موفق**
+- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- Commit کد Release و هدف Tag: `842caa36683d812d569b013ed011b606297b0bef`
+- Tag: `v0.18.1`
+- GitHub Latest: **v0.18.1 همراه APK و SHA-256**
+- Release منتشرشده فعلی: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.1`
+- APK: `Aminema-0.18.1-debug.apk`؛ SHA-256:
+  `51dae0cb750b2e7d871655ea10945d9f25f9ba53a4e4d291cdd7d31a0bc397c6`
 - Commit کد Release و هدف Tag: `85ae6501c1cdc232b860db1fbee803c1a878c791`
 - Tag: `v0.18.0`
 - GitHub Latest: **v0.18.0 همراه APK و SHA-256**
