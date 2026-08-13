@@ -240,9 +240,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Cold-start check, silent unless a release newer than any previously skipped one exists. */
     fun checkForUpdate() = viewModelScope.launch {
-        val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE) ?: return@launch
+        val release = updateRepo.checkForUpdate(
+            BuildConfig.VERSION_CODE,
+            BuildConfig.VERSION_NAME
+        ) ?: return@launch
         val skipped = settingsRepo.skippedUpdateVersionCode.first()
-        if (release.versionCode > skipped) {
+        // The value is the identity of the one release the user skipped, not a permanent
+        // minimum. A future release can use an explicit Android code after an older semantic
+        // fallback, so equality is the only safe suppression rule.
+        if (release.versionCode != skipped) {
             updateRepo.publishState(UpdateState.Available(release))
         }
     }
@@ -250,7 +256,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     /** Settings' manual "check now" — ignores any previously skipped version. */
     fun checkForUpdateManually() = viewModelScope.launch {
         updateRepo.publishState(UpdateState.Checking)
-        val release = updateRepo.checkForUpdate(BuildConfig.VERSION_CODE)
+        val release = updateRepo.checkForUpdate(
+            BuildConfig.VERSION_CODE,
+            BuildConfig.VERSION_NAME
+        )
         updateRepo.publishState(
             if (release != null) UpdateState.Available(release) else UpdateState.Idle
         )

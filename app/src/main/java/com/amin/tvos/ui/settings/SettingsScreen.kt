@@ -31,7 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.BuildConfig
@@ -52,9 +55,15 @@ fun SettingsScreen(
     val uaMode by viewModel.userAgentMode.collectAsState()
     val updateState by viewModel.updateState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var servicePendingRemoval by remember { mutableStateOf<com.amin.tvos.data.model.StreamingService?>(null) }
+    var confirmLogout by remember { mutableStateOf(false) }
+    var confirmClearHistory by remember { mutableStateOf(false) }
 
     fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalLayoutDirection provides LayoutDirection.Rtl
+    ) {
     Column(
         Modifier
             .fillMaxSize()
@@ -65,35 +74,46 @@ fun SettingsScreen(
             FocusableCard(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = "بازگشت",
                     modifier = Modifier.padding(12.dp)
                 )
             }
             Spacer(Modifier.width(20.dp))
-            Text("Settings", style = MaterialTheme.typography.displayMedium)
+            Text("تنظیمات", style = MaterialTheme.typography.displayMedium)
         }
         Spacer(Modifier.height(28.dp))
 
         // ---------- Manage services ----------
-        Text("Manage Services", style = MaterialTheme.typography.headlineMedium)
+        Text("مدیریت سرویس‌ها", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "Services live in services.json — add here or edit the file directly.",
+            "سرویس‌های متصل به Aminema را اینجا مدیریت کنید.",
             color = TextSecondary
         )
         Spacer(Modifier.height(12.dp))
         services.forEach { service ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth(0.62f).padding(vertical = 6.dp)
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(service.name, style = MaterialTheme.typography.titleLarge)
-                    Text(service.url, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        LocalLayoutDirection provides LayoutDirection.Ltr
+                    ) {
+                        Text(
+                            service.url,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.End
+                        )
+                    }
                 }
-                FocusableCard(onClick = { viewModel.removeService(service.id) }) {
+                FocusableCard(onClick = { servicePendingRemoval = service }) {
                     Icon(
                         Icons.Filled.Delete,
-                        contentDescription = "Remove ${service.name}",
+                        contentDescription = "حذف ${service.name}",
                         tint = CinemaRed,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -108,14 +128,14 @@ fun SettingsScreen(
             ) {
                 Icon(Icons.Filled.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Add Service")
+                Text("افزودن سرویس")
             }
         }
 
         Spacer(Modifier.height(32.dp))
 
         // ---------- User Agent ----------
-        Text("Browser User Agent", style = MaterialTheme.typography.headlineMedium)
+        Text("حالت مرورگر", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             UserAgentMode.entries.forEach { mode ->
@@ -138,9 +158,9 @@ fun SettingsScreen(
 
         // ---------- Login / QR zoom ----------
         val zoom by viewModel.browserZoom.collectAsState()
-        Text("Login / QR Zoom", style = MaterialTheme.typography.headlineMedium)
+        Text("بزرگ‌نمایی ورود و QR", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "Only login and QR pages use this scale. Catalog and video pages stay at 100%.",
+            "فقط صفحه‌های ورود و QR تغییر اندازه می‌دهند؛ فیلم و کاتالوگ روی ۱۰۰٪ می‌مانند.",
             color = TextSecondary
         )
         Spacer(Modifier.height(12.dp))
@@ -162,7 +182,7 @@ fun SettingsScreen(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
             }
             FocusableCard(onClick = { viewModel.resetBrowserZoom() }) {
-                Text("Reset (85%)", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+                Text("پیش‌فرض (۸۵٪)", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
             }
         }
 
@@ -171,9 +191,9 @@ fun SettingsScreen(
         // ---------- Startup intro ----------
         val playIntro by viewModel.playIntro.collectAsState()
         val muteIntro by viewModel.muteIntro.collectAsState()
-        Text("Startup Intro", style = MaterialTheme.typography.headlineMedium)
+        Text("اینتروی شروع", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "The Aminema intro plays once per cold start. OK, Back or a mouse click skips it.",
+            "در هر اجرای تازه یک‌بار پخش می‌شود؛ با OK، بازگشت یا کلیک موس رد می‌شود.",
             color = TextSecondary
         )
         Spacer(Modifier.height(12.dp))
@@ -187,7 +207,7 @@ fun SettingsScreen(
                         Icon(Icons.Filled.Check, contentDescription = null, tint = CinemaRed)
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text("Play intro")
+                    Text("پخش اینترو")
                 }
             }
             FocusableCard(onClick = { viewModel.setMuteIntro(!muteIntro) }) {
@@ -199,7 +219,7 @@ fun SettingsScreen(
                         Icon(Icons.Filled.Check, contentDescription = null, tint = CinemaRed)
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text("Mute intro")
+                    Text("پخش بی‌صدا")
                 }
             }
         }
@@ -207,30 +227,29 @@ fun SettingsScreen(
         Spacer(Modifier.height(32.dp))
 
         // ---------- Privacy / storage ----------
-        Text("Privacy & Storage", style = MaterialTheme.typography.headlineMedium)
+        Text("حریم خصوصی و حافظه", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            FocusableCard(onClick = { viewModel.clearCookies { toast("Cookies cleared — you are logged out") } }) {
-                Text("Clear Cookies / Logout", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+            FocusableCard(onClick = { confirmLogout = true }) {
+                Text("پاک‌کردن ورودها و خروج", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
             }
-            FocusableCard(onClick = { viewModel.clearCache { toast("Cache cleared") } }) {
-                Text("Clear Cache", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+            FocusableCard(onClick = { viewModel.clearCache { toast("حافظه موقت پاک شد") } }) {
+                Text("پاک‌کردن حافظه موقت", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
             }
-            FocusableCard(onClick = { viewModel.clearHistory(); toast("History cleared") }) {
-                Text("Clear History", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+            FocusableCard(onClick = { confirmClearHistory = true }) {
+                Text("پاک‌کردن تاریخچه", Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
             }
         }
 
         Spacer(Modifier.height(32.dp))
 
         // ---------- About ----------
-        Text("About", style = MaterialTheme.typography.headlineMedium)
+        Text("درباره Aminema", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         Text("Aminema  •  v${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium)
         Text(
-            "A personal entertainment dashboard. Not a streaming service — it only opens " +
-                "your own subscribed websites in an optimized TV browser. No content is " +
-                "hosted, scraped, or redistributed.",
+            "هاب سرگرمی شخصی شما؛ محتوا را میزبانی یا بازنشر نمی‌کند و فقط سرویس‌های " +
+                "خودتان را در مرورگر بهینه تلویزیون باز می‌کند.",
             color = TextSecondary
         )
         Spacer(Modifier.height(16.dp))
@@ -264,28 +283,85 @@ fun SettingsScreen(
         var url by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Add Service") },
+            title = { Text("افزودن سرویس") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = name, onValueChange = { name = it },
-                        label = { Text("Name") }, singleLine = true
+                        label = { Text("نام") }, singleLine = true
                     )
-                    OutlinedTextField(
-                        value = url, onValueChange = { url = it },
-                        label = { Text("URL (https://…)") }, singleLine = true
-                    )
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        LocalLayoutDirection provides LayoutDirection.Ltr
+                    ) {
+                        OutlinedTextField(
+                            value = url,
+                            onValueChange = { url = it },
+                            label = { Text("URL (https://…)") },
+                            singleLine = true
+                        )
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.addService(name, url)
                     showAddDialog = false
-                }) { Text("Add", color = CinemaRed) }
+                }) { Text("افزودن", color = CinemaRed) }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showAddDialog = false }) { Text("انصراف") }
             }
         )
+    }
+
+    servicePendingRemoval?.let { service ->
+        AlertDialog(
+            onDismissRequest = { servicePendingRemoval = null },
+            title = { Text("حذف ${service.name}؟") },
+            text = { Text("این سرویس از فهرست Aminema حذف می‌شود.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeService(service.id)
+                    servicePendingRemoval = null
+                }) { Text("حذف", color = CinemaRed) }
+            },
+            dismissButton = {
+                TextButton(onClick = { servicePendingRemoval = null }) { Text("انصراف") }
+            }
+        )
+    }
+    if (confirmLogout) {
+        AlertDialog(
+            onDismissRequest = { confirmLogout = false },
+            title = { Text("خروج از همه سرویس‌ها؟") },
+            text = { Text("کوکی‌ها و نشست‌های ورود پاک می‌شوند و باید دوباره وارد شوید.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmLogout = false
+                    viewModel.clearCookies { toast("از همه سرویس‌ها خارج شدید") }
+                }) { Text("خروج", color = CinemaRed) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmLogout = false }) { Text("انصراف") }
+            }
+        )
+    }
+    if (confirmClearHistory) {
+        AlertDialog(
+            onDismissRequest = { confirmClearHistory = false },
+            title = { Text("تاریخچه پاک شود؟") },
+            text = { Text("موارد اخیراً بازشده و ادامه تماشا پاک می‌شوند؛ علاقه‌مندی‌ها باقی می‌مانند.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClearHistory = false
+                    viewModel.clearHistory()
+                    toast("تاریخچه پاک شد")
+                }) { Text("پاک‌کردن", color = CinemaRed) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClearHistory = false }) { Text("انصراف") }
+            }
+        )
+    }
     }
 }

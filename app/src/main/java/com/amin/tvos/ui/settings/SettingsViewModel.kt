@@ -1,6 +1,7 @@
 package com.amin.tvos.ui.settings
 
 import android.app.Application
+import android.net.Uri
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import androidx.lifecycle.AndroidViewModel
@@ -77,9 +78,15 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun addService(name: String, url: String) = viewModelScope.launch {
         if (name.isBlank() || url.isBlank()) return@launch
         val normalized = if (url.startsWith("http")) url else "https://$url"
+        val nameId = name.lowercase().replace(Regex("[^a-z0-9]"), "_").trim('_')
+        val hostId = runCatching { Uri.parse(normalized).host.orEmpty() }
+            .getOrDefault("")
+            .lowercase()
+            .replace(Regex("[^a-z0-9]"), "_")
+            .trim('_')
         servicesRepo.addService(
             StreamingService(
-                id = name.lowercase().replace(Regex("[^a-z0-9]"), "_"),
+                id = nameId.ifBlank { hostId }.ifBlank { "service_${System.currentTimeMillis()}" },
                 name = name.trim(),
                 url = normalized.trim(),
                 type = ServiceType.STREAMING
@@ -91,10 +98,11 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Logout everywhere: cookies + web storage. */
     fun clearCookies(onDone: () -> Unit) {
-        CookieManager.getInstance().removeAllCookies { }
-        CookieManager.getInstance().flush()
-        WebStorage.getInstance().deleteAllData()
-        onDone()
+        CookieManager.getInstance().removeAllCookies {
+            CookieManager.getInstance().flush()
+            WebStorage.getInstance().deleteAllData()
+            onDone()
+        }
     }
 
     fun clearCache(onDone: () -> Unit) = viewModelScope.launch {
@@ -110,7 +118,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun checkForUpdate(onResult: (ReleaseInfo?) -> Unit) =
         viewModelScope.launch {
             updateRepo.publishState(UpdateState.Checking)
-            val release = updateRepo.checkForUpdate(com.amin.tvos.BuildConfig.VERSION_CODE)
+            val release = updateRepo.checkForUpdate(
+                com.amin.tvos.BuildConfig.VERSION_CODE,
+                com.amin.tvos.BuildConfig.VERSION_NAME
+            )
             updateRepo.publishState(
                 if (release != null) UpdateState.Available(release) else UpdateState.Idle
             )

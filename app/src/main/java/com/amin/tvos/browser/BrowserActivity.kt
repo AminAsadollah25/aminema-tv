@@ -566,8 +566,8 @@ class BrowserActivity : ComponentActivity() {
                     cancelPlaybackAutomation()
                     lastFailedUrl = request.url.toString()
                     errorView.show(
-                        title = "Can't reach $serviceName",
-                        message = "Check your internet connection, then try again."
+                        title = "اتصال به $serviceName ممکن نیست",
+                        message = "اتصال اینترنت را بررسی کنید و دوباره تلاش کنید."
                     )
                 }
             }
@@ -604,7 +604,7 @@ class BrowserActivity : ComponentActivity() {
                     cancelPlaybackAutomation()
                     lastFailedUrl = error.url
                     errorView.show(
-                        title = "Secure connection failed",
+                        title = "اتصال امن برقرار نشد",
                         message = "گواهی امنیتی این سایت قابل تأیید نیست. تاریخ دستگاه و نسخه WebView را بررسی کنید."
                     )
                 }

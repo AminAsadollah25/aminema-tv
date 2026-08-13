@@ -42,7 +42,10 @@ class UpdateRepository(private val context: Context) {
         _state.value = state
     }
 
-    suspend fun checkForUpdate(currentVersionCode: Int): ReleaseInfo? =
+    suspend fun checkForUpdate(
+        currentVersionCode: Int,
+        currentVersionName: String
+    ): ReleaseInfo? =
         withContext(Dispatchers.IO) {
             runCatching {
                 val json = httpGetText(RELEASES_API_URL) {
@@ -53,28 +56,39 @@ class UpdateRepository(private val context: Context) {
                 val body = root.optString("body")
                 val assets = root.optJSONArray("assets") ?: return@runCatching null
 
-                var apkUrl: String? = null
-                var apkFileName: String? = null
-                var sha256Url: String? = null
+                val apkAssets = mutableListOf<Pair<String, String>>()
+                val checksumAssets = mutableMapOf<String, String>()
                 for (index in 0 until assets.length()) {
                     val asset = assets.optJSONObject(index) ?: continue
                     val name = asset.optString("name")
                     val url = asset.optString("browser_download_url")
                     when {
-                        name.endsWith(".apk", ignoreCase = true) -> {
-                            apkUrl = url
-                            apkFileName = name
+                        name.endsWith(".apk", ignoreCase = true) -> apkAssets += name to url
+                        name.endsWith(".sha256", ignoreCase = true) -> {
+                            checksumAssets[name.lowercase()] = url
                         }
-                        name.endsWith(".sha256", ignoreCase = true) -> sha256Url = url
                     }
                 }
-                val resolvedApkUrl = apkUrl ?: return@runCatching null
-                val resolvedFileName = apkFileName ?: "aminema-update.apk"
+                // This installation channel uses the debug package/signing identity. When a
+                // release carries more than one APK, selecting a release-signed asset would
+                // make Android reject the in-place update.
+                val selectedApk = apkAssets.firstOrNull {
+                    it.first.endsWith("-debug.apk", ignoreCase = true)
+                } ?: apkAssets.singleOrNull() ?: return@runCatching null
+                val (resolvedFileName, resolvedApkUrl) = selectedApk
+                val sha256Url = checksumAssets["${resolvedFileName.lowercase()}.sha256"]
 
-                val versionCode = versionCodeFromBody(body) ?: versionCodeFromTag(tagName)
-                ?: return@runCatching null
+                val publishedVersionCode = versionCodeFromBody(body)
+                val versionCode = publishedVersionCode ?: versionCodeFromTag(tagName)
+                    ?: return@runCatching null
 
-                if (versionCode <= currentVersionCode) return@runCatching null
+                if (!ReleaseVersionPolicy.isNewer(
+                        releaseTag = tagName,
+                        explicitVersionCode = publishedVersionCode,
+                        currentVersionCode = currentVersionCode,
+                        currentVersionName = currentVersionName
+                    )
+                ) return@runCatching null
 
                 ReleaseInfo(
                     versionName = tagName.removePrefix("v"),
@@ -88,10 +102,10 @@ class UpdateRepository(private val context: Context) {
         }
 
     /**
-     * Downloads the APK, checks it against the published sha256 when one is available, and
-     * hands it to the system installer. Returns the downloaded file so the caller can report
-     * progress; the file is left in the cache dir for the installer to read via FileProvider
-     * and is safe to delete once the install screen has been shown.
+     * Downloads the APK, requires its published sha256, and hands it to the system installer.
+     * Returns the downloaded file so the caller can report progress; the file is left in the
+     * cache dir for the installer to read via FileProvider and is safe to delete once the
+     * install screen has been shown.
      */
     suspend fun download(
         release: ReleaseInfo,
@@ -101,16 +115,24 @@ class UpdateRepository(private val context: Context) {
         val target = File(directory, release.apkFileName)
         downloadTo(release.apkUrl, target, onProgress)
 
-        val expectedHash = release.sha256Url?.let { url ->
-            runCatching { httpGetText(url) }.getOrNull()
-                ?.trim()?.substringBefore(' ')?.lowercase()
+        val checksumUrl = release.sha256Url ?: run {
+            target.delete()
+            error("Checksum unavailable")
         }
-        if (!expectedHash.isNullOrBlank()) {
-            val actualHash = sha256Of(target)
-            if (!actualHash.equals(expectedHash, ignoreCase = true)) {
+        val expectedHash = runCatching { httpGetText(checksumUrl) }
+            .getOrNull()
+            ?.trim()
+            ?.substringBefore(' ')
+            ?.lowercase()
+            ?.takeIf { it.matches(SHA_256_PATTERN) }
+            ?: run {
                 target.delete()
-                error("Checksum mismatch")
+                error("Invalid checksum")
             }
+        val actualHash = sha256Of(target)
+        if (!actualHash.equals(expectedHash, ignoreCase = true)) {
+            target.delete()
+            error("Checksum mismatch")
         }
         target
     }
@@ -133,42 +155,49 @@ class UpdateRepository(private val context: Context) {
 
     private fun downloadTo(url: String, target: File, onProgress: (Int) -> Unit) {
         var connection = openConnection(url)
-        // GitHub's asset redirect sometimes takes two hops; HttpURLConnection follows same-
-        // protocol redirects on its own, but this bounds it in case that ever changes.
-        var redirects = 0
-        while (connection.responseCode in 300..399 && redirects < 5) {
-            val next = connection.getHeaderField("Location") ?: break
-            connection.disconnect()
-            connection = openConnection(next)
-            redirects++
-        }
-        check(connection.responseCode == HttpURLConnection.HTTP_OK) {
-            "HTTP ${connection.responseCode}"
-        }
-        val total = connection.contentLengthLong
-        connection.inputStream.use { input ->
-            target.outputStream().use { output ->
-                val buffer = ByteArray(64 * 1024)
-                var readTotal = 0L
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read <= 0) break
-                    output.write(buffer, 0, read)
-                    readTotal += read
-                    if (total > 0) onProgress(((readTotal * 100) / total).toInt())
+        try {
+            // GitHub's asset redirect sometimes takes two hops; HttpURLConnection follows same-
+            // protocol redirects on its own, but this bounds it in case that ever changes.
+            var redirects = 0
+            while (connection.responseCode in 300..399 && redirects < 5) {
+                val next = connection.getHeaderField("Location") ?: break
+                connection.disconnect()
+                connection = openConnection(next)
+                redirects++
+            }
+            check(connection.responseCode == HttpURLConnection.HTTP_OK) {
+                "HTTP ${connection.responseCode}"
+            }
+            val total = connection.contentLengthLong
+            connection.inputStream.use { input ->
+                target.outputStream().use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var readTotal = 0L
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+                        output.write(buffer, 0, read)
+                        readTotal += read
+                        if (total > 0) onProgress(((readTotal * 100) / total).toInt())
+                    }
                 }
             }
+        } finally {
+            connection.disconnect()
         }
-        connection.disconnect()
     }
 
     private fun httpGetText(url: String, configure: HttpURLConnection.() -> Unit = {}): String {
         val connection = openConnection(url)
-        connection.configure()
-        check(connection.responseCode == HttpURLConnection.HTTP_OK) {
-            "HTTP ${connection.responseCode}"
+        return try {
+            connection.configure()
+            check(connection.responseCode == HttpURLConnection.HTTP_OK) {
+                "HTTP ${connection.responseCode}"
+            }
+            connection.inputStream.bufferedReader().use { it.readText() }
+        } finally {
+            connection.disconnect()
         }
-        return connection.inputStream.bufferedReader().use { it.readText() }
     }
 
     private fun openConnection(url: String): HttpURLConnection =
@@ -206,6 +235,7 @@ class UpdateRepository(private val context: Context) {
     }
 
     private companion object {
+        val SHA_256_PATTERN = Regex("^[0-9a-f]{64}$")
         const val RELEASES_API_URL =
             "https://api.github.com/repos/AminAsadollah25/aminema-tv/releases/latest"
     }

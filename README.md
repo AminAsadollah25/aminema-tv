@@ -4,21 +4,30 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
+**Published:** Aminema 0.18.3 — Stability & Cinema Polish (`versionCode 45`)
+
+- Fixes false update availability and verifies the matching SHA-256 before an
+  APK can be installed.
+- Serializes local catalog, library and service writes and closes hidden sync
+  WebViews safely when their owner leaves.
+- Uses lazy Live TV rows and bounded logo decoding for steadier memory usage.
+- Refines TV/mouse focus feedback and redesigns Settings in Persian RTL with
+  confirmations for destructive actions.
+- Improves Persian metadata labels and modernizes TV banner/launcher assets.
+- Preserves provider playback rules, package/signing identity, login, cookies,
+  WebStorage, Continue Watching, Favorites and local library data.
+- Unit tests, Lint, Debug APK build and in-place emulator installation pass.
+
+## Previous release
+
 **Aminema 0.18.2 — Infinite Catalog Continuation Fix** (`versionCode 44`)
 
 - Fixes the full-library counter staying at 208/248 titles while the provider
   still had more archive pages.
-- The View All screen now reads live catalog state while it remains open.
-- MyMoviz archive loading is incremental: four pages per request, sequentially,
-  with the next request starting after the last stored page.
-- Stores the verified loaded page window and migrates older caches without
-  clearing catalog, login, cookie, WebStorage, Continue or Favorite data.
-- Deduplicates the merged FilmRooz/MyMoviz international library as before.
-- Verified on the 1920×1080 emulator: the foreign-series library grew from
-  208 to 448 visible titles and the cache reached 440 MyMoviz series.
-- Unit tests, Lint and Debug APK build pass.
+- The View All screen reads live catalog state while it remains open and
+  MyMoviz archive loading continues incrementally from the last stored page.
 
-## Previous release
+## Earlier release
 
 **Aminema 0.18.1 — Canonical Duplicate Fix** (`versionCode 43`)
 

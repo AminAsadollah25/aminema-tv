@@ -91,6 +91,7 @@ import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.metadata.displayReleaseYear
 import com.amin.tvos.ui.metadata.isIranianTitle
 import com.amin.tvos.ui.metadata.spotlightCategory
+import com.amin.tvos.ui.metadata.toPersianMetadataLabel
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceElevated
@@ -703,7 +704,10 @@ private fun MetadataChips(item: SpotlightItem) {
         if (item.hasPersianSubtitle) {
             add(Chip(text = "زیرنویس فارسی", background = Color(0xFF255A83), foreground = Color(0xFFE8F5FF)))
         }
-        addAll(item.genres.filter { it.isNotBlank() }.take(4).map { Chip(it, neutral) })
+        addAll(
+            item.genres.filter { it.isNotBlank() }.take(4)
+                .map { Chip(it.toPersianMetadataLabel(), neutral) }
+        )
     }.distinct()
 
     if (chips.isEmpty()) return

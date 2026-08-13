@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple TV + play silhouette for Android's themed launcher icons. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,27h64a8,8 0,0 1,8 8v42a8,8 0,0 1,-8 8h-22v7h10v6h-40v-6h10v-7h-22a8,8 0,0 1,-8 -8v-42a8,8 0,0 1,8 -8zM45,40v32l25,-16z" />
+</vector>

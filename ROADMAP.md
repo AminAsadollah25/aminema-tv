@@ -309,6 +309,14 @@ ParsiFlix/FilmRooz به یک کارت با دو منبع تبدیل شدند. Ma
 - Episode recap/summary به‌عنوان تحقیق جدا: Source انگلیسی معتبر، ترجمه فارسی و
   امکان Recap فقط تا آخرین Episode دیده‌شده؛ خارج از Scope اولیه این نسخه.
 
+### 0.18.3 — Stability & Cinema Polish (Candidate محلی، منتشر نشده)
+
+- Update-version comparison، Lifecycle WebView، Repository concurrency و
+  Live TV lazy rendering تثبیت شد.
+- Settings فارسی/RTL و اکشن‌های مخرب دو مرحله‌ای شد؛ Focus/Hover نرم‌تر شد.
+- Dependency/toolchain upgrade، شکستن فایل‌های بزرگ، SSL policy و re-encode
+  اینترو عمداً برای Releaseهای مستقل باقی ماندند تا مسیر پخش آسیب نبیند.
+
 ### 0.19.0 — Geek Mode
 
 - Collectionهای نسخه‌بندی‌شده: MCU، Star Wars، Lord of the Rings و Harry Potter.

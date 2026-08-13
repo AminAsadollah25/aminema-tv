@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -26,11 +28,12 @@ class ServicesRepository(private val context: Context) {
 
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val file: File get() = File(context.filesDir, "services.json")
+    private val storageMutex = Mutex()
 
     private val _services = MutableStateFlow<List<StreamingService>>(emptyList())
     val services: StateFlow<List<StreamingService>> = _services.asStateFlow()
 
-    suspend fun load() = withContext(Dispatchers.IO) {
+    suspend fun load() = withStorageLock {
         val bundled = runCatching {
             context.assets.open("services.json").bufferedReader().use {
                 json.decodeFromString<List<StreamingService>>(it.readText())
@@ -130,12 +133,12 @@ class ServicesRepository(private val context: Context) {
         _services.value = enriched
     }
 
-    suspend fun addService(service: StreamingService) = withContext(Dispatchers.IO) {
+    suspend fun addService(service: StreamingService) = withStorageLock {
         val updated = _services.value.filterNot { it.id == service.id } + service
         persist(updated)
     }
 
-    suspend fun removeService(id: String) = withContext(Dispatchers.IO) {
+    suspend fun removeService(id: String) = withStorageLock {
         persist(_services.value.filterNot { it.id == id })
     }
 
@@ -145,4 +148,7 @@ class ServicesRepository(private val context: Context) {
         file.writeText(json.encodeToString(list))
         _services.value = list
     }
+
+    private suspend fun <T> withStorageLock(block: () -> T): T =
+        withContext(Dispatchers.IO) { storageMutex.withLock { block() } }
 }

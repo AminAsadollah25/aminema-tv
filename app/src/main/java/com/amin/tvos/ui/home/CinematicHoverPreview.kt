@@ -37,6 +37,7 @@ import coil.compose.AsyncImage
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.ui.components.authenticatedPosterModel
+import com.amin.tvos.ui.metadata.toPersianMetadataLabel
 import com.amin.tvos.ui.theme.CinemaRed
 import com.amin.tvos.ui.theme.TextSecondary
 
@@ -150,7 +151,7 @@ fun CinematicHoverPreview(
                     Text(
                         current.summary.ifBlank {
                             current.genres.takeIf { it.isNotEmpty() }
-                                ?.joinToString(" • ")
+                                ?.joinToString(" • ") { it.toPersianMetadataLabel() }
                                 ?: "برای دیدن جزئیات، کارت را باز کن."
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -161,7 +162,8 @@ fun CinematicHoverPreview(
                     if (current.summary.isNotBlank() && current.genres.isNotEmpty()) {
                         Spacer(Modifier.height(7.dp))
                         Text(
-                            current.genres.take(3).joinToString(" • "),
+                            current.genres.take(3)
+                                .joinToString(" • ") { it.toPersianMetadataLabel() },
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.76f),
                             maxLines = 1,

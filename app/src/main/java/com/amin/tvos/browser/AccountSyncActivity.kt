@@ -134,7 +134,7 @@ class AccountSyncActivity : ComponentActivity() {
             textSize = 28f
             gravity = Gravity.CENTER
             setPadding(0, 34, 0, 0)
-            text = "Preparing account sync…"
+            text = "در حال آماده‌سازی همگام‌سازی حساب…"
         }
         panel.addView(progress, LinearLayout.LayoutParams(72, 72))
         panel.addView(
@@ -467,7 +467,7 @@ class AccountSyncActivity : ComponentActivity() {
                         id = "",
                         title = item.optString("title").trim().take(140)
                             .ifBlank { service.name },
-                        subtitle = "Synced from account",
+                        subtitle = "همگام‌شده از حساب",
                         posterUrl = item.optString("posterUrl").take(2_000),
                         serviceId = service.id,
                         serviceName = service.name,
@@ -500,9 +500,9 @@ class AccountSyncActivity : ComponentActivity() {
         val detail = if (errors.isEmpty()) {
             "فیلم ایرانی: $parsiCount  •  فیلم خارجی: $filmRoozCount"
         } else {
-            "Synced $total items\n" + errors.joinToString("\n")
+            "$total مورد همگام شد\n" + errors.joinToString("\n")
         }
-        setStatus("Account sync complete\n$detail")
+        setStatus("همگام‌سازی حساب کامل شد\n$detail")
         handler.postDelayed({ finish() }, 1_800L)
     }
 

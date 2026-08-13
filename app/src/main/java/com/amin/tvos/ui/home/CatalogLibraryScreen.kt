@@ -62,6 +62,7 @@ import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceElevated
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
+import com.amin.tvos.ui.metadata.toPersianMetadataLabel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.collectLatest
@@ -157,7 +158,9 @@ fun CatalogLibraryScreen(
             .sorted()
             .take(MAX_GENRE_FILTERS)
     }
-    if (genreFilter !in genres) genreFilter = ALL_GENRES
+    LaunchedEffect(genres, genreFilter) {
+        if (genreFilter !in genres) genreFilter = ALL_GENRES
+    }
     val visibleItems = remember(items, typeFilter, languageFilter, genreFilter, sort) {
         items
             .asSequence()
@@ -624,7 +627,7 @@ private fun FilterGroup(
                 onClick = { onSelected(value) }
             ) {
                 Text(
-                    value,
+                    value.toPersianMetadataLabel(),
                     color = if (value == selected) CinemaRed else TextSecondary,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)

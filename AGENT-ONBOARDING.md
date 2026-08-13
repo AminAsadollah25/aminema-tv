@@ -15,16 +15,16 @@
 
 ## پروژه در یک خط
 
-**Aminema** — اپ شخصی Android TV با Kotlin/Compose که فقط یک Hub روی دو سایت
-استریمینگ است که مالکش خودش در آن‌ها اشتراک دارد. اپ هرگز خودش سرویس پخش
-نیست؛ فقط WebView روی سایت‌های خودشان.
+**Aminema** — اپ شخصی Android TV با Kotlin/Compose که یک Hub روی سرویس‌های
+پیکربندی‌شدهٔ مالک است. Providerهای فعلی ParsiFlix، FilmRooz، MyMoviz و
+ParsaTV هستند. اپ هرگز خودش سرویس پخش نیست؛ فقط WebView روی سایت‌های خودشان.
 
-**وضعیت تحویل 2026-08-01:** Candidate نسخه `0.16.2 / versionCode 34` با Hero
-پوسترمحور، RTL کامل و Metadata Provider-first + Wikipedia/Wikidata fallback
-ساخته و روی امولاتور 1080p تست شده است. تغییرات هنوز Commit/Push/Release نشده‌اند.
-اول `DEVELOPMENT_LOG_0.16.2.md` و `TEST_REPORT_0.16.2.md` را بخوان. GitHub
-Release نسخه 0.16.1 Asset ندارد؛ انتشار بعدی باید APK و SHA را حتماً ضمیمه
-کند.
+**وضعیت تحویل 2026-08-12:** Release منتشرشده `0.18.2 / versionCode 44` است.
+Candidate محلی `0.18.3 / versionCode 45` برای پایداری، Performance و Cinema
+Polish ساخته شده اما هنوز Commit/Push/Tag/Release نشده است. اول
+`DEVELOPMENT_LOG_0.18.3.md` و `TEST_REPORT_0.18.3.md` را بخوان. این Candidate
+فقط با `adb install -r` تست شده و هیچ Login، Cookie، WebStorage یا Library
+پاک نشده است.
 
 ---
 

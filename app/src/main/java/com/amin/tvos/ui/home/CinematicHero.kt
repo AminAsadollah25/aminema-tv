@@ -69,6 +69,7 @@ import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.components.rememberArtworkAccent
 import com.amin.tvos.ui.metadata.displayReleaseYear
+import com.amin.tvos.ui.metadata.toPersianMetadataLabel
 import com.amin.tvos.ui.theme.CinemaRed
 import kotlinx.coroutines.delay
 
@@ -505,7 +506,9 @@ private fun HeroMetadata(item: SpotlightItem) {
         }
         item.rating.takeIf { it.isNotBlank() }?.let { add("★ $it") }
         item.runtime.takeIf { it.isNotBlank() }?.let(::add)
-        item.genres.firstOrNull { it.isNotBlank() }?.let(::add)
+        item.genres.firstOrNull { it.isNotBlank() }
+            ?.toPersianMetadataLabel()
+            ?.let(::add)
     }.take(5)
 
     Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {

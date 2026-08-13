@@ -85,7 +85,7 @@ import kotlinx.coroutines.launch
  *
  * Android TV Web/Compose combinations do not always emit HoverInteraction reliably, so
  * explicit pointer Enter/Exit events back up the normal interaction source. Selection is
- * communicated through a gentle lift, scale and brightness transition — never a red box.
+ * communicated through a gentle lift, scale, soft glow and brightness transition.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -115,8 +115,8 @@ fun FocusableCard(
             else -> 1f
         },
         animationSpec = spring(
-            dampingRatio = 0.65f, // Bouncy
-            stiffness = 250f
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
         ),
         label = "focusScale"
     )
@@ -126,10 +126,10 @@ fun FocusableCard(
         label = "focusBrightness"
     )
     val elevation by animateDpAsState(
-        targetValue = if (focused) 28.dp else 2.dp,
+        targetValue = if (focused) 18.dp else 2.dp,
         animationSpec = spring(
-            dampingRatio = 0.7f,
-            stiffness = 200f
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
         ),
         label = "focusElevation"
     )
@@ -138,12 +138,28 @@ fun FocusableCard(
         contentColor = TextPrimary,
         shape = shape,
         shadowElevation = elevation,
-        border = if (focused) androidx.compose.foundation.BorderStroke(2.dp, Color.White.copy(alpha = 0.8f)) else null,
+        border = if (focused) {
+            androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.38f))
+        } else {
+            null
+        },
         modifier = modifier
             .alpha(if (enabled) 1f else 0.34f)
             .zIndex(if (focused) 2f else 0f)
             .scale(scale)
             .onFocusChanged { dpadFocused = it.isFocused || it.hasFocus }
+            // Some Android TV mouse stacks do not emit HoverInteraction consistently.
+            // Observe raw pointer enter/exit without consuming clicks as a reliable fallback.
+            .pointerInput(enabled) {
+                awaitPointerEventScope {
+                    while (true) {
+                        when (awaitPointerEvent().type) {
+                            PointerEventType.Enter -> pointerHovered = true
+                            PointerEventType.Exit -> pointerHovered = false
+                        }
+                    }
+                }
+            }
             .hoverable(interactionSource)
             .combinedClickable(
                 enabled = enabled,

@@ -67,7 +67,7 @@ class QuickMenuOverlay(
         )
 
         TextView(context).apply {
-            text = "AMINEMA  •  QUICK MENU"
+            text = "AMINEMA  •  منوی سریع"
             setTextColor(Color.parseColor("#E50914"))
             setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
             typeface = Typeface.DEFAULT_BOLD
@@ -122,7 +122,7 @@ class QuickMenuOverlay(
         )
 
         TextView(context).apply {
-            text = "MENU / INFO / Right-click to close"
+            text = "برای بستن: MENU، INFO یا کلیک راست"
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#797B88"))
             setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
@@ -143,7 +143,7 @@ class QuickMenuOverlay(
         isFavorite: Boolean,
         canGoBack: Boolean
     ) {
-        titleView.text = title.ifBlank { "Current page" }
+        titleView.text = title.ifBlank { "صفحهٔ فعلی" }
         serviceView.text = serviceName
         rebuildActions(isFavorite, canGoBack)
         visibility = View.VISIBLE
@@ -157,15 +157,15 @@ class QuickMenuOverlay(
 
     private fun rebuildActions(isFavorite: Boolean, canGoBack: Boolean) {
         actions.removeAllViews()
-        addAction("⛶   Fullscreen", QuickAction.FULLSCREEN)
+        addAction("⛶   تمام‌صفحه", QuickAction.FULLSCREEN)
         addAction(
-            if (isFavorite) "♥   Remove from Favorites" else "♡   Add to Favorites",
+            if (isFavorite) "♥   حذف از علاقه‌مندی" else "♡   افزودن به علاقه‌مندی",
             QuickAction.FAVORITE
         )
-        addAction("⌕   Search this service", QuickAction.SEARCH)
-        addAction("↻   Reload page", QuickAction.RELOAD)
-        if (canGoBack) addAction("←   Browser back", QuickAction.BACK)
-        addAction("⌂   Aminema Home", QuickAction.HOME, accent = true)
+        addAction("⌕   جستجو در این سرویس", QuickAction.SEARCH)
+        addAction("↻   بارگذاری دوباره", QuickAction.RELOAD)
+        if (canGoBack) addAction("←   بازگشت مرورگر", QuickAction.BACK)
+        addAction("⌂   خانهٔ Aminema", QuickAction.HOME, accent = true)
     }
 
     private fun addAction(label: String, action: QuickAction, accent: Boolean = false) {

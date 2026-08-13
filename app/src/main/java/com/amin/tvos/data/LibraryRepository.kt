@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,6 +27,7 @@ class LibraryRepository(private val context: Context) {
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val file: File get() = File(context.filesDir, "library.json")
     private val playbackFile: File get() = File(context.filesDir, "playback_sessions.json")
+    private val storageMutex = Mutex()
 
     private val _items = MutableStateFlow<List<MovieItem>>(emptyList())
     val items: StateFlow<List<MovieItem>> = _items.asStateFlow()
@@ -32,7 +35,7 @@ class LibraryRepository(private val context: Context) {
     val playbackSessions: StateFlow<List<PlaybackSession>> =
         _playbackSessions.asStateFlow()
 
-    suspend fun load() = withContext(Dispatchers.IO) {
+    suspend fun load() = withStorageLock {
         _items.value = runCatching {
             json.decodeFromString<List<MovieItem>>(file.readText())
         }.getOrDefault(emptyList())
@@ -51,7 +54,7 @@ class LibraryRepository(private val context: Context) {
         resumePosition: Long = 0L,
         duration: Long = 0L,
         isPlayable: Boolean = false
-    ) = withContext(Dispatchers.IO) {
+    ) = withStorageLock {
         val id = sha1(url)
         val existing = _items.value.firstOrNull { it.id == id }
         val item = MovieItem(
@@ -74,7 +77,7 @@ class LibraryRepository(private val context: Context) {
         persist(trimmed(listOf(item) + _items.value.filterNot { it.id == id }))
     }
 
-    suspend fun toggleFavorite(id: String) = withContext(Dispatchers.IO) {
+    suspend fun toggleFavorite(id: String) = withStorageLock {
         persist(_items.value.map { if (it.id == id) it.copy(isFavorite = !it.isFavorite) else it })
     }
 
@@ -91,7 +94,7 @@ class LibraryRepository(private val context: Context) {
         resumePosition: Long,
         duration: Long,
         isPlayable: Boolean
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Boolean = withStorageLock {
         val id = sha1(url)
         val existing = _items.value.firstOrNull { it.id == id }
         val favorite = !(existing?.isFavorite ?: false)
@@ -136,13 +139,13 @@ class LibraryRepository(private val context: Context) {
         contentUrl: String,
         mimeType: String,
         bytes: ByteArray
-    ): String? = withContext(Dispatchers.IO) {
+    ): String? = withStorageLock {
         if (
             contentUrl.isBlank() ||
             bytes.isEmpty() ||
             bytes.size > 1_500_000 ||
             mimeType !in setOf("image/webp", "image/jpeg", "image/png")
-        ) return@withContext null
+        ) return@withStorageLock null
         val extension = when (mimeType) {
             "image/png" -> "png"
             "image/jpeg" -> "jpg"
@@ -166,11 +169,11 @@ class LibraryRepository(private val context: Context) {
         localUrl
     }
 
-    suspend fun remove(id: String) = withContext(Dispatchers.IO) {
+    suspend fun remove(id: String) = withStorageLock {
         persist(_items.value.filterNot { it.id == id })
     }
 
-    suspend fun clearHistory() = withContext(Dispatchers.IO) {
+    suspend fun clearHistory() = withStorageLock {
         persist(_items.value.filter { it.isFavorite })
         persistPlayback(emptyList())
     }
@@ -180,8 +183,8 @@ class LibraryRepository(private val context: Context) {
      * A generic service-shell title must never replace a real catalog title.
      */
     suspend fun repairMetadata(catalogItems: List<CatalogItem>) =
-        withContext(Dispatchers.IO) {
-            if (catalogItems.isEmpty() || _items.value.isEmpty()) return@withContext
+        withStorageLock {
+            if (catalogItems.isEmpty() || _items.value.isEmpty()) return@withStorageLock
             val byUrl = catalogItems.associateBy {
                 ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
             }
@@ -219,8 +222,8 @@ class LibraryRepository(private val context: Context) {
         resumePosition: Long,
         duration: Long,
         resumeStrategy: ResumeStrategy
-    ) = withContext(Dispatchers.IO) {
-        if (contentUrl.isBlank() || playbackUrl.isBlank()) return@withContext
+    ) = withStorageLock {
+        if (contentUrl.isBlank() || playbackUrl.isBlank()) return@withStorageLock
         val id = sha1(contentUrl)
         val existingSession = _playbackSessions.value.firstOrNull { it.id == id }
         val existingItem = _items.value.firstOrNull { it.id == id }
@@ -280,8 +283,8 @@ class LibraryRepository(private val context: Context) {
     suspend fun syncAccountSessions(
         serviceId: String,
         incoming: List<PlaybackSession>
-    ) = withContext(Dispatchers.IO) {
-        if (serviceId.isBlank()) return@withContext
+    ) = withStorageLock {
+        if (serviceId.isBlank()) return@withStorageLock
         val previous = _playbackSessions.value
         val reconciled = incoming
             .asSequence()
@@ -363,4 +366,8 @@ class LibraryRepository(private val context: Context) {
     private fun sha1(s: String): String =
         MessageDigest.getInstance("SHA-1").digest(s.toByteArray())
             .joinToString("") { "%02x".format(it) }
+
+    /** Keeps visits, playback sync and favorites from overwriting one another. */
+    private suspend fun <T> withStorageLock(block: () -> T): T =
+        withContext(Dispatchers.IO) { storageMutex.withLock { block() } }
 }

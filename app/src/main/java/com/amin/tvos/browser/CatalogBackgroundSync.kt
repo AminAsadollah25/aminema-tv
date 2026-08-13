@@ -54,12 +54,17 @@ class CatalogBackgroundSync(
     private val handler = Handler(Looper.getMainLooper())
     private val slots = mutableMapOf<String, Slot>()
     private val pendingRefreshes = mutableMapOf<String, PendingRefresh>()
+    private var destroyed = false
 
     fun refresh(
         serviceId: String,
         pageLimit: Int = DEFAULT_PAGE_LIMIT,
         onFinished: (() -> Unit)? = null
     ) {
+        if (destroyed) {
+            onFinished?.invoke()
+            return
+        }
         if (serviceId !in SUPPORTED_IDS) {
             onFinished?.invoke()
             return
@@ -114,6 +119,10 @@ class CatalogBackgroundSync(
         pageLimit: Int,
         callbacks: MutableList<() -> Unit>
     ) {
+        if (destroyed) {
+            callbacks.forEach { callback -> runCatching(callback) }
+            return
+        }
         val serviceId = service.id
         val serviceHost = Uri.parse(service.url).host.orEmpty()
         var scriptStarted = false
@@ -255,14 +264,16 @@ class CatalogBackgroundSync(
         slots.remove(serviceId)
         handler.removeCallbacks(slot.timeout)
         app.catalogRepository.setRefreshing(serviceId, false)
-        slot.callbacks.forEach { callback -> runCatching(callback) }
+        if (!destroyed) {
+            slot.callbacks.forEach { callback -> runCatching(callback) }
+        }
         source.apply {
             stopLoading()
             removeJavascriptInterface("AminCatalog")
             (parent as? ViewGroup)?.removeView(this)
             destroy()
         }
-        pendingRefreshes.remove(serviceId)?.let { pending ->
+        pendingRefreshes.remove(serviceId)?.takeUnless { destroyed }?.let { pending ->
             val service = app.servicesRepository.findById(serviceId)
             if (service == null) {
                 pending.callbacks.forEach { callback -> runCatching(callback) }
@@ -274,13 +285,15 @@ class CatalogBackgroundSync(
     }
 
     fun destroy() {
+        if (destroyed) return
+        destroyed = true
+        // Mark the coordinator closed before releasing an active slot. complete() can normally
+        // launch a queued, deeper refresh; doing that while the Activity is being destroyed
+        // would immediately create an orphaned WebView and keep unnecessary work alive.
         slots.toMap().forEach { (serviceId, slot) ->
             complete(serviceId, slot.webView)
         }
         handler.removeCallbacksAndMessages(null)
-        pendingRefreshes.values
-            .flatMap(PendingRefresh::callbacks)
-            .forEach { callback -> runCatching(callback) }
         pendingRefreshes.clear()
     }
 
@@ -467,7 +480,7 @@ class CatalogBackgroundSync(
                         id = "",
                         title = item.optString("title").trim().take(140)
                             .ifBlank { service.name },
-                        subtitle = "Synced from account",
+                        subtitle = "همگام‌شده از حساب",
                         posterUrl = item.optString("posterUrl").take(2_000),
                         serviceId = service.id,
                         serviceName = service.name,

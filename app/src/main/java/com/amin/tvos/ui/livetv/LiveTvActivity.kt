@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.MainActivity
 import com.amin.tvos.browser.BrowserActivity
@@ -224,30 +225,36 @@ class LiveTvActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(26.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(categories, key = { it.first }) { (catName, catChannels) ->
-                            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        categories.forEach { (catName, catChannels) ->
+                            item(key = "header:$catName") {
                                 Text(
                                     text = catName,
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(top = 8.dp, start = 8.dp)
                                 )
-                                // Four compact cards fit a 1080p TV row at the current
-                                // TV density. Extra channels continue on the next row;
-                                // there is no hidden horizontal scroll state.
-                                catChannels.chunked(4).forEach { rowChannels ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        rowChannels.forEach { (service, channel) ->
-                                            LiveChannelCard(
-                                                service = service,
-                                                channel = channel,
-                                                onClick = { openLiveChannel(service, channel) }
-                                            )
-                                        }
+                            }
+                            // Make every four-channel row a real LazyColumn item. Previously
+                            // a whole category (sometimes 100+ images) was composed at once.
+                            items(
+                                items = catChannels.chunked(CHANNELS_PER_ROW),
+                                key = { rowChannels ->
+                                    "row:" + rowChannels.joinToString("|") {
+                                        "${it.first.id}:${it.second.id}"
+                                    }
+                                }
+                            ) { rowChannels ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    rowChannels.forEach { (service, channel) ->
+                                        LiveChannelCard(
+                                            service = service,
+                                            channel = channel,
+                                            onClick = { openLiveChannel(service, channel) }
+                                        )
                                     }
                                 }
                             }
@@ -264,6 +271,15 @@ class LiveTvActivity : ComponentActivity() {
         channel: LiveChannel,
         onClick: () -> Unit
     ) {
+        val logoModel = remember(channel.logoUrl) {
+            ImageRequest.Builder(this)
+                .data(channel.logoUrl)
+                // Provider logos vary wildly in resolution. The visible slot is small;
+                // bounding its decode avoids retaining full-size artwork while scrolling.
+                .size(320, 180)
+                .crossfade(160)
+                .build()
+        }
         FocusableCard(
             modifier = Modifier.width(200.dp),
             shape = RoundedCornerShape(16.dp),
@@ -289,7 +305,7 @@ class LiveTvActivity : ComponentActivity() {
                 ) {
                     if (channel.logoUrl.isNotBlank()) {
                         AsyncImage(
-                            model = channel.logoUrl,
+                            model = logoModel,
                             contentDescription = channel.name,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
@@ -342,5 +358,9 @@ class LiveTvActivity : ComponentActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) hideSystemUi()
+    }
+
+    private companion object {
+        const val CHANNELS_PER_ROW = 4
     }
 }

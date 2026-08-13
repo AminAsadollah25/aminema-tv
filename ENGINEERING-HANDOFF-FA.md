@@ -46,8 +46,10 @@ Keystore محیط اصلی امضا می‌شوند تا هر نسخه جدید 
 |---|---|---|
 | `parsiflix` | فیلم ایرانی | `app.parsiflix.com` |
 | `filmrooz` | فیلم خارجی | `sean.robert-redford.net` |
+| `mymoviz` | مای‌موویز | `mymoviz.co` |
+| `parsatv` | پخش زنده | `parsatv.com` |
 
-این دو Id هرگز در UI نمایش داده نمی‌شوند — فقط «ایرانی»/«خارجی».
+این Idها شناسه داخلی‌اند و نباید به‌عنوان نام فنی در UI نمایش داده شوند.
 
 ---
 
@@ -121,6 +123,7 @@ app/src/main/java/com/amin/tvos/
 | **0.16.0** | رفع باگ «تصویر عریض در کارت عمودی» (۴ جا)، بازطراحی Hero با رنگ استخراج‌شده از پوستر و اسکلت ثابت، رفع بریدگی دکمه‌ها در Hero و Spotlight، فیلد `backdropUrl`، دو ردیف «برگزیده‌ها» با بنر عریض خود سایت‌ها، انتقال خروجی بیلد به بیرون از iCloud |
 | **0.16.1** | Visual polish و اصلاح fallback خلاصه Spotlight؛ Tag/Release ساخته شد اما APK داخلی روی 0.16.0/code33 ماند و GitHub Asset ندارد |
 | **0.16.2** | Hero کم‌حافظه با پوستر واقعی و backdrop جدا، RTL کامل، Merge غیرمخرب Metadata، خلاصه سریال ایرانی/خارجی، fallback عمومی Wikipedia/Wikidata و Back مطمئن Search |
+| **0.18.3 Candidate** | Stability & Cinema Polish: Update صحیح، Repository mutex، Lazy Live TV، lifecycle cleanup، Settings فارسی/ایمن، Focus/Hover نرم و Packaging تمیز؛ هنوز منتشر نشده |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
@@ -251,10 +254,13 @@ Opened، Favorites. تشخیص فیلم/سریال برای دو مورد آخر
 `https://api.github.com/repos/AminAsadollah25/aminema-tv/releases/latest`
 خوانده می‌شود (تگ، توضیحات، لینک Assetها همه در همین یک پاسخ هست).
 
-- تشخیص Asset: نامش به `.apk` یا `.sha256` ختم شود
-- تشخیص نسخه: اول دنبال خط `versionCode: N` در متن Release می‌گردد
-  (استاندارد این پروژه — هر Release باید این خط را در پاورقی داشته باشد)؛
-  اگر نبود، از خود Tag (`vX.Y.Z`) عدد می‌سازد: `major*10000+minor*100+patch`
+- تشخیص Asset: اول دقیقاً `*-debug.apk` انتخاب می‌شود؛ اگر نبود فقط زمانی
+  یک APK پذیرفته می‌شود که Release دقیقاً یک APK داشته باشد. SHA باید هم‌نام
+  همان APK با پسوند `.sha256` باشد.
+- تشخیص نسخه: اول خط `versionCode: N` در متن Release منبع حقیقت است. اگر آن
+  خط نبود، Tag و `BuildConfig.VERSION_NAME` به‌صورت Semantic با هم مقایسه
+  می‌شوند؛ عدد Semantic هرگز با Android versionCode مقایسه نمی‌شود (ریشهٔ
+  بنر اشتباه 0.18.2 همین اختلاط دو مقیاس بود).
 - دانلود → بررسی `sha256` (فایل `.sha256` هم Asset جداست، فرمت خروجی
   `shasum -a 256`) → `FileProvider` → `Intent(ACTION_VIEW, type=application/vnd.android.package-archive)`
 - **هرگز کاملاً بی‌صدا نیست** — طبق سیاست اندروید، تأیید نهایی کاربر همیشه

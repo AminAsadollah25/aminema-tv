@@ -1,8 +1,8 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Release جدید،
-فایل‌های `DEVELOPMENT_LOG_0.16.5.1.md`، `TEST_REPORT_0.16.5.1.md` و
-`RELEASE_NOTES_0.16.5.1.md` خوانده شوند. معماری پایدار در
+فایل‌های `DEVELOPMENT_LOG_0.18.3.md`، `TEST_REPORT_0.18.3.md` و
+`RELEASE_NOTES_0.18.3.md` خوانده شوند. معماری پایدار در
 `ENGINEERING-HANDOFF-FA.md` و صف محصول در `ROADMAP.md` است.
 
 ## قرارداد دائمی دو برنامه‌نویس
@@ -21,8 +21,21 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 ## وضعیت فعلی
 
 - محصول: **Aminema**
-- نسخه کد: **0.18.2 / versionCode 44 — Infinite Catalog Continuation Fix**
-- وضعیت در این لحظه: **منتشرشده همراه APK و SHA-256**
+- Release فعلی: **0.18.3 / versionCode 45 — Stability & Cinema Polish**
+- وضعیت: Build/Test/Lint، نصب درجا و QA امولاتور موفق؛ مالک انتشار را
+  پذیرفت. GitHub Release با APK و SHA-256 منتشر شد.
+- محدوده Release: رفع بنر اشتباه Update، Lazy Live TV، قفل نوشتن Repository،
+  بستن WebView مخفی، Settings فارسی/RTL و Confirmationهای ایمن، Focus/Hover نرم،
+  منابع Launcher/Banner و Clean APK حدود 25.25MB.
+- حفاظت داده: فقط `adb install -r`؛ Login، Cookie، WebStorage، Continue،
+  Favorite و Library پاک نشده‌اند.
+- اسناد دقیق: `DEVELOPMENT_LOG_0.18.3.md`، `TEST_REPORT_0.18.3.md` و
+  `RELEASE_NOTES_0.18.3.md`.
+- محدودیت منبع: فیلم «بی‌داد» در ParsiFlix وارد `/play` می‌شود و پاسخ `206 video/mp4`
+  می‌گیرد، اما فایل منبع در Android WebView متادیتا/فریم آماده نمی‌کند. مسیر
+  عمومی ParsiFlix دست‌کاری نشد، چون عناوین دیگر سالم‌اند.
+- Release قبلی: **0.18.2 / versionCode 44 — Infinite Catalog Continuation Fix**
+- وضعیت Release قبلی: **منتشرشده همراه APK و SHA-256**
 - Commit: `434bc4a`; Tag: `v0.18.2`
 - GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.2`
 - APK: `Aminema-0.18.2-debug.apk`; SHA-256:

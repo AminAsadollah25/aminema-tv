@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -26,6 +28,7 @@ class CatalogRepository(private val context: Context) {
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val file: File get() = File(context.filesDir, "catalog.json")
     private val metadataFile: File get() = File(context.filesDir, "title_metadata.json")
+    private val storageMutex = Mutex()
 
     private val _sections = MutableStateFlow<List<CatalogSection>>(emptyList())
     val sections: StateFlow<List<CatalogSection>> = _sections.asStateFlow()
@@ -34,7 +37,7 @@ class CatalogRepository(private val context: Context) {
     private val _titleMetadata = MutableStateFlow<Map<String, TitleMetadata>>(emptyMap())
     val titleMetadata: StateFlow<Map<String, TitleMetadata>> = _titleMetadata.asStateFlow()
 
-    suspend fun load() = withContext(Dispatchers.IO) {
+    suspend fun load() = withStorageLock {
         val loaded = runCatching {
             json.decodeFromString<List<CatalogSection>>(file.readText())
         }.getOrDefault(emptyList())
@@ -61,9 +64,9 @@ class CatalogRepository(private val context: Context) {
     fun metadataFor(contentUrl: String): TitleMetadata? =
         _titleMetadata.value[ContentMetadataPolicy.canonicalContentUrl(contentUrl)]
 
-    suspend fun saveTitleMetadata(metadata: TitleMetadata) = withContext(Dispatchers.IO) {
+    suspend fun saveTitleMetadata(metadata: TitleMetadata) = withStorageLock {
         val normalized = normalize(metadata)
-        if (normalized.contentUrl.isBlank()) return@withContext
+        if (normalized.contentUrl.isBlank()) return@withStorageLock
         val key = ContentMetadataPolicy.canonicalContentUrl(normalized.contentUrl)
         val complete = _titleMetadata.value[key]?.mergePrefer(normalized) ?: normalized
         val merged = (_titleMetadata.value + (key to complete))
@@ -90,7 +93,7 @@ class CatalogRepository(private val context: Context) {
      * Updates one service without letting a later shallow refresh shrink a library window that
      * the user already loaded. Provider order is preserved; older cached tail items are appended.
      */
-    suspend fun save(section: CatalogSection) = withContext(Dispatchers.IO) {
+    suspend fun save(section: CatalogSection) = withStorageLock {
         // Incoming adapter output carries an authoritative end-page marker. normalize() also
         // repairs legacy on-disk caches, so retain the adapter marker here before merging.
         val normalized = normalize(section).copy(loadedPageLimit = section.loadedPageLimit)
@@ -171,7 +174,7 @@ class CatalogRepository(private val context: Context) {
      * Records an adapter failure without discarding the items already cached — a failed
      * refresh should degrade to "stale but usable", not to an empty row.
      */
-    suspend fun recordError(serviceId: String, message: String) = withContext(Dispatchers.IO) {
+    suspend fun recordError(serviceId: String, message: String) = withStorageLock {
         val existing = section(serviceId)
         val updated = existing?.copy(error = message)
             ?: CatalogSection(serviceId = serviceId, error = message)
@@ -293,6 +296,10 @@ class CatalogRepository(private val context: Context) {
 
     private fun cleanText(value: String, limit: Int): String =
         value.replace(Regex("""\s+"""), " ").trim().take(limit)
+
+    /** Serializes read/modify/write cycles so concurrent provider jobs cannot lose a section. */
+    private suspend fun <T> withStorageLock(block: () -> T): T =
+        withContext(Dispatchers.IO) { storageMutex.withLock { block() } }
 
     private companion object {
         const val MAX_TITLE_METADATA = 150
