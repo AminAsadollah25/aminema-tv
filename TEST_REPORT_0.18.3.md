@@ -34,6 +34,8 @@
   `~/Library/Caches/AminemaBuild/app/outputs/apk/debug/app-debug.apk`
 - Final clean candidate size: 25,248,509 bytes
 - SHA-256: `23b4c947b4cfed7c72d523b04e6e3b63bf8a12482ad655b373315713bc468189`
+- Published GitHub asset size and digest match this tested local APK.
+- GitHub release `v0.18.3` is neither Draft nor Prerelease and resolves from `/releases/latest`.
 
 ## Lint debt that is not a verified regression
 

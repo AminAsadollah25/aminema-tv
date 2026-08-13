@@ -24,6 +24,10 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 - Release فعلی: **0.18.3 / versionCode 45 — Stability & Cinema Polish**
 - وضعیت: Build/Test/Lint، نصب درجا و QA امولاتور موفق؛ مالک انتشار را
   پذیرفت. GitHub Release با APK و SHA-256 منتشر شد.
+- Commit/Tag: `b77c00b` / `v0.18.3`
+- GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.3`
+- APK: `Aminema-0.18.3-debug.apk`، اندازه `25,248,509` بایت؛ SHA-256:
+  `23b4c947b4cfed7c72d523b04e6e3b63bf8a12482ad655b373315713bc468189`
 - محدوده Release: رفع بنر اشتباه Update، Lazy Live TV، قفل نوشتن Repository،
   بستن WebView مخفی، Settings فارسی/RTL و Confirmationهای ایمن، Focus/Hover نرم،
   منابع Launcher/Banner و Clean APK حدود 25.25MB.
