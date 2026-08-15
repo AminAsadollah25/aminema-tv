@@ -431,7 +431,7 @@ class BrowserActivity : ComponentActivity() {
                 view: WebView,
                 request: WebResourceRequest
             ): WebResourceResponse? {
-                if (serviceId != "parsatv") {
+                if (serviceId != "parsatv" && serviceId != "babaktv") {
                     return super.shouldInterceptRequest(view, request)
                 }
                 val url = request.url.toString().lowercase()
@@ -440,15 +440,31 @@ class BrowserActivity : ComponentActivity() {
                     "tapsell.ir", "tavoos.net", "poshtiban.com", "doubleclick.net",
                     "googlesyndication.com", "google-analytics.com", "ad.ir", "adro.ir",
                     "anjammidam.com/banner", "kaprila.com", "magnetadservices.com",
-                    "mgid.com", "popads.net", "exoclick.com", "propellerads.com"
+                    "mgid.com", "popads.net", "exoclick.com", "propellerads.com",
+                    "adnxs.com", "criteo.com", "outbrain.com", "taboola.com",
+                    "adsterra.com", "monetag.com", "juicyads.com", "trafficjunky.com",
+                    "onclickads.com", "clickadu.com", "push.house", "hilltopads.net"
                 )
-                val isAd = adDomains.any { url.contains(it) }
+                val isBabakRedirectAd = serviceId == "babaktv" &&
+                    url.contains("babaktv.com/redirect/ads/")
+                val babakAdPath = serviceId == "babaktv" &&
+                    Regex("/(?:ads?|advert|banner|popunder|popup|clickunder)(?:[/?#]|$)")
+                        .containsMatchIn(url)
+                val isAd = isBabakRedirectAd || babakAdPath || adDomains.any { url.contains(it) }
 
                 if (isAd) {
                     return WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(ByteArray(0)))
                 }
 
                 return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                // BabakTV's server links pass through a visible redirect page, so keep
+                // that route working. Block only its explicit advertising redirect and
+                // known ad hosts; never block the channel page or its player iframe.
+                if (serviceId == "babaktv" && isBlockedBabakAdUrl(url)) return true
+                return false
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
@@ -487,6 +503,10 @@ class BrowserActivity : ComponentActivity() {
 
             override fun onPageCommitVisible(view: WebView, url: String) {
                 super.onPageCommitVisible(view, url)
+                // Live pages can keep loading while the stream is already visible. Install
+                // the provider-scoped guard here so delayed overlays are covered even when
+                // onPageFinished is postponed by a long-running player request.
+                installParsaTvAdGuard(view)
                 if (liveTheaterModeRequested) {
                     scheduleLiveTheaterMode(view)
                     startLiveAutomatically(view)
@@ -1601,32 +1621,152 @@ class BrowserActivity : ComponentActivity() {
         }
     }
 
+    private fun isBlockedBabakAdUrl(url: String): Boolean {
+        val normalized = url.lowercase()
+        val host = runCatching { Uri.parse(normalized).host.orEmpty() }.getOrDefault("")
+        val adDomains = listOf(
+            "yektanet.com", "mediaad.org", "sabavision.com", "clickyab.com",
+            "tapsell.ir", "tavoos.net", "poshtiban.com", "doubleclick.net",
+            "googlesyndication.com", "google-analytics.com", "ad.ir", "adro.ir",
+            "kaprila.com", "magnetadservices.com", "mgid.com", "popads.net",
+            "exoclick.com", "propellerads.com", "adnxs.com", "criteo.com",
+            "outbrain.com", "taboola.com", "adsterra.com", "monetag.com",
+            "juicyads.com", "trafficjunky.com", "onclickads.com", "clickadu.com",
+            "push.house", "hilltopads.net"
+        )
+        val babakAdPath = serviceId == "babaktv" &&
+            Regex("/(?:ads?|advert|banner|popunder|popup|clickunder)(?:[/?#]|$)")
+                .containsMatchIn(normalized)
+        return (
+            host == "babaktv.com" || host.endsWith(".babaktv.com")
+        ) && (Uri.parse(normalized).path.orEmpty().startsWith("/redirect/ads/") || babakAdPath) ||
+            adDomains.any { normalized.contains(it) }
+    }
+
     /**
      * ParsaTV can mount an MGID overlay after the initial page load. Keep this
      * provider-scoped and target only identifiable ad containers; generic
      * banners or player controls must never be hidden globally.
      */
     private fun installParsaTvAdGuard(view: WebView = webView) {
-        if (serviceId != "parsatv") return
+        if (serviceId != "parsatv" && serviceId != "babaktv") return
         val script = """
             (function() {
-              if (window.__aminParsaAdGuardInstalled) return;
-              window.__aminParsaAdGuardInstalled = true;
+              if (window.__aminemaLiveAdGuardInstalled) return;
+              window.__aminemaLiveAdGuardInstalled = true;
+              var babakMode = ${if (serviceId == "babaktv") "true" else "false"};
               var selectors = [
                 '[id*="mgid" i]', '[class*="mgid" i]', '[data-mgid]',
                 '[id*="mgbox" i]', '[class*="mgbox" i]',
-                'iframe[src*="mgid" i]', '[data-ad-provider*="mgid" i]'
+                'iframe[src*="mgid" i]', '[data-ad-provider*="mgid" i]',
+                'iframe[src*="/ad/" i]', 'iframe[src*="/ads/" i]',
+                'iframe[src*="advert" i]', 'iframe[src*="banner" i]',
+                'iframe[src*="popup" i]', 'iframe[src*="popunder" i]'
               ];
+              if (babakMode) {
+                selectors = selectors.concat([
+                  '#pop-overlay',
+                  '#overlay001.vidoverlay',
+                  '[id^="overlay"][class*="vidoverlay" i]',
+                  'iframe[id^="container-"][class^="container-"]',
+                  'iframe[src*="/redirect/ads/" i]',
+                  'a[href*="/redirect/ads/" i]',
+                  'iframe[width="300"][height="250"]'
+                ]);
+              }
               var css = selectors.join(',') +
                 '{display:none !important;visibility:hidden !important;opacity:0 !important;pointer-events:none !important;}';
+              var interstitialText = /click\s+to\s+continue|video\s+resumes?\s+after\s+(?:a\s+)?short\s+ad|continue\s+after\s+(?:a\s+)?(?:short\s+)?ad/i;
+              var adMarker = /(^|[-_\s])(?:ad|ads|advert|advertising|banner|popup|popunder|clickunder)([-_\s]|$)|mgid|mgbox|doubleclick|googlesyndication|adnxs|criteo|outbrain|taboola|adsterra|monetag|juicyads|trafficjunky/i;
+              function visible(el) {
+                if (!el) return false;
+                var r = el.getBoundingClientRect();
+                var s = getComputedStyle(el);
+                return r.width > 120 && r.height > 80 && s.display !== 'none' &&
+                  s.visibility !== 'hidden' && Number(s.opacity || 1) > 0.02;
+              }
+              function hide(el) {
+                try {
+                  el.style.setProperty('display', 'none', 'important');
+                  el.style.setProperty('visibility', 'hidden', 'important');
+                  el.style.setProperty('opacity', '0', 'important');
+                  el.style.setProperty('pointer-events', 'none', 'important');
+                } catch (_) {}
+              }
+              function hideVisualAdOverlays() {
+                var vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+                var vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+                if (vw < 200 || vh < 120) return;
+                var nodes = document.querySelectorAll(
+                  'iframe,object,embed,[role="dialog"],body > div,' +
+                  '[class*="modal" i],[class*="popup" i],[class*="overlay" i]'
+                );
+                Array.from(nodes).forEach(function(el) {
+                  if (!visible(el)) return;
+                  var r = el.getBoundingClientRect();
+                  var s = getComputedStyle(el);
+                  var marker = ((el.id || '') + ' ' + (typeof el.className === 'string' ? el.className : '') + ' ' +
+                    (el.getAttribute('src') || '') + ' ' + (el.getAttribute('href') || '')).toLowerCase();
+                  var positioned = s.position === 'fixed' || s.position === 'absolute' ||
+                    el.getAttribute('role') === 'dialog' || /modal|popup|overlay/.test(marker);
+                  if (!positioned) return;
+                  var centered = Math.abs((r.left + r.width / 2) - vw / 2) < vw * 0.28 &&
+                    Math.abs((r.top + r.height / 2) - vh / 2) < vh * 0.28;
+                  var medium = r.width < vw * 0.94 && r.height < vh * 0.94;
+                  var highLayer = Number(s.zIndex || 0) >= 100000;
+                  var insetOnEitherAxis = r.width < vw * 0.94 || r.height < vh * 0.94;
+                  var mediaChild = el.tagName === 'IFRAME' || el.tagName === 'OBJECT' ||
+                    el.tagName === 'EMBED' || !!el.querySelector('iframe,img,video,object,embed');
+                  var playerMarker = /jwplayer|video-js|plyr|player-container|player-wrapper|stream-player/.test(marker);
+                  if (adMarker.test(marker) ||
+                      (!playerMarker && mediaChild && centered && (medium || (highLayer && insetOnEitherAxis)))) {
+                    hide(el);
+                  }
+                });
+              }
+              function hideInterstitials() {
+                try {
+                  var roots = document.querySelectorAll(
+                    '[role="dialog"], [class*="modal" i], [class*="popup" i], ' +
+                    '[class*="overlay" i], [id*="modal" i], [id*="popup" i], ' +
+                    '[id*="overlay" i], body > div'
+                  );
+                  Array.from(roots).forEach(function(el) {
+                    if (!visible(el)) return;
+                    var style = getComputedStyle(el);
+                    var marker = ((el.id || '') + ' ' + (typeof el.className === 'string' ? el.className : '')).toLowerCase();
+                    var positionedOverlay = style.position === 'fixed' || style.position === 'absolute' ||
+                      el.getAttribute('role') === 'dialog' || /modal|popup|overlay/.test(marker);
+                    if (!positionedOverlay) return;
+                    var label = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+                    if (!label || label.length > 240 || !interstitialText.test(label)) return;
+                    hide(el);
+                  });
+                } catch (_) {}
+              }
               function hideKnownAds() {
                 try {
                   document.querySelectorAll(selectors.join(',')).forEach(function(el) {
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                    el.style.setProperty('pointer-events', 'none', 'important');
+                    hide(el);
                   });
+                  hideInterstitials();
+                  hideVisualAdOverlays();
                 } catch (_) {}
+              }
+              function sameOriginDocuments() {
+                var result = [], seen = [];
+                function visit(win, depth) {
+                  if (!win || depth > 3) return;
+                  var doc;
+                  try { doc = win.document; void doc.body; } catch (_) { return; }
+                  if (!doc || seen.indexOf(doc) >= 0) return;
+                  seen.push(doc); result.push(doc);
+                  Array.from(doc.querySelectorAll('iframe')).forEach(function(frame) {
+                    try { visit(frame.contentWindow, depth + 1); } catch (_) {}
+                  });
+                }
+                visit(window, 0);
+                return result;
               }
               try {
                 var style = document.createElement('style');
@@ -1635,10 +1775,25 @@ class BrowserActivity : ComponentActivity() {
                 (document.head || document.documentElement).appendChild(style);
               } catch (_) {}
               hideKnownAds();
+              sameOriginDocuments().forEach(function(doc) {
+                try {
+                  var frameStyle = doc.createElement('style');
+                  frameStyle.setAttribute('data-aminema-live-ad-guard', 'true');
+                  frameStyle.textContent = css;
+                  (doc.head || doc.documentElement).appendChild(frameStyle);
+                  doc.querySelectorAll(selectors.join(',')).forEach(function(el) { hide(el); });
+                } catch (_) {}
+              });
               var timer = 0;
               new MutationObserver(function() {
                 clearTimeout(timer);
-                timer = setTimeout(hideKnownAds, 80);
+                timer = setTimeout(function() {
+                  hideKnownAds();
+                  sameOriginDocuments().forEach(function(doc) {
+                    try { doc.querySelectorAll(selectors.join(',')).forEach(function(el) { hide(el); }); }
+                    catch (_) {}
+                  });
+                }, 80);
               }).observe(document.documentElement, {childList:true, subtree:true, attributes:true});
             })();
         """.trimIndent()
@@ -1653,8 +1808,26 @@ class BrowserActivity : ComponentActivity() {
             livePlayerSelectionApplied
         ) return
         val playerId = requestedLivePlayerId?.trim().orEmpty()
-        if (playerId.isBlank()) return
-        tryApplyLivePlayer(view, livePlayerAttemptToken, retry = 0)
+        if (playerId.isNotBlank()) {
+            tryApplyLivePlayer(view, livePlayerAttemptToken, retry = 0)
+            return
+        }
+        if (serviceId != "babaktv" || livePlayerCandidates.isNotEmpty()) return
+
+        // BabakTV labels its visible choices simply 1 / 2 / 3. Pick the first
+        // human-facing server before the page's advertising iframe can win the
+        // playback probe; the existing fallback still advances if it fails.
+        discoverLivePlayerControls(view) {
+            if (
+                livePlayerCandidates.isEmpty() ||
+                livePlaybackConfirmed ||
+                livePlayerSelectionApplied
+            ) return@discoverLivePlayerControls
+            livePlayerAttemptIndex = 0
+            livePlayerAttemptToken += 1
+            liveFallbackScheduledToken = Long.MIN_VALUE
+            tryApplyLivePlayer(view, livePlayerAttemptToken, retry = 0)
+        }
     }
 
     /**
@@ -1704,6 +1877,7 @@ class BrowserActivity : ComponentActivity() {
               // mirrors for this channel. Only accept controls explicitly labelled
               // as a server/source/backup.
               var re = /(server|سرور|source|منبع|mirror|backup|جایگزین)/i;
+              var babakMode = ${if (serviceId == "babaktv") "true" else "false"};
               documents().forEach(function(doc) {
                 Array.from(doc.querySelectorAll(
                   'a,button,[role="button"],input[type="button"],input[type="submit"],' +
@@ -1711,7 +1885,16 @@ class BrowserActivity : ComponentActivity() {
                 )).forEach(function(el) {
                   if (!visible(el)) return;
                   var label = (el.innerText || el.textContent || el.value || '').trim();
-                  if (!label || label.length > 28 || !re.test(label)) return;
+                  var context = '';
+                  try {
+                    var parent = el.parentElement;
+                    for (var depth = 0; parent && depth < 3; depth++, parent = parent.parentElement) {
+                      context += ' ' + (parent.innerText || parent.textContent || '');
+                    }
+                  } catch (_) {}
+                  var numericBabakServer = babakMode && /^[1-3]$/.test(label) &&
+                    /(gem|series|stream|online|server|پخش|جم)/i.test(context);
+                  if (!label || label.length > 28 || (!re.test(label) && !numericBabakServer)) return;
                   var id = normalize(label);
                   if (!id || seen[id]) return;
                   seen[id] = true;
@@ -1916,6 +2099,7 @@ class BrowserActivity : ComponentActivity() {
                 var lastTimes = new WeakMap();
                 var confirmed = false;
                 var mutationPasses = 0;
+                var babakMode = ${if (serviceId == "babaktv") "true" else "false"};
 
                 function visible(el) {
                   if (!el) return false;
@@ -1930,9 +2114,31 @@ class BrowserActivity : ComponentActivity() {
                   var value = (
                     (el.id || '') + ' ' +
                     (typeof el.className === 'string' ? el.className : '') + ' ' +
-                    (el.getAttribute('data-ad-provider') || '')
+                    (el.getAttribute('data-ad-provider') || '') + ' ' +
+                    (el.getAttribute('src') || '') + ' ' +
+                    (el.getAttribute('href') || '') + ' ' +
+                    (el.getAttribute('title') || '') + ' ' +
+                    (el.getAttribute('alt') || '')
                   ).toLowerCase();
-                  return /mgid|mgbox|advert|ad-container|ad_wrapper/.test(value);
+                  var text = String(el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+                  var markerAd = /mgid|mgbox|advert|ad-container|ad_wrapper|redirect\/ads|doubleclick|googlesyndication|adnxs|criteo|outbrain|taboola|adsterra|monetag|juicyads|trafficjunky|popunder|clickunder|pop-overlay|vidoverlay|container-[a-f0-9]{8,}/.test(value);
+                  var style = getComputedStyle(el);
+                  var rect = el.getBoundingClientRect();
+                  var ownerWindow = (el.ownerDocument && el.ownerDocument.defaultView) || window;
+                  var vw = Math.max(el.ownerDocument.documentElement.clientWidth || 0, ownerWindow.innerWidth || 0);
+                  var vh = Math.max(el.ownerDocument.documentElement.clientHeight || 0, ownerWindow.innerHeight || 0);
+                  var positioned = style.position === 'fixed' || style.position === 'absolute';
+                  var centered = vw > 0 && vh > 0 &&
+                    Math.abs((rect.left + rect.width / 2) - vw / 2) < vw * 0.28 &&
+                    Math.abs((rect.top + rect.height / 2) - vh / 2) < vh * 0.28;
+                  var medium = vw > 0 && vh > 0 && rect.width < vw * 0.94 && rect.height < vh * 0.94;
+                  var mediaChild = el.tagName === 'IFRAME' || el.tagName === 'OBJECT' ||
+                    el.tagName === 'EMBED' || !!el.querySelector('iframe,img,video,object,embed');
+                  var playerMarker = /jwplayer|video-js|plyr|player-container|player-wrapper|stream-player/.test(value);
+                  var visualOverlayAd = !playerMarker && mediaChild && positioned && centered && medium;
+                  return markerAd || visualOverlayAd ||
+                    (text.length < 240 &&
+                      /click\s+to\s+continue|video\s+resumes?\s+after\s+(?:a\s+)?short\s+ad|continue\s+after\s+(?:a\s+)?(?:short\s+)?ad/i.test(text));
                 }
 
                 function reachableWindows() {
@@ -1946,6 +2152,7 @@ class BrowserActivity : ComponentActivity() {
                     seen.push(doc);
                     result.push(win);
                     Array.from(doc.querySelectorAll('iframe')).forEach(function(frame) {
+                      if (looksLikeAd(frame)) return;
                       try { visit(frame.contentWindow, depth + 1); } catch (_) {}
                     });
                   }
@@ -2056,10 +2263,41 @@ class BrowserActivity : ComponentActivity() {
                   } catch (_) { return false; }
                 }
 
+                function activateBabakGenerator(doc) {
+                  if (!babakMode || doc.__aminemaBabakGeneratorActivated) return;
+                  var fake = doc.querySelector('#fake-player-overlay');
+                  var link = doc.querySelector('#vidaccess');
+                  if (!fake && !link) return;
+                  try { if (fake && visible(fake)) fake.click(); } catch (_) {}
+                  if (!link) return;
+                  doc.__aminemaBabakGeneratorActivated = true;
+                  try {
+                    link.removeAttribute('target');
+                    link.click();
+                  } catch (_) {}
+                }
+
                 function theater() {
                   var applied = false;
                   reachableWindows().forEach(function(win) {
-                    try { applied = fillViewport(win.document, surfaceFor(win.document)) || applied; }
+                    try {
+                      activateBabakGenerator(win.document);
+                      Array.from(win.document.querySelectorAll(
+                        '[role="dialog"], [class*="modal" i], [class*="popup" i], ' +
+                        '[class*="overlay" i], [id*="modal" i], [id*="popup" i], ' +
+                        '[id*="overlay" i], iframe, object, embed, body > div'
+                      )).forEach(function(el) {
+                        if (!visible(el) || !looksLikeAd(el)) return;
+                        var style = getComputedStyle(el);
+                        var marker = ((el.id || '') + ' ' + (typeof el.className === 'string' ? el.className : '')).toLowerCase();
+                        if (style.position !== 'fixed' && style.position !== 'absolute' &&
+                            el.getAttribute('role') !== 'dialog' && !/modal|popup|overlay/.test(marker)) return;
+                        el.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                        el.style.setProperty('pointer-events', 'none', 'important');
+                      });
+                      applied = fillViewport(win.document, surfaceFor(win.document)) || applied;
+                    }
                     catch (_) {}
                   });
                   return applied;

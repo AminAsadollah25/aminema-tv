@@ -2058,5 +2058,228 @@
         }
       ]
     }
+  },
+  {
+    "id": "babaktv",
+    "name": "بابک تی‌وی",
+    "url": "https://babaktv.com",
+    "icon": "filmrooz",
+    "subtitle": "شبکه‌های زنده منتخب",
+    "sourceLabel": "BabakTV",
+    "artwork": "service_international_cinema",
+    "color": "#A855F7",
+    "type": "LIVE_TV",
+    "showOnHome": false,
+    "userAgent": "DESKTOP",
+    "fullscreenSelectors": [
+      "button[aria-label*='fullscreen' i]",
+      "button[title*='fullscreen' i]",
+      "[class*='fullscreen' i]"
+    ],
+    "playerSelectors": [
+      "video",
+      "iframe[allowfullscreen]",
+      "[class*='player' i]"
+    ],
+    "searchSelectors": [],
+    "contentUrlPatterns": [],
+    "playbackUrlPatterns": [],
+    "excludedUrlPatterns": [],
+    "resumeStrategy": "OPEN_PLAYBACK_PAGE",
+    "resumeButtonTextPatterns": [],
+    "liveTv": {
+      "channels": [
+        {
+          "id": "babaktv-gem-series-plus",
+          "name": "GEM Series Plus",
+          "path": "https://babaktv.com/embed/gem-series-plus-link01/",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemseriesplus.png",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-gem-series",
+          "name": "GEM Series",
+          "path": "https://babaktv.com/embed/gem-series-link01/",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemseries.png",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-gem-river",
+          "name": "GEM River",
+          "path": "https://babaktv.com/embed/gem-river-link01/",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemriver.png",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-gem-rubix",
+          "name": "GEM Rubix",
+          "path": "https://babaktv.com/embed/gem-rubix-link01/",
+          "logoUrl": "https://www.parsatv.com/index_files/channels/gemrubix.png",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-247-box",
+          "name": "247 Box TV",
+          "path": "https://babaktv.com/embed/24-box-tv-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2022/06/24-Box-TV.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-cine-film-farsi",
+          "name": "Cine Film Farsi",
+          "path": "https://babaktv.com/embed/cine-film-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/04/Cine-Film.jpeg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-persiana-latino",
+          "name": "Persiana Latino",
+          "path": "https://babaktv.com/embed/persiana-latino-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2024/10/persiana-latino.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-manoto",
+          "name": "Manoto TV",
+          "path": "https://babaktv.com/embed/manoto-tv-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2022/06/manoto-tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-persiana-hd",
+          "name": "Persiana HD",
+          "path": "https://babaktv.com/embed/persiana-hd-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2024/10/Persiana-HD.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-afn-tv",
+          "name": "AFN TV",
+          "path": "https://babaktv.com/embed/afn-tv-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/04/afn-tv.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-pmc-royale",
+          "name": "PMC Royale",
+          "path": "https://babaktv.com/embed/pmc-royale-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/09/pmc-royale.jpg",
+          "category": "persian"
+        },
+        {
+          "id": "babaktv-tw-sport-1",
+          "name": "TW Sport 1",
+          "path": "https://babaktv.com/embed/tw-sport-1-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2026/05/tw-sport1.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "babaktv-aio-sport",
+          "name": "Aio Sport",
+          "path": "https://babaktv.com/embed/aio-sport-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/04/aio-sport.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "babaktv-persiana-poker-tv",
+          "name": "Persiana Poker TV",
+          "path": "https://babaktv.com/embed/persiana-poker-tv-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/06/Persiana-Poker-TV.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "babaktv-moviesphere-lionsgate",
+          "name": "MovieSphere by Lionsgate",
+          "path": "https://babaktv.com/embed/moviesphere-by-lionsgate-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2026/08/moviesphere-by-Lionsgate.jpg",
+          "category": "movies"
+        },
+        {
+          "id": "babaktv-pluto-tv-action",
+          "name": "Pluto TV Action",
+          "path": "https://babaktv.com/embed/pluto-tv-action-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2025/01/Pluto-TV-Action.jpg",
+          "category": "movies"
+        },
+        {
+          "id": "babaktv-70s-cinema",
+          "name": "70s Cinema",
+          "path": "https://babaktv.com/embed/70s-cinema-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2025/02/70s-cinema.jpg",
+          "category": "movies"
+        },
+        {
+          "id": "babaktv-history-channel",
+          "name": "History Channel",
+          "path": "https://babaktv.com/embed/history-channel-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2022/10/HistoryEast.jpg",
+          "category": "documentary"
+        },
+        {
+          "id": "babaktv-pluto-tv-animals",
+          "name": "Pluto TV Animals",
+          "path": "https://babaktv.com/embed/pluto-tv-animals-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2024/10/Pluto-TV-Animals.jpg",
+          "category": "documentary"
+        },
+        {
+          "id": "babaktv-true-crime-now",
+          "name": "True Crime Now",
+          "path": "https://babaktv.com/embed/true-crime-now-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/09/true-crime-now.jpg",
+          "category": "documentary"
+        },
+        {
+          "id": "babaktv-bbc-news",
+          "name": "BBC News",
+          "path": "https://babaktv.com/embed/bbc-news-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2024/10/bbc-news.jpg",
+          "category": "news"
+        },
+        {
+          "id": "babaktv-nhk-world-japan",
+          "name": "NHK World Japan",
+          "path": "https://babaktv.com/embed/nhk-world-japan-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2025/01/NHK-World-Japan.jpg",
+          "category": "news"
+        },
+        {
+          "id": "babaktv-fox-sports-pluto-tv",
+          "name": "Fox Sports Pluto TV",
+          "path": "https://babaktv.com/embed/fox-sports-pluto-tv-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2025/02/FOX-sports-pluto.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "babaktv-womens-sports-network",
+          "name": "Women’s Sports Network",
+          "path": "https://babaktv.com/embed/womens-sports-network-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2025/01/womesn-sports-network.jpg",
+          "category": "sport"
+        },
+        {
+          "id": "babaktv-mbc-3",
+          "name": "MBC 3",
+          "path": "https://babaktv.com/embed/mbc-3-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2024/10/MBC3.jpg",
+          "category": "kids"
+        },
+        {
+          "id": "babaktv-dubai-one-tv",
+          "name": "Dubai One TV",
+          "path": "https://babaktv.com/embed/dubai-one-tv-link-01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2022/06/Dubai-One.jpg",
+          "category": "movies"
+        },
+        {
+          "id": "babaktv-mbc-action",
+          "name": "MBC Action",
+          "path": "https://babaktv.com/embed/mbc-action-link01/",
+          "logoUrl": "https://babaktv.com/wp-content/uploads/2023/04/Mbc_action.jpg",
+          "category": "movies"
+        }
+      ],
+      "playerOptions": []
+    }
   }
 ]

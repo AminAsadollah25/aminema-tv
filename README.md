@@ -4,7 +4,21 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Published:** Aminema 0.18.3 — Stability & Cinema Polish (`versionCode 45`)
+**Published:** Aminema 0.18.4 — Live TV Health Tabs (`versionCode 46`)
+
+- Adds a primary **فعال** tab containing only channels whose normal provider page
+  produced a real playable response during the latest background check.
+- Keeps **همه کانال‌ها** as an audit view, including channels not currently confirmed.
+- Checks each channel once per refresh, without retry loops, and shows progress while
+  the Live TV page remains usable.
+- Deduplicates repeated channel names and prefers a confirmed active source; when
+  health is equal, ParsiFlix wins, then ParsaTV, then BabakTV.
+- Persists only status and timestamp; provider pages, cookies, logins and playback
+  behavior remain unchanged.
+
+## Previous release
+
+**Aminema 0.18.3 — Stability & Cinema Polish** (`versionCode 45`)
 
 - Fixes false update availability and verifies the matching SHA-256 before an
   APK can be installed.
@@ -17,8 +31,6 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 - Preserves provider playback rules, package/signing identity, login, cookies,
   WebStorage, Continue Watching, Favorites and local library data.
 - Unit tests, Lint, Debug APK build and in-place emulator installation pass.
-
-## Previous release
 
 **Aminema 0.18.2 — Infinite Catalog Continuation Fix** (`versionCode 44`)
 

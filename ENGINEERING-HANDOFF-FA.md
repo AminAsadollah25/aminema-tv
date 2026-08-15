@@ -124,6 +124,7 @@ app/src/main/java/com/amin/tvos/
 | **0.16.1** | Visual polish و اصلاح fallback خلاصه Spotlight؛ Tag/Release ساخته شد اما APK داخلی روی 0.16.0/code33 ماند و GitHub Asset ندارد |
 | **0.16.2** | Hero کم‌حافظه با پوستر واقعی و backdrop جدا، RTL کامل، Merge غیرمخرب Metadata، خلاصه سریال ایرانی/خارجی، fallback عمومی Wikipedia/Wikidata و Back مطمئن Search |
 | **0.18.3 Candidate** | Stability & Cinema Polish: Update صحیح، Repository mutex، Lazy Live TV، lifecycle cleanup، Settings فارسی/ایمن، Focus/Hover نرم و Packaging تمیز؛ هنوز منتشر نشده |
+| **0.18.4** | تب اصلی کانال‌های فعال Live TV، تب همه کانال‌ها برای ممیزی، Health probe تک‌تلاشی و پس‌زمینه، حذف تکراری با ترجیح منبع فعال؛ وضعیت/زمان ذخیره می‌شود و Login/Cookie دست‌نخورده است |
 
 **قرارداد Versioning:** بعد از 0.9 → 0.10 → 0.11 … نه 1.0. باگ‌فیکس هم
 نسخه جدا می‌گیرد (0.9.1، 0.9.2، …)، نه Patch روی نسخه قبلی.
