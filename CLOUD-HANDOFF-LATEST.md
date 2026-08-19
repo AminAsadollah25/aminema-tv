@@ -22,8 +22,9 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
 
 - محصول: **Aminema**
 - Release فعلی: **0.18.5.1 / versionCode 47 — Cinematic Performance & TV Polish**
-- وضعیت: Build/Test/Lint، نصب درجا و QA Intro روی امولاتور موفق؛ GitHub Release
-  این نسخه باید پس از Commit/Tag فعلی تکمیل شود.
+- وضعیت: Build/Test/Lint، نصب درجا و QA Intro روی امولاتور موفق؛ Commit `5cf0ed5`،
+  Tag `v0.18.5.1` و GitHub Release با APK/SHA-256 منتشر و راستی‌آزمایی شدند.
+- GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.5.1`
 - محدوده: preload کاتالوگ در زمان Intro، Vazirmatn داخلی، Liquid Glass سبک،
   Motion سریع‌تر، Health Coordinator پایدار و تطبیق مقاوم‌تر فصل/قسمت.
 - محدودیت: `assembleRelease` موفق است اما unsigned؛ APK انتشار Debug-signed است

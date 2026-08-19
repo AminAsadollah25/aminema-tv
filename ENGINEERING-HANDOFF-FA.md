@@ -22,6 +22,8 @@
 ## آخرین وضعیت Release — 0.18.5.1
 
 - `versionCode 47`، شاخهٔ `main`، APK قابل نصب: `Aminema-0.18.5.1-debug.apk`.
+- Commit `5cf0ed5`، Tag `v0.18.5.1` و GitHub Release منتشر و راستی‌آزمایی شدند:
+  `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.5.1`.
 - اینترو حفظ شده و Refresh اولیهٔ کاتالوگ هنگام نمایش آن در پس‌زمینه آغاز می‌شود.
 - Vazirmatn داخلی، Liquid Glass کنترل‌شده و Motion سبک‌تر برای Home/Spotlight/
   Search/Live TV اضافه شده است.
