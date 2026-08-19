@@ -41,6 +41,23 @@ class LiveChannelCatalogTest {
     }
 
     @Test
+    fun activeBabakWinsOverInactiveParsaTvDuplicate() {
+        val sources = listOf(
+            source("parsatv", "GEM Series", "parsa-series"),
+            source("babaktv", "GEM Series", "babak-series")
+        )
+        val health = mapOf(
+            liveChannelKey(sources[0]) to LiveChannelHealth(LiveHealthStatus.INACTIVE, 1L),
+            liveChannelKey(sources[1]) to LiveChannelHealth(LiveHealthStatus.ACTIVE, 1L)
+        )
+
+        val result = deduplicateLiveChannels(sources, health)
+
+        assertEquals("babaktv", result.single().service.id)
+        assertTrue(isLiveActive(result.single(), health))
+    }
+
+    @Test
     fun namesWithDifferentSeparatorsAreRecognisedAsDuplicates() {
         val sources = listOf(
             source("parsatv", "GEM-Series", "series-a"),

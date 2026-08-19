@@ -13,6 +13,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -802,7 +804,13 @@ private fun SourceSelector(
 ) {
     Row(
         modifier = Modifier
-            .background(Ink.copy(alpha = 0.86f), RoundedCornerShape(24.dp))
+            .background(Ink.copy(alpha = 0.72f), RoundedCornerShape(24.dp))
+            .then(
+                Modifier.border(
+                    BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+                    RoundedCornerShape(24.dp)
+                )
+            )
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)

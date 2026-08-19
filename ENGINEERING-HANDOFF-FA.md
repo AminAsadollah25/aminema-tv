@@ -19,6 +19,19 @@
 
 ---
 
+## آخرین وضعیت Release — 0.18.5.1
+
+- `versionCode 47`، شاخهٔ `main`، APK قابل نصب: `Aminema-0.18.5.1-debug.apk`.
+- اینترو حفظ شده و Refresh اولیهٔ کاتالوگ هنگام نمایش آن در پس‌زمینه آغاز می‌شود.
+- Vazirmatn داخلی، Liquid Glass کنترل‌شده و Motion سبک‌تر برای Home/Spotlight/
+  Search/Live TV اضافه شده است.
+- Health Scan با `LiveChannelHealthCoordinator` در سطح Application ادامه پیدا می‌کند؛
+  خروج از Live TV آن را لغو نمی‌کند.
+- تست‌های Unit، Lint و Debug APK موفق‌اند؛ تست تازهٔ Android Box فیزیکی هنوز انجام
+  نشده است. Login/Cookie/WebStorage/Library پاک نشده‌اند.
+- Release build ساخته شده اما unsigned است؛ تا وقتی keystore رسمی تنظیم نشده، کانال
+  انتشار همان Debug-signed است تا نصب درجا با امضای فعلی حفظ شود.
+
 ## ۱. پروژه در یک نگاه
 
 Aminema یک Hub شخصی Android TV است — نه سرویس استریم. فقط وب‌سایت‌هایی را

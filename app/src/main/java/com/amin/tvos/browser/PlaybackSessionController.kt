@@ -67,10 +67,26 @@ class PlaybackSessionController(
                 }
                 return result;
               }
+              function numericAttribute(node) {
+                if (!node || !node.getAttribute) return 0;
+                var names = [
+                  'data-track-ep', 'data-episode', 'data-episode-number',
+                  'data-ep', 'data-number'
+                ];
+                for (var i = 0; i < names.length; i++) {
+                  var raw = toEnglishDigits(clean(node.getAttribute(names[i])));
+                  var numeric = raw.match(/^\d+$/);
+                  if (numeric) return parseInt(numeric[0], 10);
+                }
+                return 0;
+              }
               function episodeNumber(element) {
                 if (!element) return 0;
-                var label = element.querySelector &&
-                  element.querySelector('[class*="_episodeNumber_"]');
+                var direct = numericAttribute(element);
+                if (direct) return direct;
+                var label = element.querySelector && element.querySelector(
+                  '[class*="_episodeNumber_"], .mv-ep__no'
+                );
                 var text = toEnglishDigits(clean(label ? label.textContent : element.textContent));
                 var match = text.match(/قسمت\s*(\d+)/i) ||
                   text.match(/[Ee]pisode\s*(\d+)/i) || text.match(/^(\d+)$/);
@@ -193,7 +209,10 @@ class PlaybackSessionController(
                     return;
                   }
 
-                  if (!seasonButton.classList.contains('is-active')) {
+                  var seasonSelected = seasonButton.classList.contains('is-active') ||
+                    seasonButton.classList.contains('active') ||
+                    seasonButton.getAttribute('aria-selected') === 'true';
+                  if (!seasonSelected) {
                     seasonButton.click();
                     setTimeout(function() { attemptMyMoviz(retriesLeft); }, 500);
                     return;
@@ -206,8 +225,12 @@ class PlaybackSessionController(
                   var panelRows = Array.from(
                     document.querySelectorAll('#mv-tv-panel details.mv-ep')
                   ).filter(function(candidate) {
-                    var track = candidate.querySelector('.mv-eptrack[data-season]');
-                    return track && track.getAttribute('data-season') === mySeason;
+                    var tracks = Array.from(candidate.querySelectorAll('.mv-eptrack'));
+                    return tracks.some(function(track) {
+                      var trackSeason = track.getAttribute('data-season');
+                      return trackSeason === mySeason ||
+                        (!trackSeason && candidate.getAttribute('data-season') === mySeason);
+                    });
                   });
                   if (!panelRows.length) {
                     if (retriesLeft > 0) {
@@ -220,11 +243,15 @@ class PlaybackSessionController(
 
                   var rows = panelRows;
                   var row = rows.find(function(candidate) {
-                    var track = candidate.querySelector(
-                      '.mv-eptrack[data-season="' + mySeason + '"][data-track-ep="' +
-                        myEpisode + '"]'
-                    );
-                    return !!track && episodeNumber(candidate) === myEpisode;
+                    var tracks = Array.from(candidate.querySelectorAll('.mv-eptrack'));
+                    var exactTrack = tracks.some(function(track) {
+                      var trackSeason = track.getAttribute('data-season');
+                      var trackEpisode = numericAttribute(track);
+                      return (trackSeason === mySeason ||
+                        (!trackSeason && candidate.getAttribute('data-season') === mySeason)) &&
+                        trackEpisode === myEpisode;
+                    });
+                    return exactTrack || episodeNumber(candidate) === myEpisode;
                   });
                   if (!row) {
                     if (retriesLeft > 0) {

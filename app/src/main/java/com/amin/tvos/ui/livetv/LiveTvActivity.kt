@@ -2,9 +2,7 @@ package com.amin.tvos.ui.livetv
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -58,10 +56,7 @@ import coil.request.ImageRequest
 import com.amin.tvos.AminTvApp
 import com.amin.tvos.MainActivity
 import com.amin.tvos.browser.BrowserActivity
-import com.amin.tvos.browser.LiveChannelHealthProbe
-import com.amin.tvos.data.LiveChannelHealthRepository
 import com.amin.tvos.data.LiveChannelSource
-import com.amin.tvos.data.LiveHealthRefreshState
 import com.amin.tvos.data.deduplicateLiveChannels
 import com.amin.tvos.data.isLiveActive
 import com.amin.tvos.data.liveChannelKey
@@ -76,43 +71,20 @@ import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.SurfaceDark
 import com.amin.tvos.ui.theme.TextPrimary
 import com.amin.tvos.ui.theme.TextSecondary
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.net.URI
 
 class LiveTvActivity : ComponentActivity() {
 
     private val app get() = application as AminTvApp
-    private val healthRepository by lazy { LiveChannelHealthRepository(this) }
-    private lateinit var healthWebView: WebView
-    private lateinit var healthProbe: LiveChannelHealthProbe
-    private var healthRefreshJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemUi()
 
-        // The checker needs a real attached WebView to let provider players initialise.
-        // It is deliberately tiny and transparent; normal channel playback still uses
-        // BrowserActivity and the provider's ordinary page.
-        healthWebView = WebView(this).apply {
-            alpha = 0.01f
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            setBackgroundColor(android.graphics.Color.TRANSPARENT)
-        }
-        healthProbe = LiveChannelHealthProbe(healthWebView)
-
         val root = FrameLayout(this)
-        root.addView(
-            healthWebView,
-            FrameLayout.LayoutParams(320, 180).apply {
-                leftMargin = -400
-                topMargin = 0
-            }
-        )
         val compose = ComposeView(this).apply {
             setContent {
                 AminTvTheme {
@@ -143,44 +115,7 @@ class LiveTvActivity : ComponentActivity() {
             val services = app.servicesRepository.services
                 .filter { it.any { service -> service.liveTv?.channels?.isNotEmpty() == true } }
                 .first()
-            startHealthRefresh(liveChannelSources(services), force = false)
-        }
-    }
-
-    private fun startHealthRefresh(sources: List<LiveChannelSource>, force: Boolean) {
-        if (healthRefreshJob?.isActive == true) return
-        val candidates = if (force) {
-            sources
-        } else {
-            sources.filterNot { healthRepository.isFresh(liveChannelKey(it)) }
-        }
-        if (candidates.isEmpty()) {
-            healthRepository.setRefreshState(LiveHealthRefreshState())
-            return
-        }
-        healthRefreshJob = lifecycleScope.launch {
-            healthRepository.setRefreshState(
-                LiveHealthRefreshState(running = true, completed = 0, total = candidates.size)
-            )
-            candidates.forEachIndexed { index, source ->
-                if (!isActive) return@launch
-                val status = healthProbe.check(source)
-                healthRepository.record(liveChannelKey(source), status)
-                healthRepository.setRefreshState(
-                    LiveHealthRefreshState(
-                        running = true,
-                        completed = index + 1,
-                        total = candidates.size
-                    )
-                )
-            }
-            healthRepository.setRefreshState(
-                LiveHealthRefreshState(
-                    running = false,
-                    completed = candidates.size,
-                    total = candidates.size
-                )
-            )
+            app.liveChannelHealthCoordinator.start(services, force = false)
         }
     }
 
@@ -215,8 +150,8 @@ class LiveTvActivity : ComponentActivity() {
     @Composable
     private fun LiveTvScreen() {
         val services by app.servicesRepository.services.collectAsState()
-        val health by healthRepository.health.collectAsState()
-        val refreshState by healthRepository.refreshState.collectAsState()
+        val health by app.liveChannelHealthCoordinator.health.collectAsState()
+        val refreshState by app.liveChannelHealthCoordinator.refreshState.collectAsState()
         var showAll by rememberSaveable { mutableStateOf(false) }
 
         val allSources = remember(services) {
@@ -255,7 +190,8 @@ class LiveTvActivity : ComponentActivity() {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    if (focused) Color.White.copy(alpha = 0.16f) else SurfaceDark,
+                                    if (focused) Color.White.copy(alpha = 0.18f)
+                                    else SurfaceDark.copy(alpha = 0.72f),
                                     RoundedCornerShape(50)
                                 )
                                 .padding(horizontal = 17.dp, vertical = 11.dp)
@@ -280,13 +216,16 @@ class LiveTvActivity : ComponentActivity() {
                     }
                     FocusableCard(
                         shape = RoundedCornerShape(50),
-                        onClick = { startHealthRefresh(allSources, force = true) }
+                        onClick = {
+                            app.liveChannelHealthCoordinator.start(services, force = true)
+                        }
                     ) { focused ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    if (focused) Color.White.copy(alpha = 0.16f) else SurfaceDark,
+                                    if (focused) Color.White.copy(alpha = 0.18f)
+                                    else SurfaceDark.copy(alpha = 0.72f),
                                     RoundedCornerShape(50)
                                 )
                                 .padding(horizontal = 18.dp, vertical = 12.dp)
@@ -413,7 +352,7 @@ class LiveTvActivity : ComponentActivity() {
                         when {
                             selected -> Color(0xFFE50914)
                             focused -> Color.White.copy(alpha = 0.16f)
-                            else -> SurfaceDark
+                            else -> SurfaceDark.copy(alpha = 0.72f)
                         },
                         RoundedCornerShape(50)
                     )
@@ -449,7 +388,8 @@ class LiveTvActivity : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        if (focused) Color.White.copy(alpha = 0.15f) else SurfaceDark,
+                        if (focused) Color.White.copy(alpha = 0.18f)
+                        else SurfaceDark.copy(alpha = 0.72f),
                         RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp),
@@ -490,6 +430,14 @@ class LiveTvActivity : ComponentActivity() {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
+                    text = service.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
                     text = when (status) {
                         LiveHealthStatus.ACTIVE -> "فعال"
                         LiveHealthStatus.INACTIVE -> "فعلاً فعال نیست"
@@ -518,12 +466,6 @@ class LiveTvActivity : ComponentActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) hideSystemUi()
-    }
-
-    override fun onDestroy() {
-        healthRefreshJob?.cancel()
-        if (::healthProbe.isInitialized) healthProbe.close()
-        super.onDestroy()
     }
 
     private companion object {

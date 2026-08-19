@@ -32,6 +32,8 @@ fun catalogKindFromUrl(url: String): CatalogKind? = when {
     Regex("""/medias/series/""").containsMatchIn(url) -> CatalogKind.SERIES
     Regex("""/post/film/""").containsMatchIn(url) -> CatalogKind.MOVIE
     Regex("""/post/series/""").containsMatchIn(url) -> CatalogKind.SERIES
+    Regex("""/fa/movies/[^/?#]+""").containsMatchIn(url) -> CatalogKind.MOVIE
+    Regex("""/fa/shows/[^/?#]+""").containsMatchIn(url) -> CatalogKind.SERIES
     else -> null
 }
 

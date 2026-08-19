@@ -143,9 +143,9 @@ fun HomeScreen(
             providerLists = listOf(filmRoozItems, myMovizItems),
             metadataByUrl = titleMetadata,
             providerNames = providerNames,
-            // Keep the full provider window available to View All. Home rails still render only
-            // their compact preview; the library can now continue past the first 288 titles.
-            limit = 2048
+            // Home only needs a bounded merge window. View All uses the repository directly
+            // and can still continue through the full cached provider window.
+            limit = 288
         )
         Triple(
             merged(
@@ -178,6 +178,7 @@ fun HomeScreen(
             }
             .toMap()
     }
+
     val internationalSection = remember(
         filmRoozSection,
         myMovizSection,
@@ -1009,7 +1010,7 @@ fun HomeScreen(
                                 serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID &&
                                     HomeViewModel.MYMOVIZ_SERVICE_ID in
                                     refreshingCatalogServices
-                                )
+                            )
                     } == true
                 )
                 Spacer(Modifier.height(16.dp))

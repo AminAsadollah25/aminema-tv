@@ -114,14 +114,24 @@ fun FocusableCard(
             focused -> focusedScale
             else -> 1f
         },
+        // Apple-style default: focus should settle immediately and remain interruptible.
+        // The previous medium-bouncy spring made every DPAD move overshoot, which felt
+        // playful on one card but slow and noisy across long TV rails.
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessMedium
         ),
         label = "focusScale"
     )
     val containerColor by animateColorAsState(
-        targetValue = if (focused) Color(0xFF292934) else SurfaceElevated,
+        // Liquid-glass treatment without an expensive runtime blur: a tinted translucent
+        // material, a hairline highlight and the cinematic backdrop remain visible behind it.
+        // Keep the focused state only slightly brighter so a rail does not become visually noisy.
+        targetValue = if (focused) {
+            Color(0xFF4B4B5A).copy(alpha = 0.86f)
+        } else {
+            Color(0xFF252530).copy(alpha = 0.76f)
+        },
         animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "focusBrightness"
     )
@@ -138,11 +148,10 @@ fun FocusableCard(
         contentColor = TextPrimary,
         shape = shape,
         shadowElevation = elevation,
-        border = if (focused) {
-            androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.38f))
-        } else {
-            null
-        },
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (focused) 1.2.dp else 0.7.dp,
+            color = Color.White.copy(alpha = if (focused) 0.48f else 0.14f)
+        ),
         modifier = modifier
             .alpha(if (enabled) 1f else 0.34f)
             .zIndex(if (focused) 2f else 0f)

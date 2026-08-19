@@ -39,7 +39,9 @@ fun CinematicBackground(
     Box(modifier.fillMaxSize().background(Ink)) {
         Crossfade(
             targetState = posterUrl,
-            animationSpec = tween(700),
+            // Background is atmosphere, not the interaction target. A shorter crossfade
+            // keeps DPAD navigation responsive while preserving the cinematic handoff.
+            animationSpec = tween(420),
             label = "cinematicBackdrop"
         ) { url ->
             if (url.isNotBlank()) {
@@ -72,7 +74,9 @@ fun CinematicBackground(
                         .fillMaxSize()
                         .then(
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                Modifier.blur(48.dp)
+                                // Keep the backdrop soft without paying for an unnecessarily
+                                // heavy full-screen blur on Android TV boxes.
+                                Modifier.blur(32.dp)
                             } else {
                                 Modifier
                             }

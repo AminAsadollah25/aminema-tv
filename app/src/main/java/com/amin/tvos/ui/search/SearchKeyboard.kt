@@ -76,10 +76,12 @@ fun SearchKeyboard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = SurfaceDark.copy(alpha = 0.98f),
+        // One translucent deck keeps the keyboard visually attached to the cinematic
+        // backdrop; the keys below provide the stronger contrast hierarchy.
+        color = SurfaceDark.copy(alpha = 0.84f),
         contentColor = TextPrimary,
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.09f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.16f)),
         shadowElevation = 18.dp
     ) {
         Column(
@@ -302,14 +304,14 @@ private fun DeckKey(
     val highlighted = enabled && (dpadFocused || hovered)
 
     val restingColor = when (tone) {
-        KeyTone.NORMAL -> SurfaceElevated
-        KeyTone.SECONDARY -> Color(0xFF292933)
-        KeyTone.SPACE -> Color(0xFF24242E)
+        KeyTone.NORMAL -> SurfaceElevated.copy(alpha = 0.82f)
+        KeyTone.SECONDARY -> Color(0xFF292933).copy(alpha = 0.82f)
+        KeyTone.SPACE -> Color(0xFF24242E).copy(alpha = 0.82f)
         KeyTone.PRIMARY -> CinemaRed
     }
     val focusedColor = when (tone) {
         KeyTone.PRIMARY -> Color(0xFFFF2630)
-        else -> Color(0xFF383844)
+        else -> Color(0xFF4B4B5A).copy(alpha = 0.92f)
     }
     val background by animateColorAsState(
         targetValue = if (highlighted) focusedColor else restingColor,

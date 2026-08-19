@@ -39,6 +39,7 @@ import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.TextPrimary
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -151,15 +152,17 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // Refresh provider caches once per real cold start. The tiny browser
-                        // jobs live behind Home, run one provider at a time and never replace
-                        // the screen or steal remote/mouse focus.
-                        LaunchedEffect(introVisible) {
-                            if (!introVisible && !autoCatalogSyncLaunched) {
+                        // jobs start independently of the intro, run one provider at a time and
+                        // never replace the screen or steal remote/mouse focus. This means the
+                        // intro remains part of the Aminema identity while its duration becomes
+                        // useful preload time instead of a hard wait before catalog work begins.
+                        LaunchedEffect(Unit) {
+                            if (!autoCatalogSyncLaunched) {
                                 autoCatalogSyncLaunched = true
-                                delay(450L)
-                                app.servicesRepository.load()
-                                app.libraryRepository.load()
-                                app.catalogRepository.load()
+                                // HomeViewModel already loads the local services/library/catalog
+                                // snapshot on creation. Wait only for services to be available so
+                                // the first hidden WebView never races an empty service list.
+                                app.servicesRepository.services.first { it.isNotEmpty() }
 
                                 // First cold-start refresh is automatic but still independent:
                                 // one provider finishes (or times out) before the next begins.
@@ -179,7 +182,18 @@ class MainActivity : ComponentActivity() {
                                 }
                                 // MyMoviz catalogue/search is public. Login remains deferred
                                 // until the separately-tested watch flow is implemented.
-                                catalogSync.refresh(HomeViewModel.MYMOVIZ_SERVICE_ID)
+                                // MyMoviz is a large supplemental archive. One fresh page keeps
+                                // cold start light; View All continues the cached window later.
+                                catalogSync.refresh(
+                                    HomeViewModel.MYMOVIZ_SERVICE_ID,
+                                    pageLimit = 1
+                                )
+                                while (
+                                    HomeViewModel.MYMOVIZ_SERVICE_ID in
+                                    app.catalogRepository.refreshingServices.value
+                                ) {
+                                    delay(250L)
+                                }
                             }
                         }
 

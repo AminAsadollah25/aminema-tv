@@ -271,6 +271,20 @@ class EpisodeLoader(
                 return match ? parseInt(match[1], 10) : 0;
               }
 
+              function numericAttribute(node) {
+                if (!node || !node.getAttribute) return 0;
+                var names = [
+                  'data-track-ep', 'data-episode', 'data-episode-number',
+                  'data-ep', 'data-number'
+                ];
+                for (var i = 0; i < names.length; i++) {
+                  var raw = toEnglishDigits(clean(node.getAttribute(names[i])));
+                  var numeric = raw.match(/^\d+$/);
+                  if (numeric) return parseInt(numeric[0], 10);
+                }
+                return 0;
+              }
+
               // ── MyMoviz modern pattern ───────────────────────────────────
               // Season tabs are rendered immediately. The episode panel is
               // hydrated after a season click, so each season is read only
@@ -297,16 +311,22 @@ class EpisodeLoader(
                     await wait(attempt === 0 ? 650 : 300);
                     episodeElements = Array.from(
                       panel.querySelectorAll('details.mv-ep')
-                    );
+                    ).filter(function(details) {
+                      var track = details.querySelector('.mv-eptrack');
+                      var trackSeason = track && track.getAttribute('data-season');
+                      return !trackSeason || trackSeason === seasonNum;
+                    });
                     if (episodeElements.length) break;
                   }
 
                   var episodes = [];
                   episodeElements.forEach(function(details) {
                     var numberLabel = details.querySelector('.mv-ep__no');
-                    var epNum = episodeNumberFromText(
-                      numberLabel ? numberLabel.textContent : details.textContent
-                    );
+                    var track = details.querySelector('.mv-eptrack');
+                    var epNum = numericAttribute(track) || numericAttribute(details) ||
+                      episodeNumberFromText(
+                        numberLabel ? numberLabel.textContent : details.textContent
+                      );
                     if (!epNum || episodes.some(function(ep) { return ep._order === epNum; })) return;
                     var playControls = Array.from(
                       details.querySelectorAll('a.mv-eprow__btn--play')

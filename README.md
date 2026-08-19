@@ -4,7 +4,30 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Published:** Aminema 0.18.4 — Live TV Health Tabs (`versionCode 46`)
+**Published:** Aminema 0.18.5.1 — Cinematic Performance & TV Polish (`versionCode 47`)
+
+- Keeps the intro video visible as part of the Aminema identity while starting
+  the first catalog refresh behind it, so the first usable Home state can be
+  ready sooner without removing the intro.
+- Adds bundled Vazirmatn typography for consistent Persian/Latin shaping on TV
+  boxes, with calmer focus motion and lighter cinematic background transitions.
+- Applies a restrained liquid-glass treatment to cards, Spotlight source
+  controls, Search keyboard and Live TV controls without adding runtime blur to
+  every card.
+- Keeps Live TV health refresh owned by the application so leaving the screen
+  does not cancel the background scan; active/all-channel tabs and duplicate
+  source preference remain intact.
+- Hardens season/episode matching against provider data attributes and keeps
+  Home's merged catalog window bounded while View All continues from the cache.
+- Preserves application identity, signed-in sessions, Cookies, WebStorage,
+  Continue Watching, Favorites and local catalog data.
+
+The debug-signed APK is the installable update channel for the owner's existing
+TV installation. A separately built unsigned release APK is not distributed.
+
+## Previous release
+
+**Aminema 0.18.4 — Live TV Health Tabs** (`versionCode 46`)
 
 - Adds a primary **فعال** tab containing only channels whose normal provider page
   produced a real playable response during the latest background check.
