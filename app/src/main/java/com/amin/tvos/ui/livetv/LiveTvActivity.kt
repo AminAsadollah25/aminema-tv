@@ -80,6 +80,18 @@ class LiveTvActivity : ComponentActivity() {
 
     private val app get() = application as AminTvApp
 
+    override fun onResume() {
+        super.onResume()
+        app.liveChannelHealthCoordinator.setScanningEnabled(true)
+    }
+
+    override fun onPause() {
+        // Opening a real channel or returning home must silence and cancel the hidden
+        // health WebView immediately; it must never compete with the visible player.
+        app.liveChannelHealthCoordinator.setScanningEnabled(false)
+        super.onPause()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemUi()

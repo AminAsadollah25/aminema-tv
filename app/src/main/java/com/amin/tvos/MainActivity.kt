@@ -38,15 +38,13 @@ import com.amin.tvos.ui.settings.SettingsScreen
 import com.amin.tvos.ui.theme.AminTvTheme
 import com.amin.tvos.ui.theme.Ink
 import com.amin.tvos.ui.theme.TextPrimary
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
     /** True only while the cold-start intro is on screen. */
     private var introVisible by mutableStateOf(false)
     private var autoCatalogSyncLaunched = false
-    private lateinit var catalogSync: CatalogBackgroundSync
+    private var catalogSync: CatalogBackgroundSync? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,7 +108,7 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("library")
                                     },
                                     onRefreshCatalog = { serviceId ->
-                                        catalogSync.refresh(serviceId)
+                                        catalogSync?.refresh(serviceId)
                                     },
                                     viewModel = homeViewModel
                                 )
@@ -124,7 +122,7 @@ class MainActivity : ComponentActivity() {
                                     providerIds = libraryServices,
                                     onRefresh = {
                                         libraryServices.forEach { serviceId ->
-                                            catalogSync.refresh(serviceId)
+                                            catalogSync?.refresh(serviceId)
                                         }
                                     },
                                     onLoadMore = { pageLimit, onFinished ->
@@ -134,7 +132,7 @@ class MainActivity : ComponentActivity() {
                                             if (remaining <= 0) onFinished()
                                         }
                                         libraryServices.forEach { serviceId ->
-                                            catalogSync.refresh(
+                                            catalogSync?.refresh(
                                                 serviceId,
                                                 pageLimit = pageLimit,
                                                 onFinished = ::providerFinished
@@ -151,50 +149,17 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Refresh provider caches once per real cold start. The tiny browser
-                        // jobs start independently of the intro, run one provider at a time and
-                        // never replace the screen or steal remote/mouse focus. This means the
-                        // intro remains part of the Aminema identity while its duration becomes
-                        // useful preload time instead of a hard wait before catalog work begins.
+                        // Do not start hidden provider WebViews during cold start. The catalog
+                        // refresh is logically background work, but Android WebView still runs
+                        // its navigation/JS bridge on this app process and a live provider can
+                        // monopolize the TV box's UI thread for seconds (measured: >2,000 skipped
+                        // frames). That breaks the primary promise of Aminema: the Home screen
+                        // and player must remain immediately usable. Cached rows still render
+                        // instantly; Home's refresh button and View All pagination remain the
+                        // explicit, observable refresh entry points until catalog sync is moved
+                        // to an isolated process. Keep the flag for recreation compatibility.
                         LaunchedEffect(Unit) {
-                            if (!autoCatalogSyncLaunched) {
-                                autoCatalogSyncLaunched = true
-                                // HomeViewModel already loads the local services/library/catalog
-                                // snapshot on creation. Wait only for services to be available so
-                                // the first hidden WebView never races an empty service list.
-                                app.servicesRepository.services.first { it.isNotEmpty() }
-
-                                // First cold-start refresh is automatic but still independent:
-                                // one provider finishes (or times out) before the next begins.
-                                catalogSync.refresh(HomeViewModel.IRANIAN_SERVICE_ID)
-                                while (
-                                    HomeViewModel.IRANIAN_SERVICE_ID in
-                                    app.catalogRepository.refreshingServices.value
-                                ) {
-                                    delay(250L)
-                                }
-                                catalogSync.refresh(HomeViewModel.INTERNATIONAL_SERVICE_ID)
-                                while (
-                                    HomeViewModel.INTERNATIONAL_SERVICE_ID in
-                                    app.catalogRepository.refreshingServices.value
-                                ) {
-                                    delay(250L)
-                                }
-                                // MyMoviz catalogue/search is public. Login remains deferred
-                                // until the separately-tested watch flow is implemented.
-                                // MyMoviz is a large supplemental archive. One fresh page keeps
-                                // cold start light; View All continues the cached window later.
-                                catalogSync.refresh(
-                                    HomeViewModel.MYMOVIZ_SERVICE_ID,
-                                    pageLimit = 1
-                                )
-                                while (
-                                    HomeViewModel.MYMOVIZ_SERVICE_ID in
-                                    app.catalogRepository.refreshingServices.value
-                                ) {
-                                    delay(250L)
-                                }
-                            }
+                            autoCatalogSyncLaunched = true
                         }
 
                         // Home is built underneath, so it is ready the moment the intro ends.
@@ -210,8 +175,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // A visible browser/player or Live TV screen must not share the main thread with a
+        // hidden catalog WebView left behind by Home. Recreate the tiny sync host when Home
+        // returns; cached catalog data remains available and manual refresh still works.
+        if (catalogSync == null) {
+            catalogSync = CatalogBackgroundSync(this, application as AminTvApp)
+        }
+    }
+
+    override fun onPause() {
+        catalogSync?.destroy()
+        catalogSync = null
+        super.onPause()
+    }
+
     override fun onDestroy() {
-        if (::catalogSync.isInitialized) catalogSync.destroy()
+        catalogSync?.destroy()
+        catalogSync = null
         super.onDestroy()
     }
 

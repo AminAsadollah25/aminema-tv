@@ -305,13 +305,14 @@
         "تماشای آنلاین",
         "پخش آنلاین",
         "تماشای انلاین",
-        "پخش انلاین"
+        "پخش انلاین",
+        "تماشا و دانلود"
       ],
       "excludeButtonTextPatterns": [
         "تریلر",
         "پخش تریلر"
       ],
-      "autoPlayOnPlaybackPage": false
+      "autoPlayOnPlaybackPage": true
     },
     "resumeStrategy": "OPEN_PLAYBACK_PAGE",
     "resumeButtonTextPatterns": []

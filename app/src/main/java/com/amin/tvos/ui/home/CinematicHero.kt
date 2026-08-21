@@ -1,10 +1,7 @@
 package com.amin.tvos.ui.home
 
-import android.os.Build
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,8 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -165,18 +160,6 @@ private fun HeroSlideContent(
     val deep = lerp(Color(0xFF09090E), accent, 0.42f)
     val shape = RoundedCornerShape(28.dp)
 
-    // One slow drift per slide instead of an infinite transition. It keeps the cinematic
-    // feeling but stops GPU work as soon as the slide leaves composition.
-    val artScale = remember(slide.id) { Animatable(if (hasWideArtwork) 1.01f else 1.04f) }
-    LaunchedEffect(slide.id, heroArtUrl) {
-        if (heroArtUrl.isNotBlank()) {
-            artScale.animateTo(
-                targetValue = if (hasWideArtwork) 1.035f else 1.055f,
-                animationSpec = tween(11_000, easing = LinearEasing)
-            )
-        }
-    }
-
     var primaryFocused by remember(slide.id) { mutableStateOf(false) }
     var nextFocused by remember(slide.id) { mutableStateOf(false) }
     var previousFocused by remember(slide.id) { mutableStateOf(false) }
@@ -199,15 +182,14 @@ private fun HeroSlideContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        scaleX = artScale.value
-                        scaleY = artScale.value
+                        // Avoid a per-frame full-image scale animation on low-power boxes.
+                        // Slide crossfade and focus motion retain the cinematic feedback.
+                        scaleX = 1.01f
+                        scaleY = 1.01f
                         alpha = if (hasWideArtwork) 1f else 0.72f
                     }
-                    .then(
-                        if (!hasWideArtwork && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            Modifier.blur(34.dp, edgeTreatment = BlurredEdgeTreatment.Unbounded)
-                        } else Modifier
-                    )
+                    // Keep a clean darkened poster fallback instead of a per-frame full-image
+                    // RenderEffect blur, which is expensive on Android TV boxes.
             )
         }
 

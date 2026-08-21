@@ -10,6 +10,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.amin.tvos.data.LiveChannelSource
 import com.amin.tvos.data.model.LiveHealthStatus
 import kotlinx.coroutines.Dispatchers
@@ -63,27 +65,37 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
 
     suspend fun check(source: LiveChannelSource): LiveHealthStatus = withContext(Dispatchers.Main.immediate) {
         cancelCurrent()
+        // This WebView is a silent health probe, not a second player. Resume it only for
+        // the bounded probe window; leaving it paused prevents a provider's media element
+        // from leaking audio while the user is browsing the Live TV menu.
+        webView.onResume()
+        setProbeAudioMuted(true)
         val token = ++attemptToken
-        val result = withTimeoutOrNull(PROBE_TIMEOUT_MS) {
-            suspendCancellableCoroutine { cont ->
-                continuation = cont
-                val originalUrl = absoluteUrl(source)
-                val target = optimizedParsaUrl(source, originalUrl)
-                if (target != originalUrl) {
-                    webView.loadUrl(target, mapOf("Referer" to originalUrl))
-                } else {
-                    webView.loadUrl(target)
+        try {
+            withTimeoutOrNull(PROBE_TIMEOUT_MS) {
+                suspendCancellableCoroutine { cont ->
+                    continuation = cont
+                    val originalUrl = absoluteUrl(source)
+                    val target = optimizedParsaUrl(source, originalUrl)
+                    if (target != originalUrl) {
+                        webView.loadUrl(target, mapOf("Referer" to originalUrl))
+                    } else {
+                        webView.loadUrl(target)
+                    }
+                    cont.invokeOnCancellation {
+                        webView.post { if (token == attemptToken) webView.stopLoading() }
+                    }
                 }
-                cont.invokeOnCancellation {
-                    webView.post { if (token == attemptToken) webView.stopLoading() }
-                }
+            } ?: LiveHealthStatus.INACTIVE
+        } finally {
+            // A timeout cancels the continuation but does not guarantee that the field is
+            // cleared before a late page callback arrives. Clear it here and reset the
+            // WebView on every exit path, while the token guard protects a newer probe.
+            if (token == attemptToken) {
+                continuation = null
+                silenceAndReset()
             }
-        } ?: LiveHealthStatus.INACTIVE
-        if (token == attemptToken) {
-            webView.stopLoading()
-            webView.loadUrl("about:blank")
         }
-        result
     }
 
     private fun startPlayerProbe(token: Long) {
@@ -111,7 +123,7 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
         if (token != attemptToken) return
         val pending = continuation ?: return
         continuation = null
-        webView.stopLoading()
+        silenceAndReset()
         if (pending.isActive) pending.resume(status)
     }
 
@@ -121,7 +133,23 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
             continuation = null
             if (pending.isActive) pending.resume(LiveHealthStatus.INACTIVE)
         }
+        silenceAndReset()
+    }
+
+    private fun silenceAndReset() {
+        // Cleanup runs before navigation because stopLoading() alone does not stop an
+        // already-started HTML5/JWPlayer media element. onPause() is an additional native
+        // guard for pages whose player lives inside an inaccessible cross-origin iframe.
+        webView.evaluateJavascript(CLEANUP_SCRIPT, null)
+        setProbeAudioMuted(true)
         webView.stopLoading()
+        webView.onPause()
+        webView.loadUrl("about:blank")
+    }
+
+    /** Stop an in-flight health check and silence the hidden player immediately. */
+    fun cancel() {
+        cancelCurrent()
     }
 
     private fun absoluteUrl(source: LiveChannelSource): String {
@@ -165,11 +193,21 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
         }
+        // JavaScript-level muting cannot reach a cross-origin iframe. Mute the WebView
+        // itself when the installed WebView provider exposes AndroidX's MUTE_AUDIO API.
+        // This is the important guard that prevents the hidden health scanner from
+        // becoming a second audible player while the user is in Live TV or another screen.
+        setProbeAudioMuted(true)
+    }
+
+    private fun setProbeAudioMuted(muted: Boolean) {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) return
+        runCatching { WebViewCompat.setAudioMuted(webView, muted) }
     }
 
     override fun close() {
         cancelCurrent()
-        webView.stopLoading()
+        silenceAndReset()
         webView.destroy()
     }
 
@@ -180,6 +218,37 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
 
         val START_SCRIPT = """
             (function() {
+              // Providers often create the actual video after the first click. Keep a
+              // short-lived, page-local silencer installed so that a newly-created player
+              // cannot become an audible second channel during the health scan.
+              try {
+                if (window.__aminemaHealthSilencer) clearInterval(window.__aminemaHealthSilencer);
+                window.__aminemaHealthSilencer = setInterval(function() {
+                  try {
+                    document.querySelectorAll('video,audio').forEach(function(media) {
+                      media.muted = true;
+                      media.defaultMuted = true;
+                      media.volume = 0;
+                      media.setAttribute('muted', '');
+                    });
+                    if (typeof window.jwplayer === 'function') {
+                      var active = window.jwplayer();
+                      if (active) { try { active.setMute(true); } catch (_) {} }
+                    }
+                  } catch (_) {}
+                }, 50);
+              } catch (_) {}
+              document.addEventListener('play', function(event) {
+                try {
+                  var media = event.target;
+                  if (media && (media.tagName === 'VIDEO' || media.tagName === 'AUDIO')) {
+                    media.muted = true;
+                    media.defaultMuted = true;
+                    media.volume = 0;
+                    media.setAttribute('muted', '');
+                  }
+                } catch (_) {}
+              }, true);
               function roots() {
                 var all = [document];
                 document.querySelectorAll('iframe').forEach(function(frame) {
@@ -202,6 +271,28 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
                 if (typeof window.jwplayer === 'function') {
                   var player = window.jwplayer();
                   if (player) { try { player.setMute(true); } catch (_) {} try { player.play(true); } catch (_) {} }
+                }
+              } catch (_) {}
+            })();
+        """.trimIndent()
+
+        val CLEANUP_SCRIPT = """
+            (function() {
+              try {
+                if (window.__aminemaHealthSilencer) {
+                  clearInterval(window.__aminemaHealthSilencer);
+                  window.__aminemaHealthSilencer = null;
+                }
+                document.querySelectorAll('video,audio').forEach(function(media) {
+                  try { media.pause(); } catch (_) {}
+                  try { media.muted = true; media.volume = 0; } catch (_) {}
+                });
+                if (typeof window.jwplayer === 'function') {
+                  var active = window.jwplayer();
+                  if (active) {
+                    try { active.setMute(true); } catch (_) {}
+                    try { active.stop(); } catch (_) {}
+                  }
                 }
               } catch (_) {}
             })();

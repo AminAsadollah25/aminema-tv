@@ -269,6 +269,14 @@ class SpotlightActivity : ComponentActivity() {
     }
 
     private fun SpotlightItem.withProviderCapabilities(): SpotlightItem {
+        // Native series have a real in-app season/episode navigator.  A catalog item can still
+        // arrive here with WATCH as its legacy/default action; leaving that action unchanged
+        // sends the first click back to the provider's detail page and defeats the TV flow.
+        if (kind == CatalogKind.SERIES && supportsNativeEpisodeNavigator(this) &&
+            primaryAction == SpotlightAction.WATCH
+        ) {
+            return copy(primaryAction = SpotlightAction.SELECT_EPISODE)
+        }
         if (kind != CatalogKind.SERIES || supportsNativeEpisodeNavigator(this)) return this
         // Unknown providers keep the normal one-click website flow until their
         // season/episode DOM has been characterized and added to the native navigator.
@@ -314,6 +322,7 @@ class SpotlightActivity : ComponentActivity() {
                 contentUrl = item.contentUrl,
                 contentTitle = item.title,
                 contentPoster = item.posterUrl,
+                contentBackdrop = item.backdropUrl,
                 autoResume = false,
                 directPlay = true,
                 smSeason = season.id,
@@ -333,6 +342,7 @@ class SpotlightActivity : ComponentActivity() {
                 contentUrl = item.contentUrl,
                 contentTitle = item.title,
                 contentPoster = item.posterUrl,
+                contentBackdrop = item.backdropUrl,
                 autoResume = item.autoResume,
                 directPlay = item.directPlay,
                 resumeStrategyOverride = item.resumeStrategy,

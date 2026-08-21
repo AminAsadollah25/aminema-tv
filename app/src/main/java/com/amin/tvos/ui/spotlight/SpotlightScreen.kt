@@ -2,12 +2,7 @@ package com.amin.tvos.ui.spotlight
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -60,7 +55,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
@@ -147,22 +141,15 @@ fun SpotlightScreen(
         Box(Modifier.fillMaxSize().background(Ink)) {
             // Background Layer
             if (heroArtUrl.isNotBlank()) {
-                val isFallback = item.backdropUrl.isBlank() && item.posterUrl.isNotBlank()
-                val infiniteTransition = rememberInfiniteTransition(label = "kenBurnsSpotlight")
-                val scale by infiniteTransition.animateFloat(
-                    initialValue = 1.0f,
-                    targetValue = 1.05f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(25000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "backdropScale"
+                // Keep the spotlight artwork alive while scrolling, but avoid a per-frame
+                // RenderEffect blur/scale animation on low-power TV boxes. The fixed 1.02x
+                // crop preserves cinematic depth; the scrim still increases when details move
+                // under the fold so text remains readable.
+                val alphaOverlay by animateFloatAsState(
+                    if (isScrolled) 0.85f else 0.0f,
+                    animationSpec = tween(180),
+                    label = "spotlightScrim"
                 )
-                
-                // When scrolled, we blur and darken the background. Otherwise it is clear.
-                // If we are using a portrait poster as fallback, we blur it slightly by default.
-                val blurRadius by animateFloatAsState(if (isScrolled) 24f else if (isFallback) 48f else 0f)
-                val alphaOverlay by animateFloatAsState(if (isScrolled) 0.85f else 0.0f)
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     AsyncImage(
@@ -171,10 +158,9 @@ fun SpotlightScreen(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .then(if (blurRadius > 0f) Modifier.blur(blurRadius.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded) else Modifier)
                             .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
+                                scaleX = 1.02f
+                                scaleY = 1.02f
                             }
                     )
                     // Darken overlay when scrolled

@@ -1,7 +1,6 @@
 package com.amin.tvos.ui.home
 
 import android.net.Uri
-import android.os.Build
 import android.webkit.CookieManager
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -11,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.amin.tvos.ui.theme.Ink
@@ -70,17 +67,10 @@ fun CinematicBackground(
                     model = request,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                // Keep the backdrop soft without paying for an unnecessarily
-                                // heavy full-screen blur on Android TV boxes.
-                                Modifier.blur(32.dp)
-                            } else {
-                                Modifier
-                            }
-                        )
+                    // The dark scrims below provide the cinematic separation. A full-screen
+                    // RenderEffect blur here forced the TV GPU/CPU to redraw the whole 1080p
+                    // surface on every crossfade frame; keep the backdrop static and cheap.
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

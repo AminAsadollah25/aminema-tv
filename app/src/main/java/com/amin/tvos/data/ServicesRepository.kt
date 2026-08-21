@@ -130,7 +130,7 @@ class ServicesRepository(private val context: Context) {
             enrichedExisting.none { it.id == bundledService.id }
         }
         if (enriched != saved) file.writeText(json.encodeToString(enriched))
-        _services.value = enriched
+        if (_services.value != enriched) _services.value = enriched
     }
 
     suspend fun addService(service: StreamingService) = withStorageLock {

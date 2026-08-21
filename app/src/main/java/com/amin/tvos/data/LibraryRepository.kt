@@ -36,12 +36,14 @@ class LibraryRepository(private val context: Context) {
         _playbackSessions.asStateFlow()
 
     suspend fun load() = withStorageLock {
-        _items.value = runCatching {
+        val loadedItems = runCatching {
             json.decodeFromString<List<MovieItem>>(file.readText())
         }.getOrDefault(emptyList())
-        _playbackSessions.value = runCatching {
+        val loadedSessions = runCatching {
             json.decodeFromString<List<PlaybackSession>>(playbackFile.readText())
         }.getOrDefault(emptyList())
+        if (_items.value != loadedItems) _items.value = loadedItems
+        if (_playbackSessions.value != loadedSessions) _playbackSessions.value = loadedSessions
     }
 
     /** Called by the browser layer whenever the user lands on a content page. */

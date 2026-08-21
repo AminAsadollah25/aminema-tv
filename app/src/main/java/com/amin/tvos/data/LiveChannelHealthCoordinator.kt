@@ -15,8 +15,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Owns the Live TV scan for the process rather than for LiveTvActivity.
- * Leaving Live TV for a movie, series or channel therefore does not cancel the scan.
+ * Owns the Live TV scan for the process, while allowing the visible LiveTvActivity
+ * to gate it. The coordinator survives Activity recreation, but scanning is stopped
+ * whenever Live TV is no longer resumed so a hidden probe can never become a second
+ * player behind Home, Spotlight or BrowserActivity.
  */
 class LiveChannelHealthCoordinator(application: Application) {
 
@@ -25,11 +27,36 @@ class LiveChannelHealthCoordinator(application: Application) {
     private val repository = LiveChannelHealthRepository(application)
     private var probe: LiveChannelHealthProbe? = null
     private var refreshJob: Job? = null
+    private var scanningEnabled = false
+    private var pendingServices: List<StreamingService>? = null
 
     val health = repository.health
     val refreshState = repository.refreshState
 
+    /**
+     * Health checks are only allowed while the Live TV screen is resumed. A hidden
+     * WebView is still a real browser/player; leaving it scanning while another screen
+     * is visible can consume the UI thread and, more importantly, create a second player.
+     */
+    fun setScanningEnabled(enabled: Boolean) {
+        if (scanningEnabled == enabled) return
+        scanningEnabled = enabled
+        if (!enabled) {
+            refreshJob?.cancel()
+            refreshJob = null
+            probe?.cancel()
+            repository.setRefreshState(LiveHealthRefreshState())
+            return
+        }
+        pendingServices?.let { services ->
+            pendingServices = null
+            start(services, force = false)
+        }
+    }
+
     fun start(services: List<StreamingService>, force: Boolean = false) {
+        pendingServices = services
+        if (!scanningEnabled) return
         if (refreshJob?.isActive == true) return
         val sources = liveChannelSources(services)
         val candidates = if (force) {
@@ -48,7 +75,7 @@ class LiveChannelHealthCoordinator(application: Application) {
             )
             val channelProbe = probe ?: createProbe(context).also { probe = it }
             candidates.forEachIndexed { index, source ->
-                if (!isActive) return@launch
+                if (!isActive || !scanningEnabled) return@launch
                 val status = channelProbe.check(source)
                 repository.record(liveChannelKey(source), status)
                 repository.setRefreshState(

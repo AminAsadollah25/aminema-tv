@@ -26,6 +26,8 @@ import com.amin.tvos.data.model.ResumeStrategy
 import com.amin.tvos.data.model.StreamingService
 import com.amin.tvos.data.model.UserAgentMode
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -51,6 +53,12 @@ class CatalogBackgroundSync(
         val callbacks: MutableList<() -> Unit>
     )
 
+    private data class CatalogParseResult(
+        val section: CatalogSection?,
+        val accountSessions: List<PlaybackSession>?,
+        val error: String?
+    )
+
     private val handler = Handler(Looper.getMainLooper())
     private val slots = mutableMapOf<String, Slot>()
     private val pendingRefreshes = mutableMapOf<String, PendingRefresh>()
@@ -69,7 +77,10 @@ class CatalogBackgroundSync(
             onFinished?.invoke()
             return
         }
-        val rawRequestedLimit = pageLimit.coerceIn(DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT)
+        // Startup refreshes intentionally use a light one-page window. The full four-page
+        // window remains the default for manual/View All refreshes, but it is too expensive to
+        // attach to the first interactive frame on a TV box.
+        val rawRequestedLimit = pageLimit.coerceIn(MIN_PAGE_LIMIT, MAX_PAGE_LIMIT)
         val cachedLimit = app.catalogRepository.section(serviceId)?.loadedPageLimit ?: 0
         // View All grows MyMoviz in small, reliable batches. Even if several end-of-list
         // signals arrive close together, never turn them into dozens of concurrent requests.
@@ -210,19 +221,51 @@ class CatalogBackgroundSync(
         @JavascriptInterface
         fun section(serviceId: String?, payload: String?) {
             if (serviceId != expectedServiceId) return
+            val rawPayload = payload.orEmpty()
+            // JSONObject/regex normalization can be substantial for a full provider window.
+            // The bridge callback arrives on the WebView/main thread; parsing there was the
+            // source of long frame stalls while the user was already browsing Home. Parse the
+            // untrusted page payload off-main, then return only the small state transition to
+            // the main thread. No media URL or token is touched by this path.
+            val pageLimit = slots[expectedServiceId]?.pageLimit ?: DEFAULT_PAGE_LIMIT
+            activity.lifecycleScope.launch(Dispatchers.Default) {
+                val parsed = runCatching {
+                    val service = app.servicesRepository.findById(expectedServiceId)
+                    if (service == null) {
+                        CatalogParseResult(null, null, "سرویس تنظیم نشده است")
+                    } else {
+                        CatalogParseResult(
+                            section = parseSection(service, rawPayload, pageLimit),
+                            accountSessions = parseAccountSessions(service, rawPayload),
+                            error = null
+                        )
+                    }
+                }.getOrElse { error ->
+                    CatalogParseResult(null, null, error.message ?: "پاسخ نامعتبر")
+                }
+                withContext(Dispatchers.Main.immediate) {
+                    handleParsedSection(expectedServiceId, source, parsed)
+                }
+            }
+        }
+
+        private fun handleParsedSection(
+            serviceId: String,
+            source: WebView,
+            parsed: CatalogParseResult
+        ) {
             handler.post {
-                if (slots[expectedServiceId]?.webView !== source) return@post
-                val service = app.servicesRepository.findById(expectedServiceId)
-                if (service == null) {
-                    fail(expectedServiceId, source, "سرویس تنظیم نشده است")
+                if (slots[serviceId]?.webView !== source) return@post
+                val service = app.servicesRepository.findById(serviceId)
+                if (service == null || parsed.section == null) {
+                    fail(serviceId, source, parsed.error ?: "پاسخ نامعتبر")
                     return@post
                 }
-                val pageLimit = slots[expectedServiceId]?.pageLimit ?: DEFAULT_PAGE_LIMIT
-                val section = parseSection(service, payload.orEmpty(), pageLimit)
-                val accountSessions = parseAccountSessions(service, payload.orEmpty())
+                val section = parsed.section
+                val accountSessions = parsed.accountSessions
                 Log.d(
                     TAG,
-                    "result service=$expectedServiceId pages=$pageLimit " +
+                    "result service=$serviceId pages=${slots[serviceId]?.pageLimit} " +
                         "movies=${section.movies.size} series=${section.series.size} " +
                         "moreMovies=${section.hasMoreMovies} moreSeries=${section.hasMoreSeries}"
                 )
@@ -233,7 +276,7 @@ class CatalogBackgroundSync(
                     accountSessions?.let {
                         app.libraryRepository.syncAccountSessions(service.id, it)
                     }
-                    complete(expectedServiceId, source)
+                    complete(serviceId, source)
                 }
             }
         }
@@ -510,6 +553,7 @@ class CatalogBackgroundSync(
         const val MAX_ITEMS = 2048
         const val MAX_ACCOUNT_ITEMS = 20
         const val TIMEOUT_MS = 35_000L
+        const val MIN_PAGE_LIMIT = 1
         const val DEFAULT_PAGE_LIMIT = 4
         const val MYMOVIZ_PAGE_BATCH = 4
         // Keep a generous safety ceiling; the library requests the next window on demand.
@@ -668,7 +712,9 @@ class CatalogBackgroundSync(
                 }
                 async function pagedTyped(type) {
                   var pages = [];
-                  var pageCount = Math.ceil(__AMIN_MAX_ITEMS__ / 96) + 2;
+                  // Fetch only the requested window. A previous +2 probe here made even a
+                  // one-page startup refresh execute three full API pages per content type.
+                  var pageCount = Math.max(1, Math.ceil(__AMIN_MAX_ITEMS__ / 96));
                   for (var pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
                     var result = await typed(type, pageNumber);
                     if (!result.length) break;
@@ -677,7 +723,7 @@ class CatalogBackgroundSync(
                   }
                   return {
                     items: pages.slice(0, __AMIN_MAX_ITEMS__),
-                    hasMore: pages.length > __AMIN_MAX_ITEMS__
+                    hasMore: pages.length >= __AMIN_MAX_ITEMS__
                   };
                 }
                 var movieResult = await pagedTyped('MOVIE');

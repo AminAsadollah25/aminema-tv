@@ -34,6 +34,30 @@
 - Release build ساخته شده اما unsigned است؛ تا وقتی keystore رسمی تنظیم نشده، کانال
   انتشار همان Debug-signed است تا نصب درجا با امضای فعلی حفظ شود.
 
+### وضعیت Release 0.18.6 — RC Audit نهایی‌شده
+
+- این بخش وضعیت کد نسخهٔ `v0.18.6` است؛ نسخهٔ پایه `v0.18.5.1` بود و در این چرخه
+  versionCode/versionName به 48/0.18.6 ارتقا پیدا می‌کند.
+- مسیر Home/Spotlight/Search/Continue برای آیتم‌های کاتالوگ از Spotlight Native عبور
+  می‌کند. برای Providerهای شناخته‌شدهٔ سریال، `WATCH` قدیمی به `SELECT_EPISODE`
+  تبدیل می‌شود تا صفحهٔ جزئیات خام سایت دور زده نشود.
+- `LiveChannelHealthProbe` در timeout/cancellation پاک‌سازی می‌شود و WebView مخفی
+  mute/pause/blank می‌شود. Health scan فقط تا وقتی `LiveTvActivity` روی صفحه است
+  مجاز است؛ با رفتن به Home/Spotlight/Browser لغو می‌شود.
+- برای جلوگیری از ANR، Refresh خودکار کاتالوگ با WebView مخفی در cold-start عمداً
+  فعال نیست: روی همین process بیش از ۲۰۰۰ فریم از دست رفت. Home از کش فوراً می‌آید
+  و Refresh دستی/View All مسیرهای فعلی هستند؛ انتقال امن به process جدا با حفظ
+  Cookie/WebStorage هنوز طراحی نشده است.
+- شواهد امولاتور: Spotlight سریال «شاه‌گل» → «انتخاب قسمت» → قسمت ۱ به Browser
+  و فریم واقعی پخش؛ Back به Spotlight؛ Search → «Shifting Gears» → فصل ۱ → قسمت
+  ۲ نیز با لاگ `season=1 / filmrooz` و فریم واقعی پخش تأیید شد.
+- مسیر مستقیم فیلم نیز با جست‌وجوی `Masters of the Universe` و کلیک `تماشا` به
+  فریم واقعی ویدئو رسید؛ این عنوان کاندید یکتای MyMoviz است، اما چون movie route
+  فعلاً Provider id را Log نمی‌کند، در مستندات ادعای قطعیِ منبع نمی‌شود.
+- Live TV در اجرای تازه تب‌های فعال/همه (۱۱۰/۲۸۲) را نشان داد؛ GEM Series Plus
+  باز و با Back بسته شد. پس از خروج Media Session فعالی برای UID اپ باقی نماند و
+  ANR/FATAL تازه دیده نشد. سنجش نهایی صدا و وقفه روی Android Box واقعی باقی است.
+
 ## ۱. پروژه در یک نگاه
 
 Aminema یک Hub شخصی Android TV است — نه سرویس استریم. فقط وب‌سایت‌هایی را

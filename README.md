@@ -4,7 +4,7 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Published:** Aminema 0.18.5.1 — Cinematic Performance & TV Polish (`versionCode 47`)
+**Published:** Aminema 0.18.6 — Playback & Live TV Stabilization (`versionCode 48`)
 
 - Keeps the intro video visible as part of the Aminema identity while starting
   the first catalog refresh behind it, so the first usable Home state can be

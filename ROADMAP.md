@@ -7,12 +7,12 @@
 یافته‌های تصویری و ماشین حالت فصل/قسمت FilmRooz در
 `SERIES_LAB_FILMROOZ.md` ثبت شده است.
 
-نسخه جاری `0.18.5.1 / code 47 — Cinematic Performance & TV Polish` است. Intro
-همچنان نمایش داده می‌شود اما Refresh اولیهٔ کاتالوگ در همان بازهٔ زمانی و در
-پس‌زمینه شروع می‌شود. فونت Vazirmatn، سطوح Liquid Glass سبک، Focus/Transition
-روان‌تر و Health Coordinator پایدارتر اضافه شده‌اند؛ تطبیق فصل/قسمت نیز از دادهٔ
-صریح صفحه مقاوم‌تر شده است. Login، Cookie، WebStorage، Library و مسیرهای Provider
-تغییر نکرده‌اند.
+نسخهٔ منتشرشده `0.18.6 / code 48 — Playback & Live TV Stabilization` است.
+این نسخه چرخهٔ RC را نهایی می‌کند: مسیرهای Native Spotlight و پخش مستقیم فیلم/سریال،
+انتخاب دقیق فصل/قسمت، Back، Lifecycle اسکن Live TV و مسیر MyMoviz تثبیت شده‌اند.
+Refresh کاتالوگ با WebView مخفی در cold-start عمداً تا طراحی process جدا غیرفعال
+است تا Home و پخش روان بماند؛ Refresh دستی و View All حفظ شده‌اند. Login، Cookie،
+WebStorage، Library و مسیرهای Provider تغییر داده نشده‌اند.
 
 نسخهٔ قبل `0.18.4 / code 46 — Live TV Health Tabs` بود. تب اصلی پخش زنده فقط
 کانال‌هایی را نشان می‌دهد که از صفحه عادی Provider پاسخ قابل پخش گرفته‌اند؛ تب

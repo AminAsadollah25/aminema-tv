@@ -45,7 +45,10 @@ class CatalogRepository(private val context: Context) {
         if (normalized != loaded) {
             runCatching { file.writeText(json.encodeToString(normalized)) }
         }
-        _sections.value = normalized
+        // Returning from Search/Browser calls load() again. Do not emit an equal, newly
+        // allocated 2,000-item list: Home's canonical merge would otherwise rebuild every
+        // rail and recompose hundreds of image nodes for no visible change.
+        if (_sections.value != normalized) _sections.value = normalized
 
         val metadata = runCatching {
             json.decodeFromString<List<TitleMetadata>>(metadataFile.readText())
@@ -55,7 +58,7 @@ class CatalogRepository(private val context: Context) {
             .sortedByDescending { it.fetchedAt }
             .take(MAX_TITLE_METADATA)
             .associateBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
-        _titleMetadata.value = metadata
+        if (_titleMetadata.value != metadata) _titleMetadata.value = metadata
     }
 
     fun section(serviceId: String): CatalogSection? =

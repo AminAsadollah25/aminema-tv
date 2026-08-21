@@ -13,12 +13,19 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import com.amin.tvos.R
+import coil.imageLoader
+import coil.request.ImageRequest
 
 /**
  * Covers the unavoidable website detail-page bootstrap while Aminema follows
  * the site's own normal Continue/Play action. It never reads media requests.
  */
 class PlaybackLoadingView(context: Context) : FrameLayout(context) {
+
+    private val artwork = ImageView(context).apply {
+        scaleType = ImageView.ScaleType.CENTER_CROP
+        alpha = 0.42f
+    }
 
     private val title = TextView(context).apply {
         text = "در حال آماده‌سازی پخش…"
@@ -47,6 +54,19 @@ class PlaybackLoadingView(context: Context) : FrameLayout(context) {
                 Color.parseColor("#08080C"),
                 Color.BLACK
             )
+        )
+
+        // Keep the first frame cinematic instead of exposing an empty provider/player page.
+        // This is artwork already present in the native catalog; it is never a media URL.
+        addView(artwork, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        addView(
+            View(context).apply {
+                background = GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.argb(55, 0, 0, 0), Color.argb(210, 0, 0, 0))
+                )
+            },
+            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         )
 
         val panel = LinearLayout(context).apply {
@@ -82,9 +102,32 @@ class PlaybackLoadingView(context: Context) : FrameLayout(context) {
         )
     }
 
-    fun showPreparing(isContinue: Boolean, episodeLabel: String? = null) {
+    fun showPreparing(
+        isContinue: Boolean,
+        episodeLabel: String? = null,
+        titleText: String = "",
+        backdropUrl: String = "",
+        posterUrl: String = ""
+    ) {
+        val artUrl = backdropUrl.ifBlank { posterUrl }
+        if (artUrl.isNotBlank()) {
+            artwork.visibility = View.VISIBLE
+            context.imageLoader.enqueue(
+                ImageRequest.Builder(context)
+                    .data(artUrl)
+                    .size(1280, 720)
+                    .crossfade(true)
+                    .target(onSuccess = { drawable -> artwork.setImageDrawable(drawable) })
+                    .build()
+            )
+        } else {
+            artwork.setImageDrawable(null)
+            artwork.visibility = View.GONE
+        }
         title.text = if (!episodeLabel.isNullOrBlank()) {
             "در حال آماده‌سازی $episodeLabel…"
+        } else if (titleText.isNotBlank()) {
+            "در حال آماده‌سازی «$titleText»…"
         } else if (isContinue) {
             "پاپ‌کورن یادت نره… 🍿"
         } else {

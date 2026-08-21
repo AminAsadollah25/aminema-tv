@@ -786,21 +786,10 @@ fun HomeScreen(
                 slides = heroSlides,
                 onOpen = { slide ->
                     if (slide.item.primaryAction == SpotlightAction.CONTINUE) {
-                        context.startActivity(
-                            BrowserActivity.intent(
-                                context = context,
-                                serviceId = slide.item.serviceId,
-                                url = slide.item.browserStartUrl.ifBlank { slide.item.contentUrl },
-                                resumePosition = slide.item.resumePosition,
-                                contentUrl = slide.item.contentUrl,
-                                contentTitle = slide.item.title,
-                                contentPoster = slide.item.posterUrl,
-                                autoResume = slide.item.autoResume,
-                                directPlay = slide.item.directPlay,
-                                resumeStrategyOverride = slide.item.resumeStrategy,
-                                actionButtonTextPatterns = slide.item.actionButtonTextPatterns
-                            )
-                        )
+                        // Continue follows the same native Spotlight route as every other title.
+                        // This prevents a provider shell from flashing before the actual action
+                        // and gives the user one stable place to confirm the title.
+                        openSpotlight(slide.item)
                     } else {
                         openSpotlight(slide.item)
                     }
@@ -870,21 +859,9 @@ fun HomeScreen(
                         showContinueBadge = true,
                         onClick = {
                             val spotlightItem = spotlightForPlayback(session)
-                            context.startActivity(
-                                BrowserActivity.intent(
-                                    context = context,
-                                    serviceId = spotlightItem.serviceId,
-                                    url = spotlightItem.browserStartUrl.ifBlank { spotlightItem.contentUrl },
-                                    resumePosition = spotlightItem.resumePosition,
-                                    contentUrl = spotlightItem.contentUrl,
-                                    contentTitle = spotlightItem.title,
-                                    contentPoster = spotlightItem.posterUrl,
-                                    autoResume = spotlightItem.autoResume,
-                                    directPlay = spotlightItem.directPlay,
-                                    resumeStrategyOverride = spotlightItem.resumeStrategy,
-                                    actionButtonTextPatterns = spotlightItem.actionButtonTextPatterns
-                                )
-                            )
+                            // Keep Continue consistent with Home/Search: native Spotlight first,
+                            // then the provider's normal authenticated playback action.
+                            openSpotlight(spotlightItem)
                         },
                         onLongClick = { viewModel.toggleFavorite(item.id) },
                         onFocused = { focused ->

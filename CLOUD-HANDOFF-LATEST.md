@@ -29,6 +29,29 @@ Fallback صادقانه طراحی شود؛ داده حدس زده نشود و �
   Motion سریع‌تر، Health Coordinator پایدار و تطبیق مقاوم‌تر فصل/قسمت.
 - محدودیت: `assembleRelease` موفق است اما unsigned؛ APK انتشار Debug-signed است
   تا update درجا روی نصب فعلی و امضای موجود حفظ شود.
+
+## Release 0.18.6 — Stabilization audit finalized
+
+این قسمت وضعیت کد Release `0.18.6` است؛ نسخهٔ پایه `0.18.5.1` بود و این چرخه
+با versionCode 48 منتشر می‌شود.
+
+- مسیر Home/Search/Continue به Spotlight Native متصل است. برای سریال‌های Providerهای
+  شناخته‌شده، اقدام قدیمی `WATCH` به `SELECT_EPISODE` تبدیل می‌شود. تست واقعی
+  امولاتور برای «شاه‌گل» تا انتخاب فصل/قسمت و رسیدن به فریم واقعی Browser انجام شد.
+- `LiveChannelHealthProbe` در `timeout/cancel/finish` پاک‌سازی می‌شود؛ WebView Probe
+  mute/pause/blank است و `LiveTvActivity.onPause` اسکن را قطع می‌کند تا صدای Probe
+  پنهان با Browser یا Home قاطی نشود.
+- Refresh خودکار کاتالوگ در cold-start عمداً غیرفعال باقی مانده است؛ WebViewهای
+  مخفی در همان process قبلاً بیش از ۲۰۰۰ فریم را از بین بردند. این تصمیم محافظه‌کارانه
+  برای روانی است، نه ادعای Refresh پس‌زمینه. process جدا با حفظ Cookie/WebStorage
+  باید جداگانه طراحی و تأیید شود.
+- MyMoviz: الگوی دکمهٔ `تماشا و دانلود` و autoplay صفحهٔ `/watch/` اضافه شده.
+  Search → `Masters of the Universe` → `تماشا` به فریم واقعی ویدئو رسید و صفحهٔ
+  جزئیات خام باقی نماند. چون movie route فعلاً Provider id را Log نمی‌کند، این
+  فقط تأیید عملی مسیر مستقیم کاندید MyMoviz است، نه ادعای استخراج URL یا Token.
+- Search → `Shifting Gears` → فصل ۱ → قسمت ۲ نیز با state-machine واقعی FilmRooz
+  و فریم پخش تأیید شد. Live TV در اجرای تازه فعال/همه (۱۱۰/۲۸۲) را نشان داد؛
+  GEM Series Plus با Back بسته شد و Media Session فعالی برای UID اپ باقی نماند.
 - Commit/Tag: `b77c00b` / `v0.18.3`
 - GitHub Release: `https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.3`
 - APK: `Aminema-0.18.3-debug.apk`، اندازه `25,248,509` بایت؛ SHA-256:

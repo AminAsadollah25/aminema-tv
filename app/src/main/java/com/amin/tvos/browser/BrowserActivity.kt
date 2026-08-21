@@ -80,6 +80,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_CONTENT_URL = "content_url"
         private const val EXTRA_CONTENT_TITLE = "content_title"
         private const val EXTRA_CONTENT_POSTER = "content_poster"
+        private const val EXTRA_CONTENT_BACKDROP = "content_backdrop"
         private const val EXTRA_AUTO_RESUME = "auto_resume"
         private const val EXTRA_RESUME_STRATEGY = "resume_strategy"
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
@@ -100,6 +101,7 @@ class BrowserActivity : ComponentActivity() {
             contentUrl: String = "",
             contentTitle: String = "",
             contentPoster: String = "",
+            contentBackdrop: String = "",
             autoResume: Boolean = false,
             /** Follow the site's own best Play-online option instead of stopping on detail. */
             directPlay: Boolean = false,
@@ -118,6 +120,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_CONTENT_URL, contentUrl)
                 .putExtra(EXTRA_CONTENT_TITLE, contentTitle)
                 .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
+                .putExtra(EXTRA_CONTENT_BACKDROP, contentBackdrop)
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
@@ -189,6 +192,7 @@ class BrowserActivity : ComponentActivity() {
     private var lastContentUrl = ""
     private var lastContentTitle = ""
     private var lastContentPoster = ""
+    private var lastContentBackdrop = ""
 
     private var currentTitle = ""
     private var currentPoster = ""
@@ -238,6 +242,7 @@ class BrowserActivity : ComponentActivity() {
         lastContentUrl = intent.getStringExtra(EXTRA_CONTENT_URL).orEmpty()
         lastContentTitle = intent.getStringExtra(EXTRA_CONTENT_TITLE).orEmpty()
         lastContentPoster = intent.getStringExtra(EXTRA_CONTENT_POSTER).orEmpty()
+        lastContentBackdrop = intent.getStringExtra(EXTRA_CONTENT_BACKDROP).orEmpty()
         autoResumeRequested = intent.getBooleanExtra(EXTRA_AUTO_RESUME, false)
         directPlayRequested = intent.getBooleanExtra(EXTRA_DIRECT_PLAY, false)
         liveTheaterModeRequested =
@@ -326,7 +331,10 @@ class BrowserActivity : ComponentActivity() {
         if (autoResumeRequested || directPlayRequested) {
             playbackLoadingView.showPreparing(
                 isContinue = autoResumeRequested,
-                episodeLabel = requestedEpisodeLabel()
+                episodeLabel = requestedEpisodeLabel(),
+                titleText = lastContentTitle,
+                backdropUrl = lastContentBackdrop,
+                posterUrl = lastContentPoster
             )
             playbackAutomationHandler.postDelayed(
                 playbackAutomationTimeout,
@@ -2697,8 +2705,11 @@ class BrowserActivity : ComponentActivity() {
                     (tag === 'button' || tag === 'a' ? 500 : 0) -
                     text.length * 3;
                 }
+                // MyMoviz has used both semantic buttons and small SPA controls with
+                // an onclick handler. Include the latter, but do not broaden this to
+                // every div: a card/container click could open the wrong title.
                 var candidates = Array.from(document.querySelectorAll(
-                  'button,[role="button"],a'
+                  'button,[role="button"],a,[onclick]'
                 )).filter(function(el) {
                   var text = (el.innerText || el.textContent || '').trim();
                   return text && text.length < 40 && matcher.test(text) &&
