@@ -292,7 +292,7 @@
       "button[type='submit']"
     ],
     "contentUrlPatterns": [
-      "/_modern/title/[0-9]+/"
+      "/(?:_modern/title|tvshows|movies)/[0-9]+/"
     ],
     "playbackUrlPatterns": [
       "/_modern/watch/[0-9]+"

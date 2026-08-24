@@ -30,6 +30,9 @@ enum class CanonicalMatchConfidence {
     /** Normalised title, release year and movie/series kind all agree. */
     TITLE_YEAR_KIND,
 
+    /** Exact title/kind match with one provider's verified public IMDb id and one missing year. */
+    TITLE_KIND_PUBLIC_ID,
+
     /** Exact title/kind match where providers differ by at most one publication year. */
     TITLE_YEAR_DRIFT,
 

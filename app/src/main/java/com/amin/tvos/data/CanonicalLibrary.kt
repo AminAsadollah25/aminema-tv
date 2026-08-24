@@ -130,7 +130,10 @@ object CanonicalLibrary {
             }
             val preferred = distinct.maxWithOrNull(
                 compareBy<SourceVariant>(
-                    { if (it.item.kind == CatalogKind.MOVIE && it.item.hasPersianDub) 1 else 0 },
+                    // A dubbed series is just as important as a dubbed movie.  Keeping this
+                    // rule at canonical selection time lets the same title card expose the
+                    // dubbed series provider without changing the user's provider sessions.
+                    { if (it.item.hasPersianDub) 1 else 0 },
                     { autoQualityRank(it.item.maxQualityHeight) },
                     { if (it.providerId == FILMROOZ_ID) 1 else 0 },
                     ::variantQuality
@@ -199,6 +202,18 @@ object CanonicalLibrary {
 
         val firstYear = CanonicalText.normalizeYear(first.item.year)
         val secondYear = CanonicalText.normalizeYear(second.item.year)
+        if (firstTitle == secondTitle && firstYear.isBlank() != secondYear.isBlank()) {
+            // Search pages are often intentionally lightweight: one provider may omit the
+            // year while another exposes it.  Do not turn that into a title-only merge; only
+            // accept it when the other record already carries a verified public IMDb id.
+            if (hasStrongCreditOverlap(first.item, second.item)) {
+                return CanonicalMatchConfidence.TITLE_CREDITS_KIND
+            }
+            if (first.imdbId.isNotBlank() || second.imdbId.isNotBlank()) {
+                return CanonicalMatchConfidence.TITLE_KIND_PUBLIC_ID
+            }
+            return CanonicalMatchConfidence.INDEPENDENT
+        }
         if (firstYear.isNotBlank() && secondYear.isNotBlank()) {
             val firstYearNumber = firstYear.toIntOrNull()
             val secondYearNumber = secondYear.toIntOrNull()
@@ -309,6 +324,7 @@ object CanonicalLibrary {
         get() = when (this) {
             CanonicalMatchConfidence.IMDb -> 4
             CanonicalMatchConfidence.TITLE_YEAR_KIND -> 3
+            CanonicalMatchConfidence.TITLE_KIND_PUBLIC_ID -> 3
             CanonicalMatchConfidence.TITLE_ALIAS_YEAR -> 3
             CanonicalMatchConfidence.TITLE_YEAR_DRIFT -> 2
             CanonicalMatchConfidence.TITLE_ALIAS_YEAR_DRIFT -> 2

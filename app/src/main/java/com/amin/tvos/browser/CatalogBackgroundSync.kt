@@ -1338,10 +1338,16 @@ class CatalogBackgroundSync(
                 return Array.from(
                   doc.querySelectorAll('.mv-results-grid .mv-ritem')
                 ).map(function(row) {
-                  var card = row.querySelector('a.mv-card[href*="/_modern/title/"]');
+                  var card = row.querySelector(
+                    'a.mv-card[href*="/_modern/title/"],' +
+                    'a.mv-card[href*="/tvshows/"],' +
+                    'a.mv-card[href*="/movies/"]'
+                  );
                   if (!card) return null;
                   var url = new URL(card.getAttribute('href') || '', location.origin);
-                  var match = url.pathname.match(/^\/_modern\/title\/(\d+)\//);
+                  var match = url.pathname.match(
+                    /^\/(?:_modern\/title|tvshows|movies)\/(\d+)\//
+                  );
                   if (!match || url.origin !== location.origin || seen[url.pathname]) {
                     return null;
                   }
@@ -1389,7 +1395,8 @@ class CatalogBackgroundSync(
                     ? clean(countryFact.textContent).replace(/^کشور\s*:\s*/, '') : '';
                   return {
                     title: title.slice(0, 140),
-                    kind: kind,
+                    kind: /^\/tvshows\//.test(url.pathname) ? 'SERIES' :
+                      /^\/movies\//.test(url.pathname) ? 'MOVIE' : kind,
                     contentUrl: url.origin + url.pathname,
                     posterUrl: rawPoster && !/^data:/i.test(rawPoster)
                       ? new URL(rawPoster, location.origin).href : '',

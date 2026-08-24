@@ -258,11 +258,14 @@ class SiteSearchEngine(
                       : '';
                     var poster = candidate && !/^data:/i.test(candidate)
                       ? new URL(candidate, location.origin).href : '';
+                    var cardText = card ? (card.textContent || '') : '';
+                    var yearMatch = cardText.match(/(?:19|20)\d{2}/);
                     items.push({
                       title: title.slice(0, 140),
                       kind: match[1] === 'series' ? 'SERIES' : 'MOVIE',
                       contentUrl: url.origin + url.pathname,
-                      posterUrl: poster
+                      posterUrl: poster,
+                      year: yearMatch ? yearMatch[0] : ''
                     });
                   }
                 );
@@ -306,11 +309,22 @@ class SiteSearchEngine(
                 return Array.from(
                   doc.querySelectorAll('.mv-results-grid .mv-ritem')
                 ).map(function(row) {
-                  var card = row.querySelector('a.mv-card[href*="/_modern/title/"]');
+                  // MyMoviz kept the same public detail pages but moved them from the
+                  // /_modern/title/ route to /tvshows/ and /movies/.  Match both generations;
+                  // otherwise the search silently drops the provider and no source chooser
+                  // can be built for a title such as Silo.
+                  var card = row.querySelector(
+                    'a.mv-card[href*="/_modern/title/"],' +
+                    'a.mv-card[href*="/tvshows/"],' +
+                    'a.mv-card[href*="/movies/"]'
+                  );
                   if (!card) return null;
                   var url = new URL(card.getAttribute('href') || '', location.origin);
-                  if (url.origin !== location.origin ||
-                      !/^\/_modern\/title\/\d+\//.test(url.pathname)) return null;
+                  if (url.origin !== location.origin || !(
+                      /^\/_modern\/title\/\d+\//.test(url.pathname) ||
+                      /^\/tvshows\/\d+\//.test(url.pathname) ||
+                      /^\/movies\/\d+\//.test(url.pathname)
+                  )) return null;
                   var title = clean(
                     nodeText(row, '.mv-ritem__t-en') ||
                     nodeText(card, '.mv-card__title') ||
@@ -338,7 +352,9 @@ class SiteSearchEngine(
                     clean(nodeText(card, '.mv-card__badges'));
                   return {
                     title: title.slice(0, 140),
-                    kind: card.querySelector('.mv-card__ep') ? 'SERIES' : 'MOVIE',
+                    kind: /^\/tvshows\//.test(url.pathname) ||
+                      (url.pathname.startsWith('/_modern/title/') &&
+                        card.querySelector('.mv-card__ep')) ? 'SERIES' : 'MOVIE',
                     contentUrl: url.origin + url.pathname,
                     posterUrl: rawPoster && !/^data:/i.test(rawPoster)
                       ? new URL(rawPoster, location.origin).href : '',

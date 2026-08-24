@@ -73,6 +73,51 @@ class CanonicalLibraryTest {
     }
 
     @Test
+    fun exactSeriesTitleMergesWhenOneSearchResultOmitsYearButOtherHasImdb() {
+        val filmRooz = SearchResult(
+            title = "Silo",
+            kind = CatalogKind.SERIES,
+            contentUrl = "https://film.test/post/series/1/silo/",
+            posterUrl = "https://images.test/filmrooz.webp",
+            serviceId = "filmrooz"
+        )
+        val myMoviz = SearchResult(
+            title = "Silo",
+            kind = CatalogKind.SERIES,
+            contentUrl = "https://movie.test/tvshows/20197/silo-2023",
+            posterUrl = "https://images.test/mymoviz.webp",
+            serviceId = "mymoviz",
+            year = "2023",
+            imdbId = "tt14688458",
+            hasPersianDub = true
+        )
+
+        val result = CanonicalLibrary.fromSearchResults(listOf(filmRooz, myMoviz))
+
+        assertEquals(1, result.size)
+        assertEquals(2, result.single().variants.size)
+        assertEquals(CanonicalMatchConfidence.TITLE_KIND_PUBLIC_ID, result.single().matchConfidence)
+        assertEquals("mymoviz", result.single().representative.serviceId)
+    }
+
+    @Test
+    fun dubbedSeriesBeatsUndubbedSeriesAtCanonicalSelection() {
+        val original = item(
+            "Silo", "https://film.test/post/series/1/silo/", "filmrooz",
+            year = "2023"
+        ).copy(kind = CatalogKind.SERIES)
+        val dubbed = item(
+            "Silo", "https://movie.test/tvshows/20197/silo-2023", "mymoviz",
+            year = "2023"
+        ).copy(kind = CatalogKind.SERIES, hasPersianDub = true)
+
+        val result = CanonicalLibrary.canonicalize(listOf(original, dubbed))
+
+        assertEquals("mymoviz", result.single().representative.serviceId)
+        assertTrue(result.single().representative.hasPersianDub)
+    }
+
+    @Test
     fun conflictingYearsStaySeparateEvenWhenTitlesMatch() {
         val first = item("Same Name", "https://one.test/title/1", "one", year = "2019")
         val second = item("Same Name", "https://two.test/title/2", "two", year = "2024")

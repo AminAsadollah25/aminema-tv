@@ -321,6 +321,15 @@ fun SpotlightScreen(
 
                                         MetadataChips(item)
 
+                                        // Source choice must be visible before the user enters a
+                                        // series' episode list. Keeping it inside the Hero avoids
+                                        // the old TV trap where the selector existed only below
+                                        // the fold and the primary button skipped over it.
+                                        if (item.sourceVariants.size > 1) {
+                                            Spacer(Modifier.height(14.dp))
+                                            SourceSelector(item, onSourceSelected)
+                                        }
+
                                         Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 16.dp)) {
                                             Column(modifier = Modifier.fillMaxSize()) {
                                                 if (item.kind == CatalogKind.SERIES && item.episodeLabel.isNotBlank()) {
@@ -410,12 +419,9 @@ fun SpotlightScreen(
                                                         onClick = {
                                                             if (item.primaryAction == SpotlightAction.SELECT_EPISODE) {
                                                                 coroutineScope.launch {
-                                                                    // Multi-source titles insert the source chooser between
-                                                                    // the Hero and episodes; keep the primary action pointed
-                                                                    // at the actual episode navigator in both layouts.
-                                                                    val episodeItemIndex =
-                                                                        if (item.sourceVariants.size > 1) 2 else 1
-                                                                    listState.animateScrollToItem(episodeItemIndex)
+                                                                    // The source chooser is part of the fixed Hero now, so the
+                                                                    // next list item is always the episode navigator.
+                                                                    listState.animateScrollToItem(1)
                                                                 }
                                                             } else {
                                                                 onAction(item.primaryAction)
@@ -439,20 +445,6 @@ fun SpotlightScreen(
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-
-                // Source choice stays outside the fixed Hero skeleton so adding providers can
-                // never push the title/summary/actions below the visible 1080p decision area.
-                if (item.sourceVariants.size > 1) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 72.dp, vertical = 18.dp)
-                        ) {
-                            SourceSelector(item, onSourceSelected)
                         }
                     }
                 }
