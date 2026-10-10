@@ -34,5 +34,21 @@ Gate نسخهٔ نهایی موفق: ۶۵ تست، Failure/Error/Skipped صفر�
 `982ce869461d77989ace14a323e18e13cfd10e79d5b812adbb383d63334da40d`.
 نام Asset سازگار با updater: `Aminema-0.18.8-debug.apk` و checksum هم‌نام.
 
-آماده‌سازی در حال انجام؛ هنوز Published معرفی نشود. نتیجهٔ Build، SHA،
-Commit، Tag، لینک و راستی‌آزمایی Asset پس از اجرای واقعی ثبت می‌شوند.
+انتشار کامل شد:
+
+- Commit کد: `1265ce54dfab828e63ff99ea170c2039292f2b59`.
+- Tag: `v0.18.8` روی همین Commit؛ هر دو به origin Push شدند.
+- Release: https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.8
+- Latest API واقعاً `v0.18.8`، draft=false، prerelease=false و code51 است.
+- هر دو Asset حالت uploaded دارند؛ فایل APK دوباره از GitHub دانلود شد
+  و `shasum -a 256 -c` نتیجهٔ OK داد؛ digest API نیز با فایل محلی یکسان است.
+- امضای APK دانلودشده، Candidate قبلی و بیلد نهایی یکسان:
+  `ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3`.
+- نصب درجا روی emulator-5554 موفق؛ dumpsys code51/name0.18.8 را تأیید کرد.
+  خانهٔ واقعی با هیرو و پوستر دیده شد؛ لاگ AndroidRuntime PID14300 خطا نداشت.
+  شاهد: `/private/tmp/aminema-0.18.8-release-home.png`.
+- سازگاری قرارداد updater بررسی شد: Latest، پسوند debug.apk، checksum
+  هم‌نام و خط code51 صحیح‌اند. اجرای دوبارهٔ گردش نصب از داخل برنامهٔ
+  code49/50 و تست Box واقعی انجام نشده؛ پاک‌کردن/دانگرید محیط مجاز نیست.
+- هیچ فایل خصوصی، اسکریپت موقت یا بکاپ Manifest وارد این Commit نشد؛
+  فایل‌های untracked قبلی دست‌نخورده باقی‌اند.

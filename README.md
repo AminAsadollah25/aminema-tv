@@ -4,7 +4,7 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Release being published:** Aminema 0.18.8 — Startup & Catalog Stabilization (`versionCode 51`)
+**Published:** [Aminema 0.18.8 — Startup & Catalog Stabilization](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.8) (`versionCode 51`)
 
 - Uses a small, validated Home snapshot while the full Library cache loads.
 - Reuses an unchanged catalog in memory when returning Home; poster-cookie

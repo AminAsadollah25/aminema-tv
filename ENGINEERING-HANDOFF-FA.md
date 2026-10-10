@@ -5,7 +5,10 @@
 Candidate قدیمی code50 بود؛ نسخهٔ انتشار code51 است، با همان نام 0.18.8.
 updater با `versionCode: 51` در ریلیز نوت به هر دو نصب code49 و code50
 آپدیت پیشنهاد می‌دهد. تنظیم پکیج و امضا تغییر نکرد؛ نصب درجا تأیید شد.
-جزئیات و محدودیت‌ها در `RELEASE_REPORT_0.18.8.md` ثبت می‌شوند.
+انتشار تأیید شد: Commit کد `1265ce5`، Tag `v0.18.8`؛ Latest API code51،
+APK/SHA دانلودشده و امضا تطبیق شدند. لینک:
+https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.8
+جزئیات و محدودیت‌ها در `RELEASE_REPORT_0.18.8.md` ثبت شده‌اند.
 
 ## بررسی تکمیلی Startup — 2026-10-09
 

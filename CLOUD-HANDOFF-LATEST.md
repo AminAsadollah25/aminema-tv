@@ -1,11 +1,14 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
-## آمادهٔ انتشار با مجوز مالک — 2026-10-10
+## منتشرشده با مجوز مالک — 2026-10-10
 
 `0.18.8/code51`، Gate موفق (۶۵ تست، lint صفر خطا/۱۳۱ هشدار)، نصب درجا
 روی امولاتور موفق و امضای قبلی یکسان است. دامنهٔ انتشار شامل اصلاح‌های
 Startup/Catalog و تغییرات قبلی Live TV داخل Candidate است؛ اسکریپت‌های
-موقت و بکاپ Manifest خارج انتشارند. `RELEASE_REPORT_0.18.8.md` و
+موقت و بکاپ Manifest خارج انتشارند. Commit کد `1265ce5`، Tag `v0.18.8`،
+Release https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.8
+منتشر و دانلود APK/SHA واقعاً تطبیق شد. Latest API کد 51 دارد.
+`RELEASE_REPORT_0.18.8.md` و
 `RELEASE_NOTES_0.18.8.md` مرجع این انتشارند. Snapshotهای پایین تاریخی‌اند.
 
 ## بررسی تکمیلی لودینگ — 2026-10-09
