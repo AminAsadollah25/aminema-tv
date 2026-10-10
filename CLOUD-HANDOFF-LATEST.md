@@ -1,5 +1,34 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## آمادهٔ انتشار با مجوز مالک — 2026-10-10
+
+`0.18.8/code51`، Gate موفق (۶۵ تست، lint صفر خطا/۱۳۱ هشدار)، نصب درجا
+روی امولاتور موفق و امضای قبلی یکسان است. دامنهٔ انتشار شامل اصلاح‌های
+Startup/Catalog و تغییرات قبلی Live TV داخل Candidate است؛ اسکریپت‌های
+موقت و بکاپ Manifest خارج انتشارند. `RELEASE_REPORT_0.18.8.md` و
+`RELEASE_NOTES_0.18.8.md` مرجع این انتشارند. Snapshotهای پایین تاریخی‌اند.
+
+## بررسی تکمیلی لودینگ — 2026-10-09
+
+مرحلهٔ سوم هنوز محلی و منتشرنشده است؛ ابتدا
+`STARTUP-DEEP-DIVE-2026-10-09.md` را بخوانید. Background Cookie از Main
+خارج شد، Home کش مشتق‌شدهٔ کوچک دارد و Library منتظر کش کامل می‌ماند؛
+برگشت با فایل یکسان دیگر Decode تکراری ندارد. UI پنهان پشت Intro ساخته
+نمی‌شود؛ متادیتای همان فیلم هیرو crossfade تازه ایجاد نمی‌کند.
+۶۵ تست و Build/Lint موفق؛ صفر خطا و ۱۳۱ هشدار lint. نصب فقط درجا و
+داده‌ها حفظ شده‌اند. Callbackهای زمان‌بندی برابر TTFD نیستند. سرعت
+Box واقعی و پخش/Continue همچنان مستقل باید بررسی شوند.
+
+## Snapshot محلی تازه — 2026-10-09
+
+Git پایه `1ec6666`؛ نسخهٔ کاری موجود `0.18.8/code50` و تغییرات منتشرنشدهٔ
+Live TV حفظ شده‌اند. اصلاح Startup/Catalog امروز نیز هنوز Commit/Push/Release
+نشده است. اول `DEVELOPMENT_LOG_STARTUP_CATALOG_2026-10-09.md` و
+`TEST_REPORT_STARTUP_CATALOG_2026-10-09.md` را بخوانید؛ وضعیت‌های قدیمی پایین
+تاریخی‌اند و نباید به‌عنوان Latest تأییدشده معرفی شوند. Login/Cookie/Data
+پاک نشده‌اند و نصب فقط `adb install -r` است. انتشار نیازمند تأیید مالک و
+Review مستقل تغییرات قبلی Live TV است.
+
 این فایل خلاصه عملیاتی همیشه‌به‌روز پروژه است. برای جزئیات Release جدید،
 فایل‌های `DEVELOPMENT_LOG_0.18.3.md`، `TEST_REPORT_0.18.3.md` و
 `RELEASE_NOTES_0.18.3.md` خوانده شوند. معماری پایدار در
@@ -727,3 +756,12 @@ Back و Fullscreen را مشاهده کند؛ نباید Stream URL استخرا
   فیلتر فصل authoritative مانع برگشت تصادفی به فصل ۱ می‌شود.
 - Gate نسخه: `testDebugUnitTest`، `lintDebug`، `assembleDebug` و
   `assembleRelease` موفق.
+
+# Performance candidate، مرحلهٔ دوم — 2026-10-09
+
+تغییرات جدید هنوز محلی هستند: Home به LazyColumn با کلید هر ردیف تبدیل شد؛
+CatalogIndex خارج Main ساخته می‌شود؛ Library قبل از آماده شدن کش یا در viewport
+خالی pagination اجرا نمی‌کند. Build/Lint/۶۱ تست موفق، DPAD/موس/Back بررسی شدند.
+بهبود عددی زمان شروع اثبات نشده؛ تست Box واقعی/Playback/Continue باقی است.
+APK جدید و SHA در TEST_REPORT_STARTUP_CATALOG_2026-10-09.md آمده‌اند.
+لاگین/داده‌ها پاک نشدند. تغییرات قبلی عامل دیگر حفظ شده‌اند؛ بدون تأیید انتشار نکنید.

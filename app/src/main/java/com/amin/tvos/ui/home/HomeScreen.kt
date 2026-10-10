@@ -5,7 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,9 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -38,10 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amin.tvos.R
@@ -77,6 +73,7 @@ import com.amin.tvos.ui.theme.TextSecondary
 import java.util.Calendar
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import com.amin.tvos.diagnostics.StartupDiagnostics
 
 @Composable
 fun HomeScreen(
@@ -97,6 +94,12 @@ fun HomeScreen(
     val favorites by viewModel.favorites.collectAsState()
     val mySeries by viewModel.mySeries.collectAsState()
     val catalogSections by viewModel.catalogSections.collectAsState()
+    LaunchedEffect(catalogSections) {
+        if (catalogSections.any { it.all.isNotEmpty() || it.movies.isNotEmpty() || it.series.isNotEmpty() }) {
+            androidx.compose.runtime.withFrameNanos { }
+            StartupDiagnostics.mark("home.catalog.frame")
+        }
+    }
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
     val titleMetadata by viewModel.titleMetadata.collectAsState()
     val homeServices = remember(services) { services.filter { it.showOnHome } }
@@ -107,18 +110,25 @@ fun HomeScreen(
                 it.id == HomeViewModel.MYMOVIZ_SERVICE_ID
         }
     }
-    val catalogItems = remember(catalogSections) {
-        catalogSections
-            .flatMap { it.all + it.movies + it.series + it.popularSeries + it.featured }
-            .groupBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
-            .values
-            .map { variants -> variants.reduce(::mergeCatalogVariants) }
-    }
-    val catalogByUrl = remember(catalogItems) {
-        catalogItems.associateBy {
-            ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+    val catalogIndex by androidx.compose.runtime.produceState(
+        initialValue = emptyList<CatalogItem>() to emptyMap<String, CatalogItem>(),
+        key1 = catalogSections
+    ) {
+        StartupDiagnostics.mark("catalog.index.start")
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val merged = catalogSections
+                .flatMap { it.all + it.movies + it.series + it.popularSeries + it.featured }
+                .groupBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+                .values
+                .map { variants -> variants.reduce(::mergeCatalogVariants) }
+            merged to merged.associateBy {
+                ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+            }
         }
+        StartupDiagnostics.mark("catalog.index.end")
     }
+    val catalogItems = catalogIndex.first
+    val catalogByUrl = catalogIndex.second
     val iranianSection = catalogSections.firstOrNull {
         it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
     }
@@ -133,34 +143,33 @@ fun HomeScreen(
             service.id to service.sourceLabel.ifBlank { service.name }
         }
     }
-    val internationalCanonical = remember(
-        filmRoozSection, myMovizSection, titleMetadata, providerNames
+    val internationalCanonical by androidx.compose.runtime.produceState(
+        initialValue = Triple(
+            emptyList<CanonicalMedia>(), emptyList<CanonicalMedia>(), emptyList<CanonicalMedia>()
+        ),
+        key1 = filmRoozSection, key2 = myMovizSection,
+        key3 = titleMetadata to providerNames
     ) {
-        fun merged(
-            filmRoozItems: List<CatalogItem>,
-            myMovizItems: List<CatalogItem>
-        ): List<CanonicalMedia> = CanonicalLibrary.mergeLatest(
-            providerLists = listOf(filmRoozItems, myMovizItems),
-            metadataByUrl = titleMetadata,
-            providerNames = providerNames,
-            // Home only needs a bounded merge window. View All uses the repository directly
-            // and can still continue through the full cached provider window.
-            limit = 288
-        )
-        Triple(
-            merged(
-                filmRoozSection?.all.orEmpty(),
-                myMovizSection?.all.orEmpty()
-            ),
-            merged(
-                filmRoozSection?.movies.orEmpty(),
-                myMovizSection?.movies.orEmpty()
-            ),
-            merged(
-                filmRoozSection?.series.orEmpty(),
-                myMovizSection?.series.orEmpty()
+        StartupDiagnostics.mark("canonical.home.start")
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            fun merged(
+                filmRoozItems: List<CatalogItem>,
+                myMovizItems: List<CatalogItem>
+            ): List<CanonicalMedia> = CanonicalLibrary.mergeLatest(
+                providerLists = listOf(filmRoozItems, myMovizItems),
+                metadataByUrl = titleMetadata,
+                providerNames = providerNames,
+                // Only Home is bounded; View All retains the complete cached library.
+                limit = 288,
+                providerItemLimit = 288
             )
-        )
+            Triple(
+                merged(filmRoozSection?.all.orEmpty(), myMovizSection?.all.orEmpty()),
+                merged(filmRoozSection?.movies.orEmpty(), myMovizSection?.movies.orEmpty()),
+                merged(filmRoozSection?.series.orEmpty(), myMovizSection?.series.orEmpty())
+            )
+        }
+        StartupDiagnostics.mark("canonical.home.end")
     }
     val internationalCanonicalAll = internationalCanonical.first
     val internationalCanonicalMovies = internationalCanonical.second
@@ -613,10 +622,10 @@ fun HomeScreen(
         )
     }
 
-    val scrollState = rememberScrollState()
+    val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     // Where the Continue Watching row starts, so the greeting can jump to it.
-    var continueRowOffset by remember { mutableIntStateOf(0) }
+    val continueRowIndex = 2 + if (heroSlides.isEmpty() && homeServices.isNotEmpty()) 1 else 0
     var headerEntered by remember { mutableStateOf(false) }
     var heroEntered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -628,12 +637,14 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
     CinematicBackground(posterUrl = visibleBackdrop.first, pageUrl = visibleBackdrop.second)
 
-    Column(
+    LazyColumn(
         Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(vertical = 28.dp)
+            .padding(vertical = 28.dp),
+        state = scrollState
     ) {
+        item(key = "home-header", contentType = "header") {
+        Column {
         // ---------- Compact brand bar ----------
         AnimatedVisibility(
             visible = headerEntered,
@@ -646,8 +657,13 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.aminema_mascot),
+                coil.compose.AsyncImage(
+                    model = remember(context) {
+                        coil.request.ImageRequest.Builder(context)
+                            .data(R.drawable.aminema_mascot)
+                            .size(108, 108)
+                            .build()
+                    },
                     contentDescription = "Aminema",
                     modifier = Modifier.size(54.dp)
                 )
@@ -757,7 +773,9 @@ fun HomeScreen(
                     // Scroll to the row rather than launching straight into the last
                     // title: the user still gets to choose which one to resume.
                     GreetingAction.CONTINUE_LAST -> coroutineScope.launch {
-                        scrollState.animateScrollTo(continueRowOffset)
+                        if (continueWatching.isNotEmpty()) {
+                            scrollState.animateScrollToItem(continueRowIndex)
+                        }
                     }
                     GreetingAction.PICK_MOVIE -> viewModel.setAllCatalogFilters(
                         CatalogFilter.MOVIE
@@ -775,8 +793,12 @@ fun HomeScreen(
             onShuffle = { greetingVariant++ }
         )
         Spacer(Modifier.height(14.dp))
+        }
+        }
 
         // ---------- Content-first cinematic hero ----------
+        item(key = "home-hero", contentType = "hero") {
+        Column {
         AnimatedVisibility(
             visible = heroEntered && heroSlides.isNotEmpty(),
             enter = fadeIn(tween(620)) +
@@ -810,10 +832,14 @@ fun HomeScreen(
         if (heroSlides.isNotEmpty()) {
             Spacer(Modifier.height(22.dp))
         }
+        }
+        }
 
         // On a truly cold start there is no catalogue yet, so keep the two playful
         // cinema doorways close at hand until Home has enough content to build a Hero.
         if (heroSlides.isEmpty() && homeServices.isNotEmpty()) {
+            item(key = "cold-start-doorways", contentType = "doorways") {
+            Column {
             SectionRow(
                 title = "از اینجا شروع کن",
                 items = homeServices,
@@ -823,16 +849,14 @@ fun HomeScreen(
                 ServiceCard(service = service, onClick = { openService(service) })
             }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- Continue Watching ----------
         if (continueWatching.isNotEmpty()) {
-            Box(
-                Modifier.onGloballyPositioned { coordinates ->
-                    continueRowOffset =
-                        (coordinates.positionInParent().y.toInt() - 24).coerceAtLeast(0)
-                }
-            ) {
+            item(key = "continue-watching", contentType = "poster-rail") {
+            Column {
             SectionRow(
                 title = "ادامه تماشا",
                 items = continueWatching,
@@ -869,12 +893,15 @@ fun HomeScreen(
                         }
                     )
             }
-            }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- My Series ----------
         if (mySeries.isNotEmpty()) {
+            item(key = "my-series", contentType = "catalog-rail") {
+            Column {
             SectionRow(
                 title = "سریال‌های من",
                 items = mySeries,
@@ -922,6 +949,8 @@ fun HomeScreen(
                     )
             }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- Four explicit cinema categories ----------
@@ -938,6 +967,8 @@ fun HomeScreen(
                 CatalogKind.SERIES -> section?.series.orEmpty()
             }
             if (items.isNotEmpty()) {
+                item(key = "catalog:$title", contentType = "catalog-rail") {
+                Column {
                 val isInternational = title == "سریال خارجی" || title == "فیلم خارجی"
                 CatalogSectionRow(
                     title = title,
@@ -991,11 +1022,15 @@ fun HomeScreen(
                     } == true
                 )
                 Spacer(Modifier.height(16.dp))
+                }
+                }
             }
         }
 
         // Kept separate from episode-release ordering: these are provider-curated titles,
         // not necessarily recently updated shows.
+        item(key = "curated-series", contentType = "catalog-rail") {
+        Column {
         CatalogSectionRow(
             title = "سریال‌های برگزیده",
             section = internationalSection,
@@ -1021,6 +1056,8 @@ fun HomeScreen(
             isRefreshing = HomeViewModel.INTERNATIONAL_SERVICE_ID in refreshingCatalogServices
         )
         Spacer(Modifier.height(16.dp))
+        }
+        }
 
         // ---------- Each provider's own editorial banner picks ----------
         // Deliberately below the "latest" rails: this is someone else's editorial choice, so
@@ -1032,6 +1069,8 @@ fun HomeScreen(
         ).forEach { (title, section) ->
             val banners = section?.featured.orEmpty()
             if (banners.isNotEmpty()) {
+                item(key = "featured:$title", contentType = "featured-rail") {
+                Column {
                 SectionRow(
                     title = title,
                     items = banners,
@@ -1051,6 +1090,8 @@ fun HomeScreen(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
+                }
+                }
             }
         }
 
@@ -1058,6 +1099,8 @@ fun HomeScreen(
 
         // ---------- Secondary quick links (e.g. YouTube tab) — lower priority, lower down ----------
         if (secondaryQuickLinks.isNotEmpty()) {
+            item(key = "secondary-links", contentType = "quick-links") {
+            Column {
             SectionRow(
                 title = "بیشتر",
                 items = secondaryQuickLinks,
@@ -1083,10 +1126,14 @@ fun HomeScreen(
                     }
             }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- Recently Opened ----------
         if (recents.isNotEmpty()) {
+            item(key = "recently-opened", contentType = "poster-rail") {
+            Column {
             SectionRow(
                 title = "اخیراً بازشده",
                 items = recents,
@@ -1102,10 +1149,14 @@ fun HomeScreen(
                     )
             }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- Favorites ----------
         if (favorites.isNotEmpty()) {
+            item(key = "favorites", contentType = "poster-rail") {
+            Column {
             SectionRow(
                 title = "موردعلاقه‌ها",
                 items = favorites,
@@ -1121,10 +1172,13 @@ fun HomeScreen(
                     )
             }
             Spacer(Modifier.height(16.dp))
+            }
+            }
         }
 
         // ---------- Provider doorways — deliberately last, useful but no longer dominant ----------
         if (providerDoorways.isNotEmpty() && heroSlides.isNotEmpty()) {
+            item(key = "provider-doorways", contentType = "doorways") {
             SectionRow(
                 title = "ورود مستقیم به سینماها",
                 items = providerDoorways,
@@ -1133,15 +1187,19 @@ fun HomeScreen(
             ) { service ->
                 ServiceCard(service = service, onClick = { openService(service) })
             }
+            }
         } else if (providerDoorways.isEmpty()) {
+            item(key = "no-services", contentType = "message") {
             Text(
                 "هنوز سینمایی تنظیم نشده؛ از تنظیمات یک سرویس اضافه کن.",
                 color = TextSecondary,
                 modifier = Modifier.padding(horizontal = 48.dp, vertical = 20.dp)
             )
+            }
         }
 
         if (continueWatching.isEmpty() && recents.isEmpty()) {
+            item(key = "first-watch-help", contentType = "message") {
             Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
                 Text(
                     "یک عنوان را جستجو کن یا از ورودی سینماها شروع کن.\n" +
@@ -1150,8 +1208,9 @@ fun HomeScreen(
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
+            }
         }
-        Spacer(Modifier.height(32.dp))
+        item(key = "bottom-spacing", contentType = "spacing") { Spacer(Modifier.height(32.dp)) }
     }
     }
 }

@@ -16,7 +16,10 @@ import kotlinx.serialization.json.Json
 data class LiveHealthRefreshState(
     val running: Boolean = false,
     val completed: Int = 0,
-    val total: Int = 0
+    val total: Int = 0,
+    val inconclusive: Boolean = false,
+    val waitingForApp: Boolean = false,
+    val silenceUnavailable: Boolean = false
 )
 
 /** Persists only channel health and timestamps; no page, media or token data is stored. */
@@ -35,22 +38,23 @@ class LiveChannelHealthRepository(context: Context) {
     val refreshState: StateFlow<LiveHealthRefreshState> = _refreshState.asStateFlow()
 
     suspend fun record(key: String, status: LiveHealthStatus, now: Long = System.currentTimeMillis()) {
-        val updated = mutex.withLock {
+        mutex.withLock {
             val next = _health.value.toMutableMap().apply {
-                this[key] = LiveChannelHealth(status, now)
+                this[key] = reconcileLiveHealth(this[key], status, now)
             }.toMap()
             withContext(Dispatchers.IO) {
                 preferences.edit()
                     .putString(HEALTH_KEY, json.encodeToString(next))
                     .apply()
             }
-            next
+            // Publish under the same lock as persistence so an older probe result
+            // cannot overwrite a concurrently confirmed user playback.
+            _health.value = next
         }
-        _health.value = updated
     }
 
     fun isFresh(key: String, now: Long = System.currentTimeMillis()): Boolean =
-        _health.value[key]?.checkedAt?.let { now - it < FRESH_FOR_MS } == true
+        liveHealthIsFresh(_health.value[key], now)
 
     fun setRefreshState(state: LiveHealthRefreshState) {
         _refreshState.value = state
@@ -59,11 +63,10 @@ class LiveChannelHealthRepository(context: Context) {
     private fun loadHealth(): Map<String, LiveChannelHealth> = runCatching {
         json.decodeFromString<Map<String, LiveChannelHealth>>(
             preferences.getString(HEALTH_KEY, "{}").orEmpty()
-        )
+        ).mapValues { (_, value) -> normalizeStoredLiveHealth(value) }
     }.getOrDefault(emptyMap())
 
     private companion object {
         const val HEALTH_KEY = "channel_health_v1"
-        const val FRESH_FOR_MS = 30 * 60 * 1_000L
     }
 }

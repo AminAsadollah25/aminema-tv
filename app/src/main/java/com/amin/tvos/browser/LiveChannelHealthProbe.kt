@@ -35,11 +35,13 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
         configureWebView()
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView, url: String) {
+                if (url == "about:blank" || url != view.url) return
                 val token = attemptToken
                 view.postDelayed({ startPlayerProbe(token) }, 550L)
             }
 
             override fun onPageCommitVisible(view: WebView, url: String) {
+                if (url == "about:blank" || url != view.url) return
                 val token = attemptToken
                 view.postDelayed({ startPlayerProbe(token) }, 300L)
             }
@@ -49,7 +51,7 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
                 request: WebResourceRequest,
                 error: WebResourceError
             ) {
-                if (request.isForMainFrame) finish(attemptToken, LiveHealthStatus.INACTIVE)
+                if (request.isForMainFrame) finish(attemptToken, LiveHealthStatus.UNKNOWN)
             }
 
             override fun onReceivedSslError(
@@ -65,11 +67,10 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
 
     suspend fun check(source: LiveChannelSource): LiveHealthStatus = withContext(Dispatchers.Main.immediate) {
         cancelCurrent()
-        // This WebView is a silent health probe, not a second player. Resume it only for
-        // the bounded probe window; leaving it paused prevents a provider's media element
-        // from leaking audio while the user is browsing the Live TV menu.
+        // Never start off-screen media unless the entire WebView is natively muted.
+        // JavaScript muting cannot silence cross-origin frames.
+        if (!ensureSilent()) return@withContext LiveHealthStatus.UNKNOWN
         webView.onResume()
-        setProbeAudioMuted(true)
         val token = ++attemptToken
         try {
             withTimeoutOrNull(PROBE_TIMEOUT_MS) {
@@ -86,7 +87,7 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
                         webView.post { if (token == attemptToken) webView.stopLoading() }
                     }
                 }
-            } ?: LiveHealthStatus.INACTIVE
+            } ?: LiveHealthStatus.UNKNOWN
         } finally {
             // A timeout cancels the continuation but does not guarantee that the field is
             // cleared before a late page callback arrives. Clear it here and reset the
@@ -114,7 +115,7 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
             } else if (pass < MAX_POLLS) {
                 webView.postDelayed({ pollPlayer(token, pass + 1) }, POLL_INTERVAL_MS)
             } else {
-                finish(token, LiveHealthStatus.INACTIVE)
+                finish(token, LiveHealthStatus.UNKNOWN)
             }
         }
     }
@@ -131,7 +132,7 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
         attemptToken += 1
         continuation?.let { pending ->
             continuation = null
-            if (pending.isActive) pending.resume(LiveHealthStatus.INACTIVE)
+            if (pending.isActive) pending.resume(LiveHealthStatus.UNKNOWN)
         }
         silenceAndReset()
     }
@@ -198,6 +199,14 @@ class LiveChannelHealthProbe(private val webView: WebView) : AutoCloseable {
         // This is the important guard that prevents the hidden health scanner from
         // becoming a second audible player while the user is in Live TV or another screen.
         setProbeAudioMuted(true)
+    }
+
+    fun ensureSilent(): Boolean {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) return false
+        return runCatching {
+            WebViewCompat.setAudioMuted(webView, true)
+            WebViewCompat.isAudioMuted(webView)
+        }.getOrDefault(false)
     }
 
     private fun setProbeAudioMuted(muted: Boolean) {

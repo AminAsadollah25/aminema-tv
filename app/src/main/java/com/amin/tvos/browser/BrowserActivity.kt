@@ -87,6 +87,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_DIRECT_PLAY = "direct_play"
         private const val EXTRA_LIVE_THEATER_MODE = "live_theater_mode"
         private const val EXTRA_LIVE_PLAYER_ID = "live_player_id"
+        private const val EXTRA_LIVE_CHANNEL_KEY = "live_channel_key"
         private const val EXTRA_SM_SEASON = "sm_season"
         private const val EXTRA_SM_QUALITY = "sm_quality"
         private const val EXTRA_SM_EPISODE = "sm_episode"
@@ -111,7 +112,8 @@ class BrowserActivity : ComponentActivity() {
             livePlayerId: String? = null,
             smSeason: String? = null,
             smQuality: String? = null,
-            smEpisode: String? = null
+            smEpisode: String? = null,
+            liveChannelKey: String? = null
         ): Intent =
             Intent(context, BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
@@ -125,6 +127,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
                 .putExtra(EXTRA_LIVE_PLAYER_ID, livePlayerId)
+                .putExtra(EXTRA_LIVE_CHANNEL_KEY, liveChannelKey)
                 .putExtra(EXTRA_RESUME_STRATEGY, resumeStrategyOverride?.name)
                 .putExtra(EXTRA_SM_SEASON, smSeason)
                 .putExtra(EXTRA_SM_QUALITY, smQuality)
@@ -1114,6 +1117,15 @@ class BrowserActivity : ComponentActivity() {
             runOnUiThread {
                 if (livePlaybackConfirmed) return@runOnUiThread
                 livePlaybackConfirmed = true
+                if (liveTheaterModeRequested) {
+                    val key = intent.getStringExtra(EXTRA_LIVE_CHANNEL_KEY)
+                    val knownChannel = serviceProfile?.liveTv?.channels.orEmpty().any {
+                        key == "$serviceId:${it.id}"
+                    }
+                    if (key != null && knownChannel) {
+                        app.liveChannelHealthCoordinator.recordPlayback(key)
+                    }
+                }
                 livePlayerAttemptToken += 1
                 liveFallbackScheduledToken = Long.MIN_VALUE
                 livePrePlayOverlay?.hideWhenPlaying()

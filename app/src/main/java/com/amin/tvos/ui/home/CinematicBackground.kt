@@ -1,22 +1,18 @@
 package com.amin.tvos.ui.home
 
-import android.net.Uri
-import android.webkit.CookieManager
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.amin.tvos.ui.theme.Ink
+import com.amin.tvos.ui.components.authenticatedPosterModel
 
 /**
  * Soft, cinema-like backdrop built from the artwork of whatever the user watched last.
@@ -32,7 +28,6 @@ fun CinematicBackground(
     pageUrl: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     Box(modifier.fillMaxSize().background(Ink)) {
         Crossfade(
             targetState = posterUrl,
@@ -42,27 +37,8 @@ fun CinematicBackground(
             label = "cinematicBackdrop"
         ) { url ->
             if (url.isNotBlank()) {
-                val request = remember(url, pageUrl) {
-                    ImageRequest.Builder(context)
-                        .data(url)
-                        // 960×540 stays clean behind the heavy scrim/blur on a 1080p TV,
-                        // while avoiding a full 2K/4K decode for every DPAD focus change.
-                        .size(960, 540)
-                        .apply {
-                            val posterHost = runCatching { Uri.parse(url).host }.getOrNull()
-                            val pageHost = runCatching { Uri.parse(pageUrl).host }.getOrNull()
-                            // Same-host only, exactly like the poster cards.
-                            if (!posterHost.isNullOrBlank() &&
-                                posterHost.equals(pageHost, true)
-                            ) {
-                                CookieManager.getInstance().getCookie(url)
-                                    ?.takeIf { it.isNotBlank() }
-                                    ?.let { addHeader("Cookie", it) }
-                                addHeader("Referer", pageUrl)
-                            }
-                        }
-                        .build()
-                }
+                // CookieManager may start Chromium. Never initialise it in composition.
+                val request = authenticatedPosterModel(url, pageUrl, 960, 540)
                 AsyncImage(
                     model = request,
                     contentDescription = null,

@@ -13,5 +13,7 @@ enum class LiveHealthStatus {
 @Serializable
 data class LiveChannelHealth(
     val status: LiveHealthStatus = LiveHealthStatus.UNKNOWN,
-    val checkedAt: Long = 0L
+    val checkedAt: Long = 0L,
+    // An inconclusive attempt must not change the timestamp of the last success.
+    val lastAttemptAt: Long = 0L
 )

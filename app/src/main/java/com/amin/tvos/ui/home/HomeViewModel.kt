@@ -30,6 +30,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import com.amin.tvos.diagnostics.StartupDiagnostics
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -41,20 +46,21 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val updateRepo = tvApp.updateRepository
     private val metadataEnricher = PublicTitleMetadataEnricher()
     private val metadataEnrichmentInFlight = mutableSetOf<String>()
+    private var refreshJob: Job? = null
 
     val services: StateFlow<List<StreamingService>> = servicesRepo.services
 
     // ---- "Latest" rows ----
 
-    val catalogSections: StateFlow<List<CatalogSection>> = catalogRepo.sections
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val catalogSections: StateFlow<List<CatalogSection>> = catalogRepo.homeSections
+    // Library selectors must never treat the compact startup window as the full archive.
+    val fullCatalogSections: StateFlow<List<CatalogSection>> = catalogRepo.sections
+    val fullCatalogReady: StateFlow<Boolean> = catalogRepo.loaded
     val refreshingCatalogServices: StateFlow<Set<String>> =
         catalogRepo.refreshingServices
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     val titleMetadata: StateFlow<Map<String, com.amin.tvos.data.model.TitleMetadata>> =
         catalogRepo.titleMetadata
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     fun section(serviceId: String): CatalogSection? =
         catalogSections.value.firstOrNull { it.serviceId == serviceId }
@@ -200,6 +206,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 .take(20)
                 .toList()
         }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val favorites: StateFlow<List<MovieItem>> = libraryRepo.items
@@ -232,10 +239,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun refresh() = viewModelScope.launch {
-        servicesRepo.load()
-        libraryRepo.load()
-        catalogRepo.load()
+    fun refresh() {
+        // init and the first ON_RESUME can arrive together. Share that read rather than
+        // decoding the entire catalogue twice before Home has even drawn.
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            StartupDiagnostics.mark("cache.load.start")
+            coroutineScope {
+                launch { servicesRepo.load(); StartupDiagnostics.mark("services.loaded") }
+                launch { libraryRepo.load(); StartupDiagnostics.mark("library.loaded") }
+                launch { catalogRepo.load(); StartupDiagnostics.mark("catalog.loaded") }
+            }
+            StartupDiagnostics.mark("cache.load.end")
+        }
     }
 
     /** Cold-start check, silent unless a release newer than any previously skipped one exists. */

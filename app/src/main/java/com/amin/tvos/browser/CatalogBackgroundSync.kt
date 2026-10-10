@@ -1393,10 +1393,15 @@ class CatalogBackgroundSync(
                   });
                   var country = countryFact
                     ? clean(countryFact.textContent).replace(/^کشور\s*:\s*/, '') : '';
+                  var actualKind = /^\/tvshows\//.test(url.pathname) ? 'SERIES' :
+                    /^\/movies\//.test(url.pathname) ? 'MOVIE' :
+                    card.querySelector('.mv-card__ep') ? 'SERIES' : 'MOVIE';
+                  // A classic archive can contain mixed cards. Do not label the entire
+                  // response with the requested type or leak series into the movie rail.
+                  if (actualKind !== kind) return null;
                   return {
                     title: title.slice(0, 140),
-                    kind: /^\/tvshows\//.test(url.pathname) ? 'SERIES' :
-                      /^\/movies\//.test(url.pathname) ? 'MOVIE' : kind,
+                    kind: actualKind,
                     contentUrl: url.origin + url.pathname,
                     posterUrl: rawPoster && !/^data:/i.test(rawPoster)
                       ? new URL(rawPoster, location.origin).href : '',
@@ -1428,7 +1433,9 @@ class CatalogBackgroundSync(
                 var query = '?sort=latest' +
                   (type === 'SERIES' ? '&type=tv' : '') +
                   (pageNumber > 1 ? '&p=' + pageNumber : '');
-                var response = await fetch(location.origin + '/_modern/classic' + query, {
+                // Current classic filter form submits to /. The retired /_modern/classic
+                // redirects without preserving type=tv, returning movies for a series job.
+                var response = await fetch(location.origin + '/' + query, {
                   credentials: 'include'
                 });
                 if (!response.ok) return [];

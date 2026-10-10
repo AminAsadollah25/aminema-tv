@@ -4,7 +4,19 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Published:** Aminema 0.18.6 — Playback & Live TV Stabilization (`versionCode 48`)
+**Release being published:** Aminema 0.18.8 — Startup & Catalog Stabilization (`versionCode 51`)
+
+- Uses a small, validated Home snapshot while the full Library cache loads.
+- Reuses an unchanged catalog in memory when returning Home; poster-cookie
+  preparation and catalog matching do not block the main UI thread.
+- Renders Home rails lazily and keeps the cinematic intro and Hero styling.
+- Repairs movie/series classification and the MyMoviz series filter route.
+- Includes the existing Live TV health-policy fixes; inconclusive checks do
+  not label a channel unavailable, and actual playback can confirm its status.
+
+Release notes: [0.18.8](RELEASE_NOTES_0.18.8.md). Known limitations: startup
+timing varies; physical-box and comprehensive playback/resume QA remain open.
+The historical bullets below describe earlier releases, not new 0.18.8 changes.
 
 - Keeps the intro video visible as part of the Aminema identity while starting
   the first catalog refresh behind it, so the first usable Home state can be

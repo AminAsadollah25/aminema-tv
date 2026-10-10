@@ -19,6 +19,9 @@ class KeyboardSafeWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : WebView(context, attrs) {
+    init {
+        if (com.amin.tvos.BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
+    }
 
     override fun onCheckIsTextEditor(): Boolean = false
 

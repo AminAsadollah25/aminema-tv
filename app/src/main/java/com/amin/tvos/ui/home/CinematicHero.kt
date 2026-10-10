@@ -102,6 +102,9 @@ fun CinematicHero(
 
     AnimatedContent(
         targetState = active,
+        // Cache hydration enriches the same title several times. Animate only a real
+        // title change, not each new year/summary/poster field on the current slide.
+        contentKey = { it.id },
         transitionSpec = {
             (fadeIn(tween(460, easing = FastOutSlowInEasing)) +
                 scaleIn(initialScale = 0.992f, animationSpec = tween(560))) togetherWith

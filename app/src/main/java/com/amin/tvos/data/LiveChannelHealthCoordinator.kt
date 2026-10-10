@@ -14,12 +14,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Owns the Live TV scan for the process, while allowing the visible LiveTvActivity
- * to gate it. The coordinator survives Activity recreation, but scanning is stopped
- * whenever Live TV is no longer resumed so a hidden probe can never become a second
- * player behind Home, Spotlight or BrowserActivity.
- */
+/** One application-owned, natively muted probe. Screen navigation never resets its queue. */
 class LiveChannelHealthCoordinator(application: Application) {
 
     private val context = application
@@ -27,73 +22,86 @@ class LiveChannelHealthCoordinator(application: Application) {
     private val repository = LiveChannelHealthRepository(application)
     private var probe: LiveChannelHealthProbe? = null
     private var refreshJob: Job? = null
-    private var scanningEnabled = false
-    private var pendingServices: List<StreamingService>? = null
+    private var appVisible = true
+    private var queue: List<LiveChannelSource> = emptyList()
+    private var nextIndex = 0
+    private var failureGuard = LiveScanFailureGuard()
 
     val health = repository.health
     val refreshState = repository.refreshState
 
-    /**
-     * Health checks are only allowed while the Live TV screen is resumed. A hidden
-     * WebView is still a real browser/player; leaving it scanning while another screen
-     * is visible can consume the UI thread and, more importantly, create a second player.
-     */
-    fun setScanningEnabled(enabled: Boolean) {
-        if (scanningEnabled == enabled) return
-        scanningEnabled = enabled
-        if (!enabled) {
+    /** Pause only when the entire app leaves the foreground, not when a screen changes. */
+    fun setAppVisible(visible: Boolean) {
+        if (appVisible == visible) return
+        appVisible = visible
+        if (!visible) {
             refreshJob?.cancel()
             refreshJob = null
             probe?.cancel()
-            repository.setRefreshState(LiveHealthRefreshState())
-            return
-        }
-        pendingServices?.let { services ->
-            pendingServices = null
-            start(services, force = false)
+            if (nextIndex < queue.size && !refreshState.value.inconclusive &&
+                !refreshState.value.silenceUnavailable) {
+                repository.setRefreshState(refreshState.value.copy(running = false, waitingForApp = true))
+            }
+        } else if (refreshState.value.waitingForApp) {
+            drainQueue()
         }
     }
 
     fun start(services: List<StreamingService>, force: Boolean = false) {
-        pendingServices = services
-        if (!scanningEnabled) return
         if (refreshJob?.isActive == true) return
-        val sources = liveChannelSources(services)
-        val candidates = if (force) {
-            sources
-        } else {
-            sources.filterNot { repository.isFresh(liveChannelKey(it)) }
-        }
-        if (candidates.isEmpty()) {
+        // Recreating LiveTvActivity must not restart or discard a pending run.
+        if (!force && nextIndex < queue.size) return
+        val sources = interleaveLiveSources(liveChannelSources(services))
+        queue = if (force) sources else sources.filterNot { repository.isFresh(liveChannelKey(it)) }
+        nextIndex = 0
+        failureGuard = LiveScanFailureGuard()
+        if (queue.isEmpty()) {
             repository.setRefreshState(LiveHealthRefreshState())
+        } else {
+            drainQueue()
+        }
+    }
+
+    private fun drainQueue() {
+        if (!appVisible) {
+            repository.setRefreshState(LiveHealthRefreshState(
+                completed = nextIndex, total = queue.size, waitingForApp = true
+            ))
             return
         }
-
         refreshJob = scope.launch {
-            repository.setRefreshState(
-                LiveHealthRefreshState(running = true, completed = 0, total = candidates.size)
-            )
             val channelProbe = probe ?: createProbe(context).also { probe = it }
-            candidates.forEachIndexed { index, source ->
-                if (!isActive || !scanningEnabled) return@launch
+            if (!channelProbe.ensureSilent()) {
+                repository.setRefreshState(LiveHealthRefreshState(
+                    completed = nextIndex, total = queue.size, silenceUnavailable = true
+                ))
+                return@launch
+            }
+            repository.setRefreshState(LiveHealthRefreshState(
+                running = true, completed = nextIndex, total = queue.size
+            ))
+            while (nextIndex < queue.size && isActive && appVisible) {
+                val source = queue[nextIndex]
                 val status = channelProbe.check(source)
                 repository.record(liveChannelKey(source), status)
-                repository.setRefreshState(
-                    LiveHealthRefreshState(
-                        running = true,
-                        completed = index + 1,
-                        total = candidates.size
-                    )
-                )
+                nextIndex += 1
+                val inconclusive = failureGuard.shouldPause(status)
+                repository.setRefreshState(LiveHealthRefreshState(
+                    running = nextIndex < queue.size && !inconclusive,
+                    completed = nextIndex,
+                    total = queue.size,
+                    inconclusive = inconclusive
+                ))
+                if (inconclusive) return@launch
+                // Yield between channels; never open several players in parallel.
+                kotlinx.coroutines.delay(1_000L)
             }
-            repository.setRefreshState(
-                LiveHealthRefreshState(
-                    running = false,
-                    completed = candidates.size,
-                    total = candidates.size
-                )
-            )
         }
+    }
+
+    /** Real user playback is stronger evidence than an off-screen probe. */
+    fun recordPlayback(key: String) {
+        scope.launch { repository.record(key, LiveHealthStatus.ACTIVE) }
     }
 
     fun close() {

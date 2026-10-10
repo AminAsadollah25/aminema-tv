@@ -11,6 +11,7 @@ import com.amin.tvos.data.model.TitleMetadata
 import java.security.MessageDigest
 import java.text.Normalizer
 import java.util.Locale
+import java.util.IdentityHashMap
 
 /**
  * Conservative, provider-agnostic identity matching for the canonical Aminema library.
@@ -54,12 +55,17 @@ object CanonicalLibrary {
         providerLists: List<List<CatalogItem>>,
         metadataByUrl: Map<String, TitleMetadata> = emptyMap(),
         providerNames: Map<String, String> = emptyMap(),
-        limit: Int = 24
+        limit: Int = 24,
+        providerItemLimit: Int? = null
     ): List<CanonicalMedia> {
+        if (limit <= 0) return emptyList()
+        val windows = if (providerItemLimit != null) {
+            providerLists.map { it.take(providerItemLimit.coerceAtLeast(0)) }
+        } else providerLists
         val balanced = buildList {
-            val maxSize = providerLists.maxOfOrNull(List<CatalogItem>::size) ?: 0
+            val maxSize = windows.maxOfOrNull(List<CatalogItem>::size) ?: 0
             for (index in 0 until maxSize) {
-                providerLists.forEach { list -> list.getOrNull(index)?.let(::add) }
+                windows.forEach { list -> list.getOrNull(index)?.let(::add) }
             }
         }
         return canonicalize(balanced, metadataByUrl, providerNames).take(limit)
@@ -83,22 +89,29 @@ object CanonicalLibrary {
                 )
             }
 
+        // Pairwise matching must not parse the same URL or normalise the same title
+        // thousands of times. Facts live only for this pass, with no persistent cache.
+        val facts = IdentityHashMap<SourceVariant, MatchFacts>()
+        variants.forEach { facts[it] = MatchFacts(it) }
         val groups = mutableListOf<MutableGroup>()
         variants.forEach { candidate ->
-            val best = groups
-                .mapNotNull { group ->
-                    val confidence = group.bestConfidence(candidate)
-                    confidence.takeIf { it != CanonicalMatchConfidence.INDEPENDENT }
-                        ?.let { group to it }
+            var bestGroup: MutableGroup? = null
+            var bestConfidence = CanonicalMatchConfidence.INDEPENDENT
+            // Preserve the first group on ties, as maxByOrNull did, without allocating
+            // a temporary list and Pair for every candidate/group comparison.
+            groups.forEach { group ->
+                val confidence = group.bestConfidence(candidate, facts)
+                if (confidence.rank > bestConfidence.rank) {
+                    bestGroup = group
+                    bestConfidence = confidence
                 }
-                .maxByOrNull { (_, confidence) -> confidence.rank }
-
-            if (best == null) {
+            }
+            val selected = bestGroup
+            if (selected == null) {
                 groups += MutableGroup(mutableListOf(candidate))
             } else {
-                val (group, confidence) = best
-                group.variants += candidate
-                group.confidence = maxConfidence(group.confidence, confidence)
+                selected.variants += candidate
+                selected.confidence = maxConfidence(selected.confidence, bestConfidence)
             }
         }
 
@@ -109,19 +122,23 @@ object CanonicalLibrary {
         val variants: MutableList<SourceVariant>,
         var confidence: CanonicalMatchConfidence = CanonicalMatchConfidence.INDEPENDENT
     ) {
-        fun bestConfidence(candidate: SourceVariant): CanonicalMatchConfidence {
-            val candidateImdb = candidate.imdbId.lowercase(Locale.ROOT)
-            val groupImdbIds = variants.map { it.imdbId.lowercase(Locale.ROOT) }
-                .filter { it.isNotBlank() }
-                .toSet()
+        fun bestConfidence(
+            candidate: SourceVariant,
+            facts: Map<SourceVariant, MatchFacts>
+        ): CanonicalMatchConfidence {
+            val candidateImdb = facts.getValue(candidate).imdb
             // Never allow a no-id bridge to transitively join two contradictory IMDb ids.
-            if (candidateImdb.isNotBlank() && groupImdbIds.any { it != candidateImdb }) {
+            if (candidateImdb.isNotBlank() && variants.any {
+                val imdb = facts.getValue(it).imdb
+                imdb.isNotBlank() && imdb != candidateImdb
+            }) {
                 return CanonicalMatchConfidence.INDEPENDENT
             }
-            return variants
-                .map { existing -> match(existing, candidate) }
-                .maxByOrNull { confidence -> confidence.rank }
-                ?: CanonicalMatchConfidence.INDEPENDENT
+            var best = CanonicalMatchConfidence.INDEPENDENT
+            variants.forEach { existing ->
+                best = maxConfidence(best, match(existing, candidate, facts))
+            }
+            return best
         }
 
         fun toCanonical(): CanonicalMedia {
@@ -148,7 +165,7 @@ object CanonicalLibrary {
             }
             val normalized = CanonicalText.normalizeTitle(representative.title)
             val identity = when {
-                imdbId.isNotBlank() -> "imdb:${imdbId.lowercase(Locale.ROOT)}"
+                imdbId.isNotBlank() -> "imdb:${representative.kind}:${imdbId.lowercase(Locale.ROOT)}"
                 year.isNotBlank() -> "${representative.kind}:$normalized:$year"
                 distinct.size > 1 -> "${representative.kind}:$normalized:${creditFingerprint(distinct)}"
                 else -> ContentMetadataPolicy.canonicalContentUrl(preferred.item.contentUrl)
@@ -166,17 +183,28 @@ object CanonicalLibrary {
         }
     }
 
+    private class MatchFacts(variant: SourceVariant) {
+        val imdb = variant.imdbId.lowercase(Locale.ROOT)
+        val url = ContentMetadataPolicy.canonicalContentUrl(variant.item.contentUrl)
+        val title = CanonicalText.normalizeTitle(variant.item.title)
+        val core = CanonicalText.subtitleCore(variant.item.title)
+        val year = CanonicalText.normalizeYear(variant.item.year)
+    }
+
     private fun match(
         first: SourceVariant,
-        second: SourceVariant
+        second: SourceVariant,
+        facts: Map<SourceVariant, MatchFacts>
     ): CanonicalMatchConfidence {
-        val firstUrl = ContentMetadataPolicy.canonicalContentUrl(first.item.contentUrl)
-        val secondUrl = ContentMetadataPolicy.canonicalContentUrl(second.item.contentUrl)
-        if (firstUrl == secondUrl) return CanonicalMatchConfidence.SAME_SOURCE_PAGE
+        val firstFacts = facts.getValue(first)
+        val secondFacts = facts.getValue(second)
+        val firstUrl = firstFacts.url
+        val secondUrl = secondFacts.url
         if (first.item.kind != second.item.kind) return CanonicalMatchConfidence.INDEPENDENT
+        if (firstUrl == secondUrl) return CanonicalMatchConfidence.SAME_SOURCE_PAGE
 
-        val firstImdb = first.imdbId.lowercase(Locale.ROOT)
-        val secondImdb = second.imdbId.lowercase(Locale.ROOT)
+        val firstImdb = firstFacts.imdb
+        val secondImdb = secondFacts.imdb
         if (firstImdb.isNotBlank() && secondImdb.isNotBlank()) {
             return if (firstImdb == secondImdb) {
                 CanonicalMatchConfidence.IMDb
@@ -190,18 +218,18 @@ object CanonicalLibrary {
             return CanonicalMatchConfidence.INDEPENDENT
         }
 
-        val firstTitle = CanonicalText.normalizeTitle(first.item.title)
-        val secondTitle = CanonicalText.normalizeTitle(second.item.title)
-        val titleAlias = CanonicalText.isClearSubtitleAlias(
-            first.item.title,
-            second.item.title
-        )
+        val firstTitle = firstFacts.title
+        val secondTitle = secondFacts.title
+        val titleAlias = firstTitle.isNotBlank() && secondTitle.isNotBlank() &&
+            firstTitle != secondTitle && firstFacts.core.isNotBlank() &&
+            secondFacts.core.isNotBlank() &&
+            (firstFacts.core == secondTitle || secondFacts.core == firstTitle)
         if (firstTitle.isBlank() || (firstTitle != secondTitle && !titleAlias)) {
             return CanonicalMatchConfidence.INDEPENDENT
         }
 
-        val firstYear = CanonicalText.normalizeYear(first.item.year)
-        val secondYear = CanonicalText.normalizeYear(second.item.year)
+        val firstYear = firstFacts.year
+        val secondYear = secondFacts.year
         if (firstTitle == secondTitle && firstYear.isBlank() != secondYear.isBlank()) {
             // Search pages are often intentionally lightweight: one provider may omit the
             // year while another exposes it.  Do not turn that into a title-only merge; only
@@ -340,18 +368,29 @@ object CanonicalLibrary {
 
     private fun String.sha1(): String = MessageDigest.getInstance("SHA-1")
         .digest(toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte -> "%02x".format(byte) }
+        .let { digest ->
+            val hex = "0123456789abcdef"
+            val chars = CharArray(digest.size * 2)
+            digest.forEachIndexed { index, byte ->
+                val value = byte.toInt() and 0xff
+                chars[index * 2] = hex[value ushr 4]
+                chars[index * 2 + 1] = hex[value and 0x0f]
+            }
+            String(chars)
+        }
 
     private const val FILMROOZ_ID = "filmrooz"
 }
 
 /** Text-only utilities shared by matching and search presentation. */
 object CanonicalText {
+    private val whitespace = Regex("""\s+""")
+    private val subtitleDelimiter = Regex("\\s*[:：]\\s*|\\s+[–—-]\\s+")
     private val trailingYear = Regex("""\s*[\[(（]\s*([۱۲۳۴۵۶۷۸۹۰١٢٣٤٥٦٧٨٩٠0-9]{4})\s*[\])）]\s*$""")
 
     fun displayTitle(value: String): String = value
         .replace(trailingYear, "")
-        .replace(Regex("""\s+"""), " ")
+        .replace(whitespace, " ")
         .trim()
 
     fun extractYear(value: String): String = trailingYear.find(value)
@@ -395,9 +434,9 @@ object CanonicalText {
             (firstCore == secondTitle || secondCore == firstTitle)
     }
 
-    private fun subtitleCore(value: String): String {
+    internal fun subtitleCore(value: String): String {
         val core = value.trim().split(
-            Regex("\\s*[:：]\\s*|\\s+[–—-]\\s+")
+            subtitleDelimiter
         ).firstOrNull().orEmpty()
         return normalizeTitle(core)
     }

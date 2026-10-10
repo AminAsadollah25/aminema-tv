@@ -29,6 +29,8 @@ import androidx.navigation.compose.rememberNavController
 import com.amin.tvos.intro.IntroGate
 import com.amin.tvos.intro.IntroOverlay
 import com.amin.tvos.intro.IntroPreferences
+import com.amin.tvos.diagnostics.StartupDiagnostics
+import androidx.compose.runtime.withFrameNanos
 import com.amin.tvos.browser.CatalogBackgroundSync
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity() {
     private var catalogSync: CatalogBackgroundSync? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        StartupDiagnostics.mark("main.create.start")
+        StartupDiagnostics.watchMainThread(intent.getBooleanExtra("profile_startup", false))
         super.onCreate(savedInstanceState)
         // A configuration recreation is not a new app opening.
         autoCatalogSyncLaunched = savedInstanceState != null
@@ -72,7 +76,12 @@ class MainActivity : ComponentActivity() {
                     Box(Modifier.fillMaxSize()) {
                         val navController = rememberNavController()
                         val homeViewModel: HomeViewModel = viewModel()
-                        val catalogSnapshot by homeViewModel.catalogSections.collectAsStateWithLifecycle()
+                        LaunchedEffect(Unit) {
+                            withFrameNanos { }
+                            StartupDiagnostics.mark("compose.first.frame")
+                        }
+                        val catalogSnapshot by homeViewModel.fullCatalogSections.collectAsStateWithLifecycle()
+                        val fullCatalogReady by homeViewModel.fullCatalogReady.collectAsStateWithLifecycle()
                         var libraryItemsSelector by remember {
                             mutableStateOf<(List<com.amin.tvos.data.model.CatalogSection>) -> List<CatalogItem>>(
                                 { emptyList() }
@@ -98,6 +107,10 @@ class MainActivity : ComponentActivity() {
                                     lifecycleOwner.lifecycle.addObserver(observer)
                                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                                 }
+                                // Keep cache loading in the ViewModel, but do not measure,
+                                // animate and decode a whole hidden Home while VideoView is
+                                // preparing/playing the modal intro. Skip still opens Home.
+                                if (!introVisible) {
                                 HomeScreen(
                                     onOpenSettings = { navController.navigate("settings") },
                                     onOpenLibrary = { title, itemsSelector, openItem, services ->
@@ -112,12 +125,14 @@ class MainActivity : ComponentActivity() {
                                     },
                                     viewModel = homeViewModel
                                 )
+                                }
                             }
                             composable("library") {
                                 CatalogLibraryScreen(
                                     title = libraryTitle,
                                     itemsProvider = { libraryItemsSelector(catalogSnapshot) },
                                     catalogRevision = catalogSnapshot,
+                                    catalogReady = fullCatalogReady,
                                     refreshingServices = homeViewModel.refreshingCatalogServices.collectAsStateWithLifecycle().value,
                                     providerIds = libraryServices,
                                     onRefresh = {
@@ -162,17 +177,21 @@ class MainActivity : ComponentActivity() {
                             autoCatalogSyncLaunched = true
                         }
 
-                        // Home is built underneath, so it is ready the moment the intro ends.
+                        // Native data preloads during the intro; rich UI starts after it.
                         if (introVisible) {
                             IntroOverlay(
                                 muted = introMuted,
-                                onFinished = { introVisible = false }
+                                onFinished = {
+                                    StartupDiagnostics.mark("intro.finished")
+                                    introVisible = false
+                                }
                             )
                         }
                     }
                 }
             }
         }
+        StartupDiagnostics.mark("main.create.end")
     }
 
     override fun onResume() {
@@ -206,6 +225,7 @@ class MainActivity : ComponentActivity() {
         if (!introVisible) return super.dispatchKeyEvent(event)
         if (event.keyCode in VOLUME_KEYS) return super.dispatchKeyEvent(event)
         if (event.action == KeyEvent.ACTION_UP && event.keyCode in SKIP_KEYS) {
+            StartupDiagnostics.mark("intro.skipped")
             introVisible = false
         }
         return true

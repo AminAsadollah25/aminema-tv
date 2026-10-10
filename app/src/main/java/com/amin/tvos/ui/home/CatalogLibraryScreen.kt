@@ -110,12 +110,24 @@ fun CatalogLibraryScreen(
     onRefresh: () -> Unit,
     onLoadMore: (Int, () -> Unit) -> Unit,
     onBack: () -> Unit,
-    onOpen: (CatalogItem) -> Unit
+    onOpen: (CatalogItem) -> Unit,
+    catalogReady: Boolean = true
 ) {
-    // Read the current provider window on every catalog revision. This is important for the
-    // View All screen: a background page fetch replaces the cached section without recreating
-    // the navigation route.
-    val items = itemsProvider()
+    // A focus/filter recomposition must not re-merge the entire archive. Resolve one
+    // immutable snapshot per catalogue revision, away from the TV's drawing thread.
+    val resolvedItems by androidx.compose.runtime.produceState<List<CatalogItem>?>(
+        initialValue = null,
+        key1 = catalogRevision, key2 = title, key3 = providerIds to catalogReady
+    ) {
+        if (!catalogReady) {
+            value = null
+            return@produceState
+        }
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            itemsProvider()
+        }
+    }
+    val items = resolvedItems.orEmpty()
     var typeFilter by remember { mutableStateOf(LibraryTypeFilter.ALL) }
     var languageFilter by remember { mutableStateOf(LibraryLanguageFilter.ALL) }
     var genreFilter by remember { mutableStateOf(ALL_GENRES) }
@@ -199,7 +211,9 @@ fun CatalogLibraryScreen(
         // Give the repository-backed selector one frame before deciding whether the archive
         // actually grew.
         kotlinx.coroutines.delay(250L)
-        val latestItems = itemsProvider()
+        val latestItems = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            itemsProvider()
+        }
         val latestProviderHasMore = catalogRevision.any { section ->
             section.serviceId in providerIds && (
                 section.hasMoreAll || section.hasMoreMovies ||
@@ -215,6 +229,9 @@ fun CatalogLibraryScreen(
     val hasMoreItems = displayedItems.size < visibleItems.size
 
     fun requestMore() {
+        // A worker is still building the cached index: an empty viewport is not evidence
+        // that another provider page is needed. Avoid booting a WebView on library entry.
+        if (resolvedItems == null) return
         when {
             displayedItems.size < visibleItems.size -> {
                 visibleCount = (visibleCount + PAGE_SIZE).coerceAtMost(visibleItems.size)
@@ -232,23 +249,23 @@ fun CatalogLibraryScreen(
         }
     }
 
-    LaunchedEffect(gridState, displayedItems.size, visibleItems.size, viewMode, isRefreshing) {
+    LaunchedEffect(gridState, displayedItems.size, visibleItems.size, viewMode, isRefreshing, resolvedItems == null) {
         if (viewMode != LibraryViewMode.GRID) return@LaunchedEffect
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
             .distinctUntilChanged()
             .filter { lastIndex ->
-                lastIndex >= displayedItems.lastIndex - LOAD_AHEAD
+                lastIndex >= 0 && lastIndex >= displayedItems.lastIndex - LOAD_AHEAD
             }
             .collectLatest {
                 requestMore()
             }
     }
-    LaunchedEffect(listState, displayedItems.size, visibleItems.size, viewMode, isRefreshing) {
+    LaunchedEffect(listState, displayedItems.size, visibleItems.size, viewMode, isRefreshing, resolvedItems == null) {
         if (viewMode != LibraryViewMode.LIST) return@LaunchedEffect
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
             .distinctUntilChanged()
             .filter { lastIndex ->
-                lastIndex >= displayedItems.lastIndex - LOAD_AHEAD
+                lastIndex >= 0 && lastIndex >= displayedItems.lastIndex - LOAD_AHEAD
             }
             .collectLatest {
                 requestMore()
@@ -378,7 +395,11 @@ fun CatalogLibraryScreen(
 
         if (visibleItems.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("با این فیلتر عنوانی پیدا نشد.", color = TextSecondary)
+                if (resolvedItems == null) {
+                    CircularProgressIndicator(color = CinemaRed)
+                } else {
+                    Text("با این فیلتر عنوانی پیدا نشد.", color = TextSecondary)
+                }
             }
         } else {
             if (viewMode == LibraryViewMode.GRID) {

@@ -80,18 +80,6 @@ class LiveTvActivity : ComponentActivity() {
 
     private val app get() = application as AminTvApp
 
-    override fun onResume() {
-        super.onResume()
-        app.liveChannelHealthCoordinator.setScanningEnabled(true)
-    }
-
-    override fun onPause() {
-        // Opening a real channel or returning home must silence and cancel the hidden
-        // health WebView immediately; it must never compete with the visible player.
-        app.liveChannelHealthCoordinator.setScanningEnabled(false)
-        super.onPause()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemUi()
@@ -154,7 +142,8 @@ class LiveTvActivity : ComponentActivity() {
                 contentPoster = source.channel.logoUrl,
                 liveTheaterMode = true,
                 contentTitle = source.channel.name,
-                livePlayerId = playerId
+                livePlayerId = playerId,
+                liveChannelKey = liveChannelKey(source)
             )
         )
     }
@@ -181,7 +170,9 @@ class LiveTvActivity : ComponentActivity() {
         val activeSources = remember(uniqueSources, health) {
             uniqueSources.filter { isLiveActive(it, health) }
         }
-        val visibleSources = if (showAll) uniqueSources else activeSources
+        // Never turn an inconclusive scan into an unusable empty default screen.
+        val displayAll = showAll || activeSources.isEmpty()
+        val visibleSources = if (displayAll) uniqueSources else activeSources
         val categories = remember(visibleSources) { categoryGroups(visibleSources) }
 
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -219,8 +210,16 @@ class LiveTvActivity : ComponentActivity() {
                         Text(
                             if (refreshState.running) {
                                 "در حال بررسی کانال‌ها ${refreshState.completed} از ${refreshState.total}"
+                            } else if (refreshState.silenceUnavailable) {
+                                "بررسی بی‌صدا در این دستگاه در دسترس نیست؛ کانال را انتخاب کنید"
+                            } else if (refreshState.waitingForApp) {
+                                "صف بررسی محفوظ است و با بازگشت به اپ ادامه می‌یابد"
+                            } else if (refreshState.inconclusive) {
+                                "بررسی خودکار نتیجه قطعی نداشت؛ پخش کانال را امتحان کنید"
+                            } else if (activeSources.isEmpty()) {
+                                "وضعیت پخش هنوز تأیید نشده؛ کانال دلخواه را انتخاب کنید"
                             } else {
-                                "شبکه‌های فعال آماده تماشا"
+                                "وضعیت بر اساس آخرین پخش تأییدشده"
                             },
                             style = MaterialTheme.typography.bodyLarge,
                             color = TextSecondary
@@ -260,13 +259,13 @@ class LiveTvActivity : ComponentActivity() {
                     LiveTab(
                         label = "فعال",
                         count = activeSources.size,
-                        selected = !showAll,
+                        selected = !displayAll,
                         onClick = { showAll = false }
                     )
                     LiveTab(
                         label = "همه کانال‌ها",
                         count = uniqueSources.size,
-                        selected = showAll,
+                        selected = displayAll,
                         onClick = { showAll = true }
                     )
                 }
@@ -451,9 +450,9 @@ class LiveTvActivity : ComponentActivity() {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = when (status) {
-                        LiveHealthStatus.ACTIVE -> "فعال"
+                        LiveHealthStatus.ACTIVE -> "پخش تأییدشده"
                         LiveHealthStatus.INACTIVE -> "فعلاً فعال نیست"
-                        LiveHealthStatus.UNKNOWN, null -> "در صف بررسی"
+                        LiveHealthStatus.UNKNOWN, null -> "پخش را امتحان کنید"
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = when (status) {

@@ -20,6 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,14 +56,21 @@ fun authenticatedPosterModel(
     heightPx: Int? = null
 ): Any? {
     val context = LocalContext.current
-    return remember(posterUrl, pageUrl, widthPx, heightPx) {
-        if (!posterUrl.startsWith("http")) return@remember posterUrl
-        posterRequest(context, posterUrl, pageUrl)
-            .apply {
-                if (widthPx != null && heightPx != null) size(widthPx, heightPx)
+    val request by produceState<Pair<String, Any?>?>(
+        initialValue = null, posterUrl, pageUrl, widthPx, heightPx
+    ) {
+        value = posterUrl to withContext(Dispatchers.IO) {
+            if (!posterUrl.startsWith("http")) posterUrl else {
+                posterRequest(context, posterUrl, pageUrl)
+                    .apply {
+                        if (widthPx != null && heightPx != null) size(widthPx, heightPx)
+                    }
+                    .build()
             }
-            .build()
+        }
     }
+    // Never send an unauthenticated first request or briefly show the previous title's art.
+    return request?.takeIf { it.first == posterUrl }?.second
 }
 
 /**
@@ -70,13 +81,17 @@ fun authenticatedPosterModel(
 @Composable
 fun blurredBackdropModel(posterUrl: String, pageUrl: String): Any? {
     val context = LocalContext.current
-    return remember(posterUrl, pageUrl) {
-        if (!posterUrl.startsWith("http")) return@remember posterUrl
-        posterRequest(context, posterUrl, pageUrl)
-            .size(96, 144)
-            .crossfade(true)
-            .build()
+    val request by produceState<Pair<String, Any?>?>(null, posterUrl, pageUrl) {
+        value = posterUrl to withContext(Dispatchers.IO) {
+            if (!posterUrl.startsWith("http")) posterUrl else {
+                posterRequest(context, posterUrl, pageUrl)
+                    .size(96, 144)
+                    .crossfade(true)
+                    .build()
+            }
+        }
     }
+    return request?.takeIf { it.first == posterUrl }?.second
 }
 
 /** Shared builder so the same-host cookie rule lives in exactly one place. */
