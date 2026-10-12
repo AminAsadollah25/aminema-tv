@@ -1120,6 +1120,12 @@ Reflection را بشکند) و فقط با امولاتور قابل تأیید 
 
 ### یافتهٔ تازهٔ 2026-10-12 — پوستر باکیفیت
 
+به‌روزرسانی: شش polish در Candidate0.18.10/code53 اجرا شدند؛ تصویر بزرگ
+FilmRooz نیز واقعاً در Native تأیید شد. metadata labels/source dedupe، عکس
+عوامل ایرانی، Hero روشن و محدودیت تصاویر اضافه شدند. Gate۸۵ تست موفق.
+مرجع TEST_REPORT_0.18.10.md؛ benchmark Box و QA exhaustive تصاویر/افراد باقی
+است. این Candidate هنوز Commit/Push/Release نشده.
+
 Ted Lasso منبع MyMoviz واقعاً190×281 است؛ thumbnail نباید بی‌بررسی نقش
 پوستر تمام‌قد TV را بگیرد. صف بعدی: Probe منابعِ تصویر درشتِ همان عنوان،
 تفکیک thumbnail کارت/پوستر Hero/Backdrop، cache محدود، بدون تغییر URL

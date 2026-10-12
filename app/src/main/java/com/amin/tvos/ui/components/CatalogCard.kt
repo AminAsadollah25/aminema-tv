@@ -31,12 +31,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.memory.MemoryCache
+import coil.imageLoader
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.ui.theme.SurfaceElevated
@@ -58,22 +61,27 @@ fun authenticatedPosterModel(
     heightPx: Int? = null
 ): Any? {
     val context = LocalContext.current
-    val request by produceState<Pair<String, Any?>?>(
+    val request by produceState<Pair<List<Any?>, Any?>?>(
         initialValue = null, posterUrl, pageUrl, widthPx, heightPx
     ) {
-        value = posterUrl to withContext(Dispatchers.IO) {
+        value = listOf(posterUrl,pageUrl,widthPx,heightPx) to withContext(Dispatchers.IO) {
             if (!posterUrl.startsWith("http")) posterUrl else {
                 posterRequest(context, posterUrl, pageUrl)
                     .apply {
-                        if (widthPx != null && heightPx != null) size(widthPx, heightPx)
+                        if (widthPx != null && heightPx != null) {
+                            size(widthPx, heightPx)
+                            memoryCacheKey(posterKey(posterUrl, widthPx, heightPx))
+                        }
                     }
                     .build()
             }
         }
     }
     // Never send an unauthenticated first request or briefly show the previous title's art.
-    return request?.takeIf { it.first == posterUrl }?.second
+    return request?.takeIf { it.first == listOf(posterUrl,pageUrl,widthPx,heightPx) }?.second
 }
+
+private fun posterKey(url: String, width: Int, height: Int) = "$url@${width}x$height"
 
 /**
  * The same authenticated request, deliberately asked for at a tiny size so that scaling it
@@ -97,7 +105,7 @@ fun blurredBackdropModel(posterUrl: String, pageUrl: String): Any? {
 }
 
 /** Shared builder so the same-host cookie rule lives in exactly one place. */
-private fun posterRequest(
+internal fun posterRequest(
     context: android.content.Context,
     posterUrl: String,
     pageUrl: String
@@ -109,7 +117,7 @@ private fun posterRequest(
         // Wikimedia asks automated clients to identify themselves. OkHttp's generic
         // default receives HTTP 403 for these public portraits on the TV WebView device.
         if (posterHost == "commons.wikimedia.org" || posterHost == "upload.wikimedia.org") {
-            addHeader("User-Agent", "Aminema/0.18.9 (personal Android TV metadata; https://github.com/AminAsadollah25/aminema-tv)")
+            addHeader("User-Agent", "Aminema/${com.amin.tvos.BuildConfig.VERSION_NAME} (personal Android TV metadata; https://github.com/AminAsadollah25/aminema-tv)")
         }
         if (!posterHost.isNullOrBlank() && posterHost.equals(pageHost, true)) {
             CookieManager.getInstance().getCookie(posterUrl)
@@ -134,13 +142,22 @@ fun LargeTitlePoster(
     var detailLoaded by remember(detailUrl, pageUrl) { mutableStateOf(false) }
     val fallback = authenticatedPosterModel(thumbnailUrl, pageUrl, widthPx, heightPx)
     val detail = authenticatedPosterModel(detailUrl, pageUrl, widthPx, heightPx)
+    val context = LocalContext.current
+    val cachedThumbnail = remember(thumbnailUrl) {
+        context.imageLoader.memoryCache?.get(MemoryCache.Key(posterKey(thumbnailUrl,360,540)))
+            ?.bitmap?.asImageBitmap()
+    }
     Box(modifier) {
+        if (!detailLoaded && cachedThumbnail != null) androidx.compose.foundation.Image(
+            bitmap = cachedThumbnail, contentDescription = null,
+            contentScale = contentScale, modifier = Modifier.fillMaxSize()
+        )
         if (!detailLoaded) AsyncImage(
             model = fallback, contentDescription = title, contentScale = contentScale,
             modifier = Modifier.fillMaxSize()
         )
         if (detailUrl.isNotBlank() && detailUrl != thumbnailUrl && detail != null) AsyncImage(
-            model = detail, contentDescription = title, contentScale = contentScale,
+            model = detail, contentDescription = if(detailLoaded) title else null, contentScale = contentScale,
             onSuccess = { detailLoaded = true },
             onError = { detailLoaded = false },
             modifier = Modifier.fillMaxSize()
@@ -157,7 +174,7 @@ fun CatalogCard(
     /** Optional canonical/source status; ordinary rails keep their existing episode footer. */
     footerLabel: String? = null
 ) {
-    val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
+    val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl,360,540)
     FocusableCard(
         modifier = Modifier.width(180.dp),
         focusedScale = 1.06f,
@@ -165,7 +182,7 @@ fun CatalogCard(
         onInteractionFocusChanged = onFocused
     ) { focused ->
         Column(Modifier.padding(bottom = 8.dp)) {
-            Box(Modifier.fillMaxWidth().height(270.dp)) {
+            Box(Modifier.fillMaxWidth().height(270.dp).background(SurfaceElevated)) {
                 if (item.posterUrl.isNotBlank()) {
                     AsyncImage(
                         model = posterModel,
@@ -231,7 +248,7 @@ fun CatalogCard(
                 }
             }
             Text(
-                item.title,
+                com.amin.tvos.ui.metadata.displayTitle(item.title,item.year),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
                 maxLines = 1,
                 minLines = 1,
@@ -248,7 +265,12 @@ fun CatalogCard(
             ) {
                 val footer = footerLabel ?: item.episodeLabel.takeIf {
                     item.kind == CatalogKind.SERIES && it.isNotBlank()
-                }.orEmpty()
+                }?.let { com.amin.tvos.ui.metadata.compactEpisodeLabel(it) }.orEmpty().ifBlank {
+                    if(item.kind==CatalogKind.MOVIE) com.amin.tvos.ui.metadata.displayReleaseYear(
+                        com.amin.tvos.data.model.SpotlightItem(item.title,item.kind,item.contentUrl,
+                            serviceId=item.serviceId,year=item.year,country=item.country)
+                    ) else ""
+                }
                 if (footer.isNotBlank()) {
                     Text(
                         footer,

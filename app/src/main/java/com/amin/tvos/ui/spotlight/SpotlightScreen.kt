@@ -86,6 +86,11 @@ import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.LargeTitlePoster
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.metadata.displayReleaseYear
+import com.amin.tvos.ui.metadata.displayTitle
+import com.amin.tvos.ui.metadata.compactEpisodeLabel
+import com.amin.tvos.ui.metadata.displayCountries
+import com.amin.tvos.ui.metadata.displayLanguages
+import com.amin.tvos.ui.metadata.visibleSources
 import com.amin.tvos.ui.metadata.isIranianTitle
 import com.amin.tvos.ui.metadata.spotlightCategory
 import com.amin.tvos.ui.metadata.toPersianMetadataLabel
@@ -136,7 +141,7 @@ fun SpotlightScreen(
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         val heroArtUrl = item.backdropUrl.ifBlank { item.posterUrl }
-        val backdropModel = authenticatedPosterModel(heroArtUrl, item.contentUrl)
+        val backdropModel = authenticatedPosterModel(heroArtUrl, item.contentUrl,960,540)
 
         Box(Modifier.fillMaxSize().background(Ink)) {
             // Background Layer
@@ -297,7 +302,7 @@ fun SpotlightScreen(
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
                                             Text(
-                                                spotlightTitle(item),
+                                                displayTitle(item.title,item.year),
                                                 color = TextPrimary,
                                                 fontSize = 32.sp,
                                                 fontWeight = FontWeight.Bold,
@@ -329,19 +334,22 @@ fun SpotlightScreen(
                                         // series' episode list. Keeping it inside the Hero avoids
                                         // the old TV trap where the selector existed only below
                                         // the fold and the primary button skipped over it.
-                                        if (item.sourceVariants.size > 1) {
+                                        if (visibleSources(item.sourceVariants,item.contentUrl).size > 1) {
                                             Spacer(Modifier.height(14.dp))
                                             SourceSelector(item, onSourceSelected)
                                         }
 
                                         Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 16.dp)) {
                                             Column(modifier = Modifier.fillMaxSize()) {
+                                                // Synopsis yields space before the primary action does.
+                                                Column(Modifier.weight(1f).fillMaxWidth()) {
                                                 if (item.kind == CatalogKind.SERIES && item.episodeLabel.isNotBlank()) {
                                                     Spacer(Modifier.height(14.dp))
                                                     Text(
-                                                        "آخرین انتشار  •  ${item.episodeLabel}",
+                                                        "آخرین انتشار  •  ${compactEpisodeLabel(item.episodeLabel)}",
                                                         color = Color(0xFFFFC857),
-                                                        style = MaterialTheme.typography.titleMedium
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        maxLines = 1, overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
 
@@ -380,7 +388,7 @@ fun SpotlightScreen(
                                                         lineHeight = 26.sp,
                                                         maxLines = 4,
                                                         overflow = TextOverflow.Ellipsis,
-                                                        modifier = Modifier.fillMaxWidth()
+                                                        modifier = Modifier.fillMaxWidth().weight(1f,fill = false)
                                                     )
                                                 } else if (metadataLoading) {
                                                     Spacer(Modifier.height(16.dp))
@@ -402,8 +410,9 @@ fun SpotlightScreen(
                                                     }
                                                 }
                                                 // CreditsBlock removed from hero, moved below
+                                                }
                                                 
-                                                Spacer(Modifier.height(32.dp))
+                                                Spacer(Modifier.height(8.dp))
                                                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                                     SpotlightButton(
                                                         text = primaryLabel(item),
@@ -470,6 +479,23 @@ fun SpotlightScreen(
                 }
 
                 // ITEM 2: Cast & Crew Avatars
+                // Genre details live below the Hero so synopsis and primary action fit.
+                if(item.genres.isNotEmpty()) {
+                    item {
+                        Column(Modifier.fillMaxWidth().padding(horizontal=72.dp,vertical=20.dp)
+                            .background(Ink.copy(alpha=0.92f),RoundedCornerShape(24.dp)).padding(24.dp)) {
+                            Text("ژانرها",color=TextPrimary,style=MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.height(12.dp))
+                            FlowRow(horizontalArrangement=Arrangement.spacedBy(12.dp),
+                                verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                item.genres.map { it.toPersianMetadataLabel() }.filter { it.isNotBlank() }
+                                    .distinct().forEach { genre ->
+                                        Text(genre,color=TextPrimary,style=MaterialTheme.typography.bodyLarge)
+                                    }
+                            }
+                        }
+                    }
+                }
                 if (item.cast.isNotEmpty() || item.directors.isNotEmpty()) {
                     item {
                         CastAndCrewSection(item)
@@ -498,6 +524,8 @@ private fun CastAndCrewSection(item: SpotlightItem) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 72.dp, vertical = 32.dp)
+            .background(Ink.copy(alpha = 0.92f),RoundedCornerShape(24.dp))
+            .padding(24.dp)
     ) {
         Text(
             "بازیگران و عوامل",
@@ -514,7 +542,7 @@ private fun CastAndCrewSection(item: SpotlightItem) {
             item.directors.forEach { allPeople.add(it to "کارگردان") }
             item.cast.forEach { allPeople.add(it to "بازیگر") }
             
-            items(allPeople.distinctBy { it.first.name }) { (person, role) ->
+            items(allPeople.distinctBy { it.first.name },key = { it.first.name }) { (person, role) ->
                 PersonAvatar(person = person, role = role, contentUrl = item.contentUrl)
             }
         }
@@ -622,6 +650,11 @@ private fun PersonAvatar(person: PersonRef, role: String, contentUrl: String) {
                     model = imageModel,
                     contentDescription = person.name,
                     contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(person.name.trim().take(1), color = TextPrimary, fontSize = 40.sp)
+                        }
+                    },
                     error = {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(person.name.trim().take(1), color = TextPrimary, fontSize = 40.sp)
@@ -687,19 +720,15 @@ private fun MetadataChips(item: SpotlightItem) {
             }
         }
         item.runtime.takeIf { it.isNotBlank() }?.let { add(Chip(it, neutral)) }
-        item.country.takeIf { it.isNotBlank() }?.let { add(Chip("محصول $it", neutral)) }
-        item.language.takeIf { it.isNotBlank() }?.let { add(Chip("زبان $it", neutral)) }
+        displayCountries(item.country).takeIf { it.isNotBlank() }?.let { add(Chip("محصول $it", neutral)) }
+        displayLanguages(item.language).takeIf { it.isNotBlank() }?.let { add(Chip("زبان $it", neutral)) }
         if (item.hasPersianDub) {
             add(Chip(text = "دوبله فارسی", background = Color(0xFF147A4A), foreground = Color(0xFFE8FFF2)))
         }
         if (item.hasPersianSubtitle) {
             add(Chip(text = "زیرنویس فارسی", background = Color(0xFF255A83), foreground = Color(0xFFE8F5FF)))
         }
-        addAll(
-            item.genres.filter { it.isNotBlank() }.take(4)
-                .map { Chip(it.toPersianMetadataLabel(), neutral) }
-        )
-    }.distinct()
+    }.distinctBy { it.text }
 
     if (chips.isEmpty()) return
     FlowRow(
@@ -719,16 +748,6 @@ private fun MetadataChips(item: SpotlightItem) {
             )
         }
     }
-}
-
-private fun spotlightTitle(item: SpotlightItem): String {
-    if (item.year.isBlank()) return item.title
-    val rawYear = item.year.toLatinNumberDigits().filter(Char::isDigit).take(4)
-    if (rawYear.isBlank()) return item.title
-    return item.title
-        .replace(Regex("""\s*[（(]\s*$rawYear\s*[)）]\s*$"""), "")
-        .trim()
-        .ifBlank { item.title }
 }
 
 private fun String.toLatinNumberDigits(): String = map { character ->
@@ -809,7 +828,7 @@ private fun SourceSelector(
             color = TextPrimary,
             style = MaterialTheme.typography.labelLarge
         )
-        item.sourceVariants.forEach { source ->
+        visibleSources(item.sourceVariants,item.contentUrl).forEach { source ->
             val selected = ContentMetadataPolicy.isSameTopLevelPage(
                 item.contentUrl,
                 source.item.contentUrl

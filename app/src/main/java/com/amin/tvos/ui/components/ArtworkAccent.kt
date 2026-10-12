@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import coil.imageLoader
-import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -47,12 +46,12 @@ fun rememberArtworkAccent(
             resolved = fallback
             return@LaunchedEffect
         }
-        val request = ImageRequest.Builder(context)
-            .data(posterUrl)
-            .size(96, 144)
-            // Pixels can only be read back from a software bitmap.
-            .allowHardware(false)
-            .build()
+        val request = withContext(Dispatchers.IO) {
+            posterRequest(context,posterUrl,pageUrl)
+                .size(96,144)
+                .allowHardware(false)
+                .build()
+        }
         val bitmap = runCatching {
             (context.imageLoader.execute(request) as? SuccessResult)
                 ?.drawable
@@ -92,6 +91,8 @@ private fun accentOf(bitmap: Bitmap): Color {
     var toneR = 0.0; var toneG = 0.0; var toneB = 0.0
     var vividWeight = 0.0
     var vividR = 0.0; var vividG = 0.0; var vividB = 0.0
+    var paperCount = 0.0
+    var paperR = 0.0; var paperG = 0.0; var paperB = 0.0
 
     val stepX = (bitmap.width / 48).coerceAtLeast(1)
     val stepY = (bitmap.height / 72).coerceAtLeast(1)
@@ -110,6 +111,9 @@ private fun accentOf(bitmap: Bitmap): Color {
             toneCount += 1.0
 
             AndroidColor.colorToHSV(pixel, hsv)
+            if(hsv[2]>=0.75f && hsv[1]<=0.30f) {
+                paperCount += 1; paperR += r; paperG += g; paperB += b
+            }
             if (hsv[1] > 0.32f && hsv[2] in 0.22f..0.92f) {
                 // Squared so a genuinely vivid pixel outvotes several dull ones.
                 val weight = (hsv[1] * hsv[1] * hsv[2]).toDouble()
@@ -122,6 +126,12 @@ private fun accentOf(bitmap: Bitmap): Color {
     }
 
     if (toneCount <= 0.0) return Color.Unspecified
+
+    // A red title on mostly pale paper must not repaint the whole hero red/brown.
+    if(paperCount/toneCount >= 0.45) return Color(
+        (paperR/paperCount/255).toFloat(),(paperG/paperCount/255).toFloat(),
+        (paperB/paperCount/255).toFloat()
+    )
 
     val tone = Color(
         red = (toneR / toneCount / 255.0).toFloat().coerceIn(0f, 1f),
@@ -137,6 +147,10 @@ private fun accentOf(bitmap: Bitmap): Color {
         androidx.compose.ui.graphics.lerp(tone, vivid, 0.34f)
     } else {
         tone
+    }
+    // Preserve genuinely light artwork instead of turning every cream/white poster dark.
+    if (HeroContrastPolicy.isBrightArtwork(tone.red.toDouble(),tone.green.toDouble(),tone.blue.toDouble())) {
+        return androidx.compose.ui.graphics.lerp(tone,Color.White,0.10f)
     }
     return base.deepenForScrim()
 }

@@ -139,9 +139,8 @@ class SpotlightActivity : ComponentActivity() {
             // A fresh synopsis-only record is not complete. Retry the provider's ordinary
             // title metadata so newly supported credits can appear without clearing app data.
             val cacheIsFresh = cached?.isDecisionComplete() == true &&
-                (initial.serviceId != "mymoviz" || cached.artworkLookupVersion >= 1) &&
                 cached.peopleImageVersion >= 1 &&
-                !cached.backdropUrl.isNullOrBlank() &&
+                cached.artworkLookupVersion >= 4 &&
                 System.currentTimeMillis() - cached.fetchedAt < METADATA_MAX_AGE_MS
             if (isFinishing || isDestroyed) return@launch
             if (cacheIsFresh) {

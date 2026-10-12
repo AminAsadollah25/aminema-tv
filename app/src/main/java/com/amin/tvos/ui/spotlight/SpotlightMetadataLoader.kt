@@ -182,7 +182,7 @@ class SpotlightMetadataLoader(
                 root.optString("detailPosterUrl"), root.optInt("posterWidth"),
                 root.optInt("posterHeight")
             ),
-            artworkLookupVersion = 1,
+            artworkLookupVersion = if(root.optBoolean("artworkPending")) 0 else 4,
             summary = root.optString("summary").clean(520),
             year = root.optString("year")
                 .replace(Regex("""[^0-9۰-۹]"""), "")
@@ -491,6 +491,32 @@ class SpotlightMetadataLoader(
               // currentSrc honours the site's own srcset; natural dimensions reject failures.
               var titlePoster = /^(?:www\.)?mymoviz\.co$/i.test(location.hostname)
                 ? document.querySelector('.mv-detail__posterbtn img') : null;
+              // Observed on the signed-in FilmRooz title page; never read this anchor's href.
+              if (/\/post\/(?:film|series)\//i.test(location.pathname)) {
+                titlePoster = document.querySelector('.postMeta #playTheStream img.mw-100') || titlePoster;
+              }
+              // FilmRooz's hidden viewport contains an SVG placeholder with real-looking
+              // dimensions; its observed data-src advertises the ordinary full poster.
+              // Measure that image itself, never accept the placeholder's dimensions.
+              var posterUrl = titlePoster ? personImage(
+                titlePoster.getAttribute('data-src') || titlePoster.currentSrc || titlePoster.src
+              ) : '';
+              var posterMeasure = titlePoster;
+              if (posterUrl && (personImage(titlePoster.currentSrc || titlePoster.src) !== posterUrl ||
+                  !titlePoster.complete || titlePoster.naturalWidth < 300)) {
+                posterMeasure = new Image();
+                await new Promise(function(resolve) {
+                  var timer = setTimeout(function() {
+                    posterMeasure.onload = posterMeasure.onerror = null;
+                    posterMeasure.src = ''; resolve();
+                  }, 3600);
+                  function done() {
+                    clearTimeout(timer); posterMeasure.onload = posterMeasure.onerror = null; resolve();
+                  }
+                  posterMeasure.onload = done; posterMeasure.onerror = done;
+                  posterMeasure.src = posterUrl;
+                });
+              }
               var provider = await parsiflixDetails();
               var titleText = clean(
                 (document.querySelector('main h1,main h2,.postMeta h1,.postMeta h2') || {}).textContent
@@ -605,9 +631,10 @@ class SpotlightMetadataLoader(
               ));
               AminSpotlight.result(JSON.stringify({
                 summary: (providerSummary || summary(schema)).slice(0, 520),
-                detailPosterUrl: titlePoster ? personImage(titlePoster.currentSrc || titlePoster.src) : '',
-                posterWidth: titlePoster ? titlePoster.naturalWidth : 0,
-                posterHeight: titlePoster ? titlePoster.naturalHeight : 0,
+                detailPosterUrl: posterUrl,
+                artworkPending: !!titlePoster && (!posterUrl || !posterMeasure || posterMeasure.naturalWidth < 300),
+                posterWidth: posterMeasure ? posterMeasure.naturalWidth : 0,
+                posterHeight: posterMeasure ? posterMeasure.naturalHeight : 0,
                 year: yearMatch ? yearMatch[0] : '',
                 genres: genres.slice(0, 4),
                 rating: rating.replace(/[^0-9۰-۹.٫]/g, '').slice(0, 5),

@@ -155,7 +155,7 @@ fun TitleMetadata.isDecisionComplete(): Boolean =
 
 fun SpotlightItem.withMetadata(metadata: TitleMetadata): SpotlightItem = copy(
     posterUrl = posterUrl.ifBlank { metadata.posterUrl },
-    detailPosterUrl = metadata.detailPosterUrl.ifBlank { detailPosterUrl },
+    detailPosterUrl = detailPosterUrl.ifBlank { metadata.detailPosterUrl },
     backdropUrl = backdropUrl.ifBlank { metadata.backdropUrl },
     summary = metadata.summary.ifBlank { summary },
     year = metadata.year.ifBlank { year },

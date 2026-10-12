@@ -39,16 +39,10 @@ class PublicTitleMetadataEnricher {
 
         val cleanTitle = cleanDisplayTitle(item.title, item.year.ifBlank { known?.year.orEmpty() })
         if (cleanTitle.length < 2) return@withContext null
-        val rawExpectedYear = item.year.ifBlank { known?.year.orEmpty() }
-            .filter(Char::isDigit)
-            .take(4)
-            .toIntOrNull()
         // Parsiflix frequently publishes the catalog/upload year for older Iranian titles.
         // Treating that as the production year rejects an otherwise exact Wikidata match
         // (for example a 1393 film newly added in 1405). A verified Solar year remains useful.
-        val expectedYear = rawExpectedYear.takeUnless {
-            item.serviceId.equals("parsiflix", true) && it in 1900..2200
-        }
+        val expectedYear = publicMatchYear(item.serviceId, item.year, known?.year.orEmpty())
         val expectedImdb = known?.imdbId.orEmpty()
         val now = System.currentTimeMillis()
 
@@ -201,7 +195,7 @@ class PublicTitleMetadataEnricher {
             ) continue
 
             // A title without year/IMDb evidence must be an exceptionally close title match.
-            if (expectedImdb.isBlank() && expectedYear == null && verifiedTitleScore < 0.88) continue
+            if (expectedImdb.isBlank() && (expectedYear == null || years.isEmpty()) && verifiedTitleScore < 0.88) continue
             return WikiMatch(candidate.extract, entity)
         }
         return null
@@ -406,7 +400,7 @@ class PublicTitleMetadataEnricher {
         )
         const val EXTERNAL_RETRY_MS = 30L * 24L * 60L * 60L * 1_000L
         // v5 adds the official public Sheyda title UI as an Iranian credits fallback.
-        const val LOOKUP_VERSION = 6
+        const val LOOKUP_VERSION = 8
 
         private fun needsPortraits(metadata: TitleMetadata?): Boolean =
             (metadata?.cast.orEmpty() + metadata?.directors.orEmpty()).any { it.imageUrl.isBlank() }

@@ -19,7 +19,9 @@ class PosterArtworkPolicyTest {
         assertEquals("", PosterArtworkPolicy.verifiedPortrait(url, 640, 640))
         assertEquals("", PosterArtworkPolicy.verifiedPortrait("https://secret@images.example.com/a", 364, 536))
         assertEquals("", PosterArtworkPolicy.verifiedPortrait(url, 0, 0))
+        assertEquals("", PosterArtworkPolicy.verifiedPortrait("data:image/svg+xml,placeholder", 381, 571))
         assertEquals(url, PosterArtworkPolicy.verifiedPortrait(url, 364, 536))
+        assertEquals(url, PosterArtworkPolicy.verifiedPortrait(url, 762, 1142))
     }
 
     @Test fun cachedDetailArtSurvivesPartialRefreshWithoutReplacingThumbnail() {
@@ -36,5 +38,11 @@ class PosterArtworkPolicyTest {
         val old = Json.decodeFromString<TitleMetadata>("""{"contentUrl":"https://example.com/title"}""")
         assertEquals("", old.detailPosterUrl)
         assertEquals(0, old.artworkLookupVersion)
+    }
+    @Test fun sourceRefreshDoesNotReplaceCanonicalArtworkAlreadyOnScreen() {
+        val item=SpotlightItem("Title",CatalogKind.SERIES,"https://example.com/title",
+            posterUrl=url,detailPosterUrl="https://example.com/large.jpg",serviceId="filmrooz")
+        val next=item.withMetadata(TitleMetadata(item.contentUrl,detailPosterUrl="https://other.example.com/large.jpg"))
+        assertEquals(item.detailPosterUrl,next.detailPosterUrl)
     }
 }

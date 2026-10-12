@@ -60,6 +60,8 @@ class FilmnetPublicMetadataEnricher {
 
         val directors = mutableListOf<PersonRef>()
         val cast = mutableListOf<PersonRef>()
+        val portraits = mutableListOf<TrustedPortrait>()
+        val exactTitle = normalize(title) == normalize(video.optString("title"))
         val castGroups = aggregate?.optJSONArray("cast") ?: JSONArray()
         for (index in 0 until castGroups.length()) {
             val group = castGroups.optJSONObject(index) ?: continue
@@ -85,11 +87,19 @@ class FilmnetPublicMetadataEnricher {
             val person = entry.optJSONObject("person") ?: continue
             val name = person.optString("name").cleanText(80)
             if (name.isBlank()) continue
+            val image = if(exactTitle) PersonImagePolicy.safeUrl(
+                person.optJSONObject("avatar_image")?.optString("path").orEmpty()
+            ).takeIf { runCatching { java.net.URI(it).host == "tv.filmnet.ir" }.getOrDefault(false) }.orEmpty() else ""
             val reference = PersonRef(
                 name = name,
                 providerId = person.optString("id").take(80),
-                profileUrl = ""
+                profileUrl = "",
+                imageUrl = image
             )
+            if(image.isNotBlank() && (role.contains("کارگردان") || role.contains("بازیگر"))) {
+                portraits += TrustedPortrait("filmnet:${reference.providerId}",
+                    setOf(name,person.optString("name_en")).filter { it.isNotBlank() }.toSet(),image)
+            }
             when {
                 role.contains("کارگردان") -> directors += reference
                 role.contains("بازیگر") -> cast += reference
@@ -127,8 +137,10 @@ class FilmnetPublicMetadataEnricher {
             language = if (known?.language.isNullOrBlank()) "فارسی" else "",
             hasPersianSubtitle = Regex("""زیرنویس\s*:?[\s‌]*فارسی""")
                 .containsMatchIn(summary),
-            directors = if (known?.directors.isNullOrEmpty()) directors.distinct() else emptyList(),
-            cast = if (known?.cast.isNullOrEmpty()) cast.distinct().take(8) else emptyList(),
+            directors = PersonPortraitPolicy.fill(
+                known?.directors?.takeIf { it.isNotEmpty() } ?: directors.distinct().take(3),portraits),
+            cast = PersonPortraitPolicy.fill(
+                known?.cast?.takeIf { it.isNotEmpty() } ?: cast.distinct().take(8),portraits),
             externalLookupAt = now,
             externalLookupVersion = PublicTitleMetadataEnricher.LOOKUP_VERSION,
             fetchedAt = now
@@ -166,7 +178,7 @@ class FilmnetPublicMetadataEnricher {
     }
 
     private fun kindMatches(kind: CatalogKind, value: String): Boolean = when (kind) {
-        CatalogKind.MOVIE -> value.contains("movie", true) || value.contains("film", true)
+        CatalogKind.MOVIE -> value.contains("movie", true) || value.contains("film", true) || value == "single_video"
         CatalogKind.SERIES -> value.contains("series", true)
     }
 

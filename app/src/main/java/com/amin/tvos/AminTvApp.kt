@@ -16,7 +16,24 @@ import com.amin.tvos.update.UpdateRepository
  * Application + lightweight service locator.
  * Kept dependency-injection-framework-free for fast startup on Android boxes.
  */
-class AminTvApp : Application() {
+class AminTvApp : Application(), coil.ImageLoaderFactory {
+
+    /** Lazy Coil factory: no image client or Chromium work is added to app startup. */
+    override fun newImageLoader(): coil.ImageLoader {
+        val lowRam = (getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).isLowRamDevice
+        return coil.ImageLoader.Builder(this)
+            .memoryCache {
+                coil.memory.MemoryCache.Builder(this).maxSizePercent(if(lowRam) 0.10 else 0.15).build()
+            }
+            .bitmapFactoryMaxParallelism(if(lowRam) 1 else 2)
+            .okHttpClient {
+                okhttp3.OkHttpClient.Builder().dispatcher(okhttp3.Dispatcher().apply {
+                    maxRequests = 4
+                    maxRequestsPerHost = 2
+                }).build()
+            }
+            .build()
+    }
 
     val servicesRepository by lazy { ServicesRepository(this) }
     val libraryRepository by lazy { LibraryRepository(this) }

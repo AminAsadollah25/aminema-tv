@@ -64,6 +64,9 @@ import com.amin.tvos.ui.components.FocusableCard
 import com.amin.tvos.ui.components.LargeTitlePoster
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.components.rememberArtworkAccent
+import com.amin.tvos.ui.components.HeroContrastPolicy
+import com.amin.tvos.ui.metadata.displayTitle
+import com.amin.tvos.ui.metadata.compactEpisodeLabel
 import com.amin.tvos.ui.metadata.displayReleaseYear
 import com.amin.tvos.ui.metadata.toPersianMetadataLabel
 import com.amin.tvos.ui.theme.CinemaRed
@@ -151,11 +154,14 @@ private fun HeroSlideContent(
         heightPx = 720
     )
     val accent = rememberArtworkAccent(
-        posterUrl = heroArtUrl,
+        posterUrl = item.posterUrl.ifBlank { heroArtUrl },
         pageUrl = item.contentUrl,
         fallback = Color(0xFF24212C)
     )
-    val deep = lerp(Color(0xFF09090E), accent, 0.42f)
+    val deep = lerp(Color(0xFF09090E), accent, 0.94f)
+    val light = HeroContrastPolicy.useDarkText(deep.red.toDouble(),deep.green.toDouble(),deep.blue.toDouble())
+    val copyColor = if(light) Color.Black else Color.White
+    val eyebrowColor = if(HeroContrastPolicy.isBrightArtwork(deep.red.toDouble(),deep.green.toDouble(),deep.blue.toDouble())) Color(0xFF9A1330) else copyColor
     val shape = RoundedCornerShape(28.dp)
 
     var primaryFocused by remember(slide.id) { mutableStateOf(false) }
@@ -197,8 +203,8 @@ private fun HeroSlideContent(
             Modifier.fillMaxSize().background(
                 Brush.horizontalGradient(
                     0f to deep.copy(alpha = 1f),
-                    0.47f to deep.copy(alpha = 0.96f),
-                    0.72f to Color.Black.copy(alpha = 0.42f),
+                    0.62f to deep,
+                    0.78f to Color.Black.copy(alpha = 0.26f),
                     1f to Color.Transparent
                 )
             )
@@ -208,7 +214,7 @@ private fun HeroSlideContent(
                 Brush.verticalGradient(
                     0f to Color.Black.copy(alpha = 0.10f),
                     0.58f to Color.Transparent,
-                    1f to Color.Black.copy(alpha = 0.78f)
+                    1f to (if(light) deep else Color.Black).copy(alpha = 0.78f)
                 )
             )
         )
@@ -246,14 +252,14 @@ private fun HeroSlideContent(
                     Icon(
                         Icons.Filled.AutoAwesome,
                         contentDescription = null,
-                        tint = CinemaRed,
+                        tint = eyebrowColor,
                         modifier = Modifier.size(17.dp)
                     )
                     Spacer(Modifier.width(7.dp))
                     Text(
                         slide.eyebrow,
                         style = MaterialTheme.typography.labelLarge,
-                        color = CinemaRed
+                        color = eyebrowColor
                     )
                 }
                 Spacer(Modifier.height(5.dp))
@@ -262,8 +268,8 @@ private fun HeroSlideContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        heroTitle(item),
-                        color = Color.White,
+                        displayTitle(item.title,item.year),
+                        color = copyColor,
                         fontSize = 35.sp,
                         lineHeight = 40.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -271,14 +277,14 @@ private fun HeroSlideContent(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            shadow = Shadow(Color.Black.copy(alpha = 0.72f), blurRadius = 18f)
+                            shadow = Shadow(if(light) Color.Transparent else Color.Black.copy(alpha = 0.72f), blurRadius = 18f)
                         )
                     )
                     displayReleaseYear(item).takeIf { it.isNotBlank() }?.let { year ->
                         Box(
                             Modifier
                                 .clip(RoundedCornerShape(9.dp))
-                                .background(Color.Black.copy(alpha = 0.46f))
+                                .background(Color.Black.copy(alpha = 0.72f))
                                 .border(
                                     BorderStroke(0.7.dp, Color.White.copy(alpha = 0.30f)),
                                     RoundedCornerShape(9.dp)
@@ -305,13 +311,13 @@ private fun HeroSlideContent(
                         style = MaterialTheme.typography.bodyLarge,
                         fontSize = 15.sp,
                         lineHeight = 22.sp,
-                        color = Color.White.copy(alpha = 0.80f),
+                        color = copyColor,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                HeroCredits(item)
+                HeroCredits(item,copyColor)
 
                 Spacer(Modifier.weight(1f))
 
@@ -471,19 +477,11 @@ private fun HeroCarouselArrow(
     }
 }
 
-private fun heroTitle(item: SpotlightItem): String {
-    if (item.year.isBlank()) return item.title
-    return item.title
-        .replace(Regex("""\s*[（(]\s*${Regex.escape(item.year)}\s*[)）]\s*$"""), "")
-        .trim()
-        .ifBlank { item.title }
-}
-
 @Composable
 private fun HeroMetadata(item: SpotlightItem) {
     val labels = buildList {
         add(if (item.kind == CatalogKind.SERIES) "سریال" else "فیلم")
-        item.episodeLabel.takeIf { it.isNotBlank() }?.let(::add)
+        item.episodeLabel.takeIf { it.isNotBlank() }?.let { add(compactEpisodeLabel(it)) }
         when {
             item.hasPersianDub -> add("دوبله فارسی")
             item.hasPersianSubtitle -> add("زیرنویس فارسی")
@@ -503,7 +501,7 @@ private fun HeroMetadata(item: SpotlightItem) {
                     .clip(RoundedCornerShape(7.dp))
                     .background(
                         if (isDub) Color(0xFF087A4B).copy(alpha = 0.94f)
-                        else Color.Black.copy(alpha = 0.34f)
+                        else Color.Black.copy(alpha = 0.78f)
                     )
                     .border(
                         BorderStroke(
@@ -527,7 +525,7 @@ private fun HeroMetadata(item: SpotlightItem) {
 }
 
 @Composable
-private fun HeroCredits(item: SpotlightItem) {
+private fun HeroCredits(item: SpotlightItem,copyColor: Color) {
     if (item.directors.isEmpty() && item.cast.isEmpty()) return
     val text = buildList {
         item.directors.take(1).takeIf { it.isNotEmpty() }?.let { directors ->
@@ -541,7 +539,7 @@ private fun HeroCredits(item: SpotlightItem) {
     Spacer(Modifier.height(5.dp))
     Text(
         text,
-        color = Color.White.copy(alpha = 0.72f),
+        color = copyColor,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         maxLines = 1,
