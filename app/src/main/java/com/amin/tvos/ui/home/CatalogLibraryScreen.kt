@@ -128,6 +128,7 @@ fun CatalogLibraryScreen(
         }
     }
     val items = resolvedItems.orEmpty()
+    val allowRemoteLoading = providerIds.isNotEmpty()
     var typeFilter by remember { mutableStateOf(LibraryTypeFilter.ALL) }
     var languageFilter by remember { mutableStateOf(LibraryLanguageFilter.ALL) }
     var genreFilter by remember { mutableStateOf(ALL_GENRES) }
@@ -238,7 +239,7 @@ fun CatalogLibraryScreen(
             }
             // The first library window may come from an older cache without the new hasMore
             // flags. Allow one probe refresh; the provider result then decides whether to stop.
-            !noMoreItems && !isRefreshing && !isLoadingMore && loadedPageLimit < MAX_PAGE_LIMIT -> {
+            allowRemoteLoading && !noMoreItems && !isRefreshing && !isLoadingMore && loadedPageLimit < MAX_PAGE_LIMIT -> {
                 requestedPageLimit = (loadedPageLimit + PAGE_STEP).coerceAtMost(MAX_PAGE_LIMIT)
                 itemCountBeforeLoad = items.size
                 isLoadingMore = true
@@ -297,7 +298,7 @@ fun CatalogLibraryScreen(
                 }
             }
             Spacer(Modifier.width(18.dp))
-            FocusableCard(
+            if (allowRemoteLoading) FocusableCard(
                 shape = RoundedCornerShape(50),
                 enabled = !isRefreshing,
                 onClick = {
@@ -393,12 +394,20 @@ fun CatalogLibraryScreen(
             )
         }
 
+        if (!allowRemoteLoading) {
+            Text("انتخاب از آرشیو ذخیره‌شده · بدون دریافت خودکار صفحات سایت",
+                color = TextSecondary, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 48.dp, vertical = 6.dp))
+        }
+
         if (visibleItems.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 if (resolvedItems == null) {
                     CircularProgressIndicator(color = CinemaRed)
                 } else {
-                    Text("با این فیلتر عنوانی پیدا نشد.", color = TextSecondary)
+                    Text(if (allowRemoteLoading) "با این فیلتر عنوانی پیدا نشد." else
+                        "در آرشیو ذخیره‌شده عنوانی با این دسته پیدا نشد؛ کاتالوگ را از خانه بروزرسانی کن.",
+                        color = TextSecondary, modifier = Modifier.padding(48.dp))
                 }
             }
         } else {
@@ -417,7 +426,7 @@ fun CatalogLibraryScreen(
                     ) { item ->
                         CatalogCard(item = item, onClick = { onOpen(item) })
                     }
-                    if (hasMoreItems || isLoadingMore || (!noMoreItems && loadedPageLimit < MAX_PAGE_LIMIT)) {
+                    if (hasMoreItems || isLoadingMore || (allowRemoteLoading && !noMoreItems && loadedPageLimit < MAX_PAGE_LIMIT)) {
                         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                             LoadingMoreLabel(
                                 loading = isLoadingMore,
@@ -439,7 +448,7 @@ fun CatalogLibraryScreen(
                     ) { item ->
                         CatalogListItem(item = item, onClick = { onOpen(item) })
                     }
-                    if (hasMoreItems || isLoadingMore || (!noMoreItems && loadedPageLimit < MAX_PAGE_LIMIT)) {
+                    if (hasMoreItems || isLoadingMore || (allowRemoteLoading && !noMoreItems && loadedPageLimit < MAX_PAGE_LIMIT)) {
                         item {
                             LoadingMoreLabel(
                                 loading = isLoadingMore,

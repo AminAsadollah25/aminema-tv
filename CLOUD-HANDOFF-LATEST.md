@@ -1,5 +1,17 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## Candidate محلی0.19.0/code54 — 2026-10-12
+
+ردیف مسکات۱۲دسته زیر Hero؛ GenreDiscovery از cache فقط هنگام کلیک انتخاب
+می‌کند. providerIds خالی در Library یعنی بدون refresh/remote pagination؛
+هیچ Provider adapter یا login تغییر نکرده. یک atlas مشترک1448×1086 روی IO
+و متن native؛ ماراتون فقط انتخاب سریال، کلاسیک تا۲۰۰۰، خانوادگی بدون تضمین کودک.
+DEVELOPMENT_LOG_0.19.0.md و TEST_REPORT_0.19.0.md مرجع‌اند. منتشر نشده؛
+Release عمومی همچنان0.18.10 است. انتشار نیازمند تأیید جداگانهٔ مالک.
+Gate نهایی۹۳تست، lint صفر خطا/۱۳۱هشدار؛ نصب درجای code54 موفق، SHA/امضا
+و نبود Probe/کرش تأیید. SoftReference تصویر و crop۷۸٪/Canvas146dp در APK نهایی‌اند.
+شاهد نهایی /private/tmp/aminema-0190-preview-final.png؛ APK/SHA در گزارش QA.
+
 ## منتشرشده0.18.10/code53 — 2026-10-12
 
 شش بهبود درخواستی و اصلاح تقویم اجرا و منتشر شدند. اول DEVELOPMENT_LOG_0.18.10.md

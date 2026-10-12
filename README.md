@@ -4,6 +4,10 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
+Local candidate: **0.19.0/code54** adds the mascot genre rail below Hero and
+cache-only discovery. Not published. See [development log](DEVELOPMENT_LOG_0.19.0.md)
+and [QA](TEST_REPORT_0.19.0.md). Marathon currently means series selection, not autoplay.
+
 **Published:** [Aminema 0.18.10 — Artwork & Presentation Polish](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.10) (`versionCode 53`)
 
 Release notes: [0.18.10](RELEASE_NOTES_0.18.10.md). Verified assets and SHA:

@@ -44,6 +44,7 @@ import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
 import com.amin.tvos.data.CanonicalLibrary
+import com.amin.tvos.data.GenreDiscovery
 import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.CanonicalMedia
 import com.amin.tvos.data.model.CatalogFilter
@@ -844,6 +845,20 @@ fun HomeScreen(
             Spacer(Modifier.height(22.dp))
         }
         }
+        }
+
+        item(key = "genre-discovery", contentType = "genre-rail") {
+            GenreDiscoveryRow(
+                onSelect = { category ->
+                    onOpenLibrary(
+                        category.libraryTitle,
+                        { sections -> GenreDiscovery.select(category, sections, titleMetadata) },
+                        { item -> openSpotlight(spotlightForCatalog(item)) },
+                        emptySet() // Cache-only discovery; no background provider pagination.
+                    )
+                },
+                onFocused = { heroOwnsBackdrop = false }
+            )
         }
 
         // On a truly cold start there is no catalogue yet, so keep the two playful
