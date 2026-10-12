@@ -1,5 +1,20 @@
 # سند فنی مداوم Aminema
 
+## تغییر محلی — 2026-10-12، 0.18.9/code52
+
+detailPosterUrl/ artworkLookupVersion1 متادیتای MyMoviz را از thumbnail جدا
+می‌کنند؛ فقط تصویر واقعی container پوستر با اندازهٔ معتبر پذیرفته می‌شود.
+LargeTitlePoster سایز decode محدود و fallback به thumbnail دارد. Home هیچ
+lookup تازه روی فوکوس ندارد؛ سایر Providerها دست‌نخورده‌اند. QA/محدودیت‌های
+این ارتقا در اسناد0.18.9 ثبت می‌شوند؛ هنوز منتشر نشده.
+
+PlaybackSession اکنون episodeAction/Season/Quality اختیاری دارد؛ فایل‌های
+قدیمی بدون پاک‌کردن داده خوانده می‌شوند. Continue دارای action از Native
+state machine همان قسمت استفاده می‌کند. PersonRef.imageUrl مستقل از
+profileUrl است؛ تکمیل عکس P18 فقط بعد از تطبیق معتبر عنوان و شخص مرتبط
+P161/P57 صورت می‌گیرد. جزئیات merge/cache/Probe/محدودیت‌ها در
+`DEVELOPMENT_LOG_0.18.9.md`. این Candidate منتشر نشده است.
+
 ## کانال نصب نسخهٔ 0.18.8 — 2026-10-10
 
 Candidate قدیمی code50 بود؛ نسخهٔ انتشار code51 است، با همان نام 0.18.8.

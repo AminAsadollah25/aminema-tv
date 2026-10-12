@@ -223,11 +223,17 @@ class LibraryRepository(private val context: Context) {
         posterUrl: String,
         resumePosition: Long,
         duration: Long,
-        resumeStrategy: ResumeStrategy
+        resumeStrategy: ResumeStrategy,
+        episodeAction: String = "",
+        episodeQuality: String = ""
     ) = withStorageLock {
         if (contentUrl.isBlank() || playbackUrl.isBlank()) return@withStorageLock
         val id = sha1(contentUrl)
         val existingSession = _playbackSessions.value.firstOrNull { it.id == id }
+        val action = EpisodeResumePolicy.safeAction(episodeAction)
+        val sameEpisode = existingSession != null && EpisodeResumePolicy.sameEpisode(
+            existingSession.episodeAction, action, existingSession.playbackUrl, playbackUrl
+        )
         val existingItem = _items.value.firstOrNull { it.id == id }
         val resolvedTitle = title.ifBlank {
             existingSession?.title ?: existingItem?.title ?: serviceName
@@ -246,14 +252,17 @@ class LibraryRepository(private val context: Context) {
             playbackUrl = playbackUrl,
             lastPlayed = now,
             resumePosition = resumePosition.takeIf { it > 0L }
-                ?: existingSession?.resumePosition
+                ?: existingSession?.resumePosition?.takeIf { sameEpisode }
                 ?: 0L,
             duration = duration.takeIf { it > 0L }
-                ?: existingSession?.duration
+                ?: existingSession?.duration?.takeIf { sameEpisode }
                 ?: 0L,
             resumeStrategy = resumeStrategy,
             actionButtonTextPatterns = emptyList(),
-            syncedFromAccount = false
+            syncedFromAccount = false,
+            episodeAction = action,
+            episodeSeason = EpisodeResumePolicy.season(action),
+            episodeQuality = episodeQuality.take(40)
         )
         persistPlayback(
             (listOf(session) + _playbackSessions.value.filterNot { it.id == id })

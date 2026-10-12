@@ -35,6 +35,8 @@ data class SpotlightItem(
     val contentUrl: String,
     /** Portrait artwork, ~2:3 — see [CatalogItem.posterUrl] on why the two are not swappable. */
     val posterUrl: String = "",
+    /** Verified larger detail-page portrait; catalog thumbnails remain unchanged. */
+    val detailPosterUrl: String = "",
     /** The provider's own wide key art, ~16:9, when it publishes one. */
     val backdropUrl: String = "",
     val serviceId: String,
@@ -59,6 +61,9 @@ data class SpotlightItem(
     val duration: Long = 0L,
     val editionTimelineId: String = "",
     val autoResume: Boolean = false,
+    val episodeAction: String = "",
+    val episodeSeason: String = "",
+    val episodeQuality: String = "",
     val directPlay: Boolean = false,
     val resumeStrategy: ResumeStrategy? = null,
     val actionButtonTextPatterns: List<String> = emptyList(),
@@ -78,6 +83,8 @@ data class TitleMetadata(
     val contentUrl: String,
     /** Public/provider portrait and wide artwork used only when the catalog has a gap. */
     val posterUrl: String = "",
+    val detailPosterUrl: String = "",
+    val artworkLookupVersion: Int = 0,
     val backdropUrl: String = "",
     val summary: String = "",
     val year: String = "",
@@ -97,6 +104,8 @@ data class TitleMetadata(
     val externalLookupAt: Long = 0L,
     /** Bump when a new trusted metadata source is added so old negative cache can retry. */
     val externalLookupVersion: Int = 0,
+    /** One non-destructive retry of older credits lacking dedicated portrait fields. */
+    val peopleImageVersion: Int = 0,
     val fetchedAt: Long = System.currentTimeMillis()
 )
 
@@ -107,6 +116,8 @@ data class TitleMetadata(
 fun TitleMetadata.mergePrefer(newer: TitleMetadata): TitleMetadata = copy(
     contentUrl = newer.contentUrl.ifBlank { contentUrl },
     posterUrl = newer.posterUrl.ifBlank { posterUrl },
+    detailPosterUrl = newer.detailPosterUrl.ifBlank { detailPosterUrl },
+    artworkLookupVersion = maxOf(artworkLookupVersion, newer.artworkLookupVersion),
     backdropUrl = newer.backdropUrl.ifBlank { backdropUrl },
     summary = newer.summary.ifBlank { summary },
     year = newer.year.ifBlank { year },
@@ -117,14 +128,26 @@ fun TitleMetadata.mergePrefer(newer: TitleMetadata): TitleMetadata = copy(
     language = newer.language.ifBlank { language },
     hasPersianDub = hasPersianDub || newer.hasPersianDub,
     hasPersianSubtitle = hasPersianSubtitle || newer.hasPersianSubtitle,
-    directors = newer.directors.ifEmpty { directors },
-    cast = newer.cast.ifEmpty { cast },
+    directors = mergePeoplePrefer(directors, newer.directors),
+    cast = mergePeoplePrefer(cast, newer.cast),
     awards = newer.awards.ifEmpty { awards },
     imdbId = newer.imdbId.ifBlank { imdbId },
     externalLookupAt = maxOf(externalLookupAt, newer.externalLookupAt),
     externalLookupVersion = maxOf(externalLookupVersion, newer.externalLookupVersion),
+    peopleImageVersion = maxOf(peopleImageVersion, newer.peopleImageVersion),
     fetchedAt = maxOf(fetchedAt, newer.fetchedAt)
 )
+
+/** Metadata refresh must not erase a previously verified portrait with a name-only credit. */
+private fun mergePeoplePrefer(previous: List<PersonRef>, newer: List<PersonRef>): List<PersonRef> =
+    newer.ifEmpty { previous }.map { person ->
+        val old = previous.singleOrNull { it.name.trim().equals(person.name.trim(), true) }
+        if (old == null) person else person.copy(
+            providerId = person.providerId.ifBlank { old.providerId },
+            profileUrl = person.profileUrl.ifBlank { old.profileUrl },
+            imageUrl = person.imageUrl.ifBlank { old.imageUrl }
+        )
+    }
 
 /** The decision-making fields requested for a useful, spoiler-safe title page. */
 fun TitleMetadata.isDecisionComplete(): Boolean =
@@ -132,6 +155,7 @@ fun TitleMetadata.isDecisionComplete(): Boolean =
 
 fun SpotlightItem.withMetadata(metadata: TitleMetadata): SpotlightItem = copy(
     posterUrl = posterUrl.ifBlank { metadata.posterUrl },
+    detailPosterUrl = metadata.detailPosterUrl.ifBlank { detailPosterUrl },
     backdropUrl = backdropUrl.ifBlank { metadata.backdropUrl },
     summary = metadata.summary.ifBlank { summary },
     year = metadata.year.ifBlank { year },
@@ -170,6 +194,9 @@ fun SpotlightItem.withPlaybackSource(
         resumePosition = 0L,
         duration = 0L,
         editionTimelineId = "",
+        episodeAction = "",
+        episodeSeason = "",
+        episodeQuality = "",
         autoResume = false,
         directPlay = variant.kind == CatalogKind.MOVIE && providerSupportsDirectPlay,
         resumeStrategy = null,

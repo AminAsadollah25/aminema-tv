@@ -316,6 +316,7 @@ class CatalogRepository(private val context: Context) {
     private fun normalize(metadata: TitleMetadata): TitleMetadata =
         metadata.copy(
             contentUrl = ContentMetadataPolicy.canonicalContentUrl(metadata.contentUrl),
+            detailPosterUrl = PersonImagePolicy.safeUrl(metadata.detailPosterUrl),
             posterUrl = metadata.posterUrl.trim().take(2_000)
                 .takeIf { it.startsWith("https://", ignoreCase = true) }
                 .orEmpty(),
@@ -350,7 +351,8 @@ class CatalogRepository(private val context: Context) {
                 it.copy(
                     name = cleanText(it.name, 80),
                     providerId = it.providerId.take(80),
-                    profileUrl = it.profileUrl.take(2_000)
+                    profileUrl = it.profileUrl.take(2_000),
+                    imageUrl = PersonImagePolicy.safeUrl(it.imageUrl)
                 )
             }
             .filter { it.name.isNotBlank() }

@@ -61,6 +61,7 @@ import coil.compose.AsyncImage
 import com.amin.tvos.data.model.CatalogKind
 import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.LargeTitlePoster
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.components.rememberArtworkAccent
 import com.amin.tvos.ui.metadata.displayReleaseYear
@@ -149,12 +150,6 @@ private fun HeroSlideContent(
         widthPx = 1280,
         heightPx = 720
     )
-    val portraitModel = authenticatedPosterModel(
-        posterUrl = item.posterUrl,
-        pageUrl = item.contentUrl,
-        widthPx = 420,
-        heightPx = 630
-    )
     val accent = rememberArtworkAccent(
         posterUrl = heroArtUrl,
         pageUrl = item.contentUrl,
@@ -222,9 +217,13 @@ private fun HeroSlideContent(
         // portrait poster visible even when a banner exists. Requests are strictly sized
         // and only the active slide is composed, so the extra bitmap remains bounded.
         if (item.posterUrl.isNotBlank()) {
-            AsyncImage(
-                model = portraitModel,
-                contentDescription = item.title,
+            LargeTitlePoster(
+                thumbnailUrl = item.posterUrl,
+                detailUrl = item.detailPosterUrl,
+                pageUrl = item.contentUrl,
+                title = item.title,
+                widthPx = 420,
+                heightPx = 630,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .align(AbsoluteAlignment.CenterRight)
@@ -379,13 +378,13 @@ private fun HeroSlideContent(
                         .padding(start = 20.dp, bottom = 18.dp)
                 ) {
                     HeroCarouselArrow(
-                        pointsLeft = false,
+                        pointsLeft = true,
                         contentDescription = "اسلاید بعدی",
                         onClick = onNext,
                         onFocusChanged = { nextFocused = it }
                     )
                     HeroCarouselArrow(
-                        pointsLeft = true,
+                        pointsLeft = false,
                         contentDescription = "اسلاید قبلی",
                         onClick = onPrevious,
                         onFocusChanged = { previousFocused = it }

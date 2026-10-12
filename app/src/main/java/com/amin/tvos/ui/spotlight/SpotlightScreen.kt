@@ -83,6 +83,7 @@ import com.amin.tvos.data.model.SourceVariant
 import com.amin.tvos.data.model.SpotlightAction
 import com.amin.tvos.data.model.SpotlightItem
 import com.amin.tvos.ui.components.FocusableCard
+import com.amin.tvos.ui.components.LargeTitlePoster
 import com.amin.tvos.ui.components.authenticatedPosterModel
 import com.amin.tvos.ui.metadata.displayReleaseYear
 import com.amin.tvos.ui.metadata.isIranianTitle
@@ -112,7 +113,6 @@ fun SpotlightScreen(
     val primaryFocus = remember { FocusRequester() }
     var primaryActionReady by remember(item.contentUrl) { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl)
     val contentVisibleState = remember { androidx.compose.animation.core.MutableTransitionState(false) }
 
     val listState = rememberLazyListState()
@@ -218,9 +218,13 @@ fun SpotlightScreen(
                     // international service ships roughly 2:3. Forcing either into a fixed
                     // 2:3 frame with Crop cut the top and bottom off the taller ones — the
                     // artwork arrived intact and the frame is what damaged it.
-                    AsyncImage(
-                        model = posterModel,
-                        contentDescription = item.title,
+                    LargeTitlePoster(
+                        thumbnailUrl = item.posterUrl,
+                        detailUrl = item.detailPosterUrl,
+                        pageUrl = item.contentUrl,
+                        title = item.title,
+                        widthPx = 720,
+                        heightPx = 1080,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -595,6 +599,8 @@ private fun AwardCard(awardEvent: AwardEvent) {
 
 @Composable
 private fun PersonAvatar(person: PersonRef, role: String, contentUrl: String) {
+    val imageModel = if (person.imageUrl.isNotBlank())
+        authenticatedPosterModel(person.imageUrl, contentUrl, 192, 192) else null
     var isFocused by remember { mutableStateOf(false) }
     
     Column(
@@ -611,11 +617,16 @@ private fun PersonAvatar(person: PersonRef, role: String, contentUrl: String) {
                 .background(Color.White.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
-            if (person.profileUrl.isNotBlank()) {
-                AsyncImage(
-                    model = authenticatedPosterModel(person.profileUrl, contentUrl),
+            if (imageModel != null) {
+                coil.compose.SubcomposeAsyncImage(
+                    model = imageModel,
                     contentDescription = person.name,
                     contentScale = ContentScale.Crop,
+                    error = {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(person.name.trim().take(1), color = TextPrimary, fontSize = 40.sp)
+                        }
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
             } else {

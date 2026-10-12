@@ -295,6 +295,7 @@ fun HomeScreen(
             kind = representative.kind,
             contentUrl = selected.contentUrl,
             posterUrl = representative.posterUrl.ifBlank { meta?.posterUrl.orEmpty() },
+            detailPosterUrl = meta?.detailPosterUrl.orEmpty(),
             backdropUrl = representative.backdropUrl.ifBlank { meta?.backdropUrl.orEmpty() },
             serviceId = selected.serviceId,
             serviceName = selectedVariant?.providerName.orEmpty().ifBlank {
@@ -328,6 +329,7 @@ fun HomeScreen(
             title = item.title,
             kind = baseMeta.kind,
             contentUrl = item.url,
+            detailPosterUrl = fetchedMeta?.detailPosterUrl.orEmpty(),
             posterUrl = baseMeta.posterUrl.ifBlank {
                 fetchedMeta?.posterUrl.orEmpty().ifBlank { item.posterUrl }
             },
@@ -411,6 +413,7 @@ fun HomeScreen(
             kind = metadata?.kind ?: catalogKindFromUrl(session.contentUrl)
                 ?: CatalogKind.MOVIE,
             contentUrl = session.contentUrl,
+            detailPosterUrl = fetchedMetadata?.detailPosterUrl.orEmpty(),
             posterUrl = metadata?.posterUrl.orEmpty().ifBlank {
                 fetchedMetadata?.posterUrl.orEmpty().ifBlank { session.posterUrl }
             },
@@ -429,7 +432,9 @@ fun HomeScreen(
                 ?: metadata?.rating.orEmpty(),
             runtime = fetchedMetadata?.runtime?.takeIf { it.isNotBlank() }
                 ?: metadata?.runtime.orEmpty(),
-            episodeLabel = metadata?.episodeLabel.orEmpty(),
+            episodeLabel = com.amin.tvos.data.EpisodeResumePolicy.episode(session.episodeAction)
+                .takeIf { it.isNotBlank() }?.let { "ادامهٔ قسمت $it" }
+                ?: metadata?.episodeLabel.orEmpty(),
             country = fetchedMetadata?.country?.takeIf { it.isNotBlank() }
                 ?: metadata?.country.orEmpty(),
             language = fetchedMetadata?.language?.takeIf { it.isNotBlank() }
@@ -442,11 +447,17 @@ fun HomeScreen(
                 ?: metadata?.directors.orEmpty(),
             cast = fetchedMetadata?.cast?.takeIf { it.isNotEmpty() }
                 ?: metadata?.cast.orEmpty(),
-            primaryAction = SpotlightAction.CONTINUE,
+            primaryAction = if (session.serviceId == "parsiflix" &&
+                catalogKindFromUrl(session.contentUrl) == CatalogKind.SERIES &&
+                session.episodeAction.isBlank()) SpotlightAction.SELECT_EPISODE
+                else SpotlightAction.CONTINUE,
             browserStartUrl = startUrl,
             resumePosition = session.resumePosition,
             duration = session.duration,
             autoResume = true,
+            episodeAction = session.episodeAction,
+            episodeSeason = session.episodeSeason,
+            episodeQuality = session.episodeQuality,
             // Only account-synced movies with normal quality choices need the resolver.
             // ParsiFlix Continue remains the source of truth for episode/progress state.
             directPlay = useDirectResolver,

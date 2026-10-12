@@ -166,7 +166,10 @@ class SpotlightMetadataLoader(
                         PersonRef(
                             name = name,
                             providerId = value?.optString("providerId").orEmpty().take(80),
-                            profileUrl = safeProfile
+                            profileUrl = safeProfile,
+                            imageUrl = com.amin.tvos.data.PersonImagePolicy.safeUrl(
+                                value?.optString("imageUrl").orEmpty()
+                            )
                         )
                     )
                 }
@@ -175,6 +178,11 @@ class SpotlightMetadataLoader(
 
         val metadata = TitleMetadata(
             contentUrl = expectedUrl,
+            detailPosterUrl = com.amin.tvos.data.PosterArtworkPolicy.verifiedPortrait(
+                root.optString("detailPosterUrl"), root.optInt("posterWidth"),
+                root.optInt("posterHeight")
+            ),
+            artworkLookupVersion = 1,
             summary = root.optString("summary").clean(520),
             year = root.optString("year")
                 .replace(Regex("""[^0-9۰-۹]"""), "")
@@ -199,6 +207,7 @@ class SpotlightMetadataLoader(
             hasPersianSubtitle = root.optBoolean("hasPersianSubtitle"),
             directors = people("directors"),
             cast = people("cast"),
+            peopleImageVersion = 1,
             imdbId = root.optString("imdbId")
                 .let { Regex("""tt\d{5,12}""").find(it)?.value.orEmpty() }
         )
@@ -262,6 +271,16 @@ class SpotlightMetadataLoader(
                 if (!value) return [];
                 return Array.isArray(value) ? value : [value];
               }
+              function personImage(value) {
+                if (Array.isArray(value)) value = value[0];
+                if (value && typeof value === 'object') value = value.contentUrl || value.url;
+                if (typeof value !== 'string' || !value) return '';
+                try {
+                  var image = new URL(value, location.href);
+                  return /^https?:$/.test(image.protocol) && !image.username && !image.password
+                    ? image.href : '';
+                } catch (_) { return ''; }
+              }
               function person(value) {
                 return array(value).map(function(entry) {
                   if (!entry) return null;
@@ -276,7 +295,8 @@ class SpotlightMetadataLoader(
                   return {
                     name: name.slice(0, 80),
                     providerId: String(entry['@id'] || entry.id || '').slice(0, 80),
-                    profileUrl: rawUrl
+                    profileUrl: rawUrl,
+                    imageUrl: personImage(entry.image)
                   };
                 }).filter(Boolean);
               }
@@ -377,7 +397,8 @@ class SpotlightMetadataLoader(
                   catch (_) { return null; }
                   return {
                     name: name.slice(0, 80),
-                    profileUrl: url.origin === location.origin ? url.href : ''
+                    profileUrl: url.origin === location.origin ? url.href : '',
+                    imageUrl: personImage((link.querySelector('img') || {}).src)
                   };
                 }).filter(Boolean);
                 if (linked.length) return linked.slice(0, 8);
@@ -466,6 +487,10 @@ class SpotlightMetadataLoader(
               // Give client-rendered title pages one final short hydration window.
               await new Promise(function(resolve) { setTimeout(resolve, 650); });
               var schema = schemaObjects()[0] || {};
+              // Verified MyMoviz detail container, not cards, cast photos or OG logos.
+              // currentSrc honours the site's own srcset; natural dimensions reject failures.
+              var titlePoster = /^(?:www\.)?mymoviz\.co$/i.test(location.hostname)
+                ? document.querySelector('.mv-detail__posterbtn img') : null;
               var provider = await parsiflixDetails();
               var titleText = clean(
                 (document.querySelector('main h1,main h2,.postMeta h1,.postMeta h2') || {}).textContent
@@ -580,6 +605,9 @@ class SpotlightMetadataLoader(
               ));
               AminSpotlight.result(JSON.stringify({
                 summary: (providerSummary || summary(schema)).slice(0, 520),
+                detailPosterUrl: titlePoster ? personImage(titlePoster.currentSrc || titlePoster.src) : '',
+                posterWidth: titlePoster ? titlePoster.naturalWidth : 0,
+                posterHeight: titlePoster ? titlePoster.naturalHeight : 0,
                 year: yearMatch ? yearMatch[0] : '',
                 genres: genres.slice(0, 4),
                 rating: rating.replace(/[^0-9۰-۹.٫]/g, '').slice(0, 5),

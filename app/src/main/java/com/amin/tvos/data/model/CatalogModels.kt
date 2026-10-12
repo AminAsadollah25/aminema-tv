@@ -16,7 +16,9 @@ enum class CatalogKind { MOVIE, SERIES }
 data class PersonRef(
     val name: String,
     val providerId: String = "",
-    val profileUrl: String = ""
+    val profileUrl: String = "",
+    /** Image asset, not the person's HTML profile page. */
+    val imageUrl: String = ""
 )
 
 /**

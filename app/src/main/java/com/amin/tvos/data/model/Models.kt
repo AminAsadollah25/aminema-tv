@@ -186,7 +186,10 @@ data class PlaybackSession(
     /** Optional per-item normal website action, e.g. FilmRooz "پخش آنلاین". */
     val actionButtonTextPatterns: List<String> = emptyList(),
     /** True when imported from the signed-in account rather than local playback. */
-    val syncedFromAccount: Boolean = false
+    val syncedFromAccount: Boolean = false,
+    val episodeAction: String = "",
+    val episodeSeason: String = "",
+    val episodeQuality: String = ""
 )
 
 /** User-agent modes for the embedded browser. */

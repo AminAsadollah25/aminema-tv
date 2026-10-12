@@ -187,6 +187,7 @@ class BrowserActivity : ComponentActivity() {
     private var smQuality: String? = null
     private var smEpisode: String? = null
     private var episodeSelectionDispatched = false
+    private var pendingEpisodeAction = ""
 
     private var keyboardOpenSuppressedUntil = 0L
     private var keyboardSessionSequence = 0L
@@ -929,8 +930,33 @@ class BrowserActivity : ComponentActivity() {
               window.__aminPlaybackInstalled = true;
               window.__aminLastPlaybackReport = 0;
 
+              // The already-verified ParsiFlix episode rows supply semantic numbers.
+              // Observe ordinary user clicks; never read their playback href/src.
+              document.addEventListener('click', function(event) {
+                var target = event.target;
+                var row = target && target.closest && target.closest('[class*="_episodeItem_"]');
+                if (!row || !target.closest('button,a,[role="button"]')) return;
+                var season = row.closest('[class*="_seasonItem_"]');
+                var seasons = Array.from(document.querySelectorAll('[class*="_seasonItem_"]'));
+                var seasonIndex = seasons.indexOf(season);
+                var numberNode = row.querySelector('[class*="_episodeNumber_"]');
+                var text = (numberNode ? numberNode.textContent : row.textContent) || '';
+                text = text.replace(/[۰-۹]/g, function(c) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(c); })
+                  .replace(/[٠-٩]/g, function(c) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(c); });
+                var number = text.trim().match(/^([0-9]+)$/) || text.match(/قسمت\s*([0-9]+)/);
+                if (seasonIndex >= 0 && number && window.AminPlayback) {
+                  window.AminPlayback.selectEpisode('#parsiflix-s' + seasonIndex + '-epnum-' + number[1]);
+                }
+              }, true);
+
               function report(video, reason) {
                 if (!video || !window.AminPlayback) return;
+                // A loaded poster/video is not evidence of playback. Checkpoints
+                // must not create a Continue record for an unplayed episode.
+                if (reason === 'play' || (video.played && video.played.length > 0)) {
+                  video.__aminPlaybackStarted = true;
+                }
+                if (!video.__aminPlaybackStarted) return;
                 var now = Date.now();
                 if (reason === 'timeupdate' &&
                     now - window.__aminLastPlaybackReport < 10000) return;
@@ -1030,6 +1056,14 @@ class BrowserActivity : ComponentActivity() {
 
     private inner class PlaybackBridge {
         @JavascriptInterface
+        fun selectEpisode(action: String?) {
+            if (serviceId != "parsiflix") return
+            val safe = com.amin.tvos.data.EpisodeResumePolicy.safeAction(action.orEmpty())
+            if (!safe.startsWith("#parsiflix-")) return
+            runOnUiThread { pendingEpisodeAction = safe }
+        }
+
+        @JavascriptInterface
         fun update(payload: String?) {
             val data = runCatching { JSONObject(payload.orEmpty()) }.getOrNull()
                 ?: return
@@ -1037,6 +1071,14 @@ class BrowserActivity : ComponentActivity() {
                 val playbackUrl = data.optString("pageUrl").take(2_000)
                 val referrer = data.optString("referrer").take(2_000)
                 val adapter = serviceAdapter ?: return@runOnUiThread
+                if (pendingEpisodeAction.isNotBlank()) {
+                    // A click is not playback. Ignore the old video's pause/checkpoint
+                    // until the newly selected episode actually emits play.
+                    if (data.optString("reason") != "play") return@runOnUiThread
+                    smEpisode = pendingEpisodeAction
+                    smSeason = com.amin.tvos.data.EpisodeResumePolicy.season(smEpisode.orEmpty())
+                    pendingEpisodeAction = ""
+                }
                 confirmPlaybackReady()
                 val contentUrl = lastContentUrl.ifBlank {
                     referrer.takeIf { adapter.isContentUrl(it) }.orEmpty()
@@ -1067,7 +1109,9 @@ class BrowserActivity : ComponentActivity() {
                         posterUrl = poster,
                         resumePosition = position,
                         duration = duration,
-                        resumeStrategy = adapter.resumeStrategy
+                        resumeStrategy = adapter.resumeStrategy,
+                        episodeAction = smEpisode.orEmpty(),
+                        episodeQuality = smQuality.orEmpty()
                     )
                 }
             }

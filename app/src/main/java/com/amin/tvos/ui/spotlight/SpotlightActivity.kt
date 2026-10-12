@@ -139,6 +139,8 @@ class SpotlightActivity : ComponentActivity() {
             // A fresh synopsis-only record is not complete. Retry the provider's ordinary
             // title metadata so newly supported credits can appear without clearing app data.
             val cacheIsFresh = cached?.isDecisionComplete() == true &&
+                (initial.serviceId != "mymoviz" || cached.artworkLookupVersion >= 1) &&
+                cached.peopleImageVersion >= 1 &&
                 !cached.backdropUrl.isNullOrBlank() &&
                 System.currentTimeMillis() - cached.fetchedAt < METADATA_MAX_AGE_MS
             if (isFinishing || isDestroyed) return@launch
@@ -223,6 +225,19 @@ class SpotlightActivity : ComponentActivity() {
                     if (!isCurrentSource(initial)) return@launch
                     app.catalogRepository.metadataFor(initial.contentUrl)?.let { merged ->
                         spotlightItem = (spotlightItem ?: initial).withMetadata(merged)
+                        // Credits may only become available after Sheyda's fallback.
+                        // Give these newly identified people one bounded portrait lookup;
+                        // do not recurse into the metadata fallback chain.
+                        if ((merged.cast + merged.directors).any { it.imageUrl.isBlank() }) {
+                            val portraits = publicMetadataEnricher.lookup(initial, merged)
+                            if (!isCurrentSource(initial)) return@launch
+                            if (portraits != null) {
+                                app.catalogRepository.saveTitleMetadata(portraits)
+                                app.catalogRepository.metadataFor(initial.contentUrl)?.let { complete ->
+                                    spotlightItem = (spotlightItem ?: initial).withMetadata(complete)
+                                }
+                            }
+                        }
                     }
                     metadataLoading = false
                 }
@@ -337,7 +352,8 @@ class SpotlightActivity : ComponentActivity() {
             BrowserActivity.intent(
                 context = this,
                 serviceId = item.serviceId,
-                url = item.browserStartUrl.ifBlank { item.contentUrl },
+                url = if (item.episodeAction.isNotBlank()) item.contentUrl
+                    else item.browserStartUrl.ifBlank { item.contentUrl },
                 resumePosition = item.resumePosition,
                 contentUrl = item.contentUrl,
                 contentTitle = item.title,
@@ -346,7 +362,10 @@ class SpotlightActivity : ComponentActivity() {
                 autoResume = item.autoResume,
                 directPlay = item.directPlay,
                 resumeStrategyOverride = item.resumeStrategy,
-                actionButtonTextPatterns = item.actionButtonTextPatterns
+                actionButtonTextPatterns = item.actionButtonTextPatterns,
+                smEpisode = item.episodeAction.takeIf { it.isNotBlank() },
+                smSeason = item.episodeSeason.takeIf { it.isNotBlank() },
+                smQuality = item.episodeQuality.takeIf { it.isNotBlank() }
             )
         )
     }

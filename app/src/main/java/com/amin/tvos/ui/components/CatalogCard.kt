@@ -21,6 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -104,6 +106,11 @@ private fun posterRequest(
     .apply {
         val posterHost = runCatching { Uri.parse(posterUrl).host }.getOrNull()
         val pageHost = runCatching { Uri.parse(pageUrl).host }.getOrNull()
+        // Wikimedia asks automated clients to identify themselves. OkHttp's generic
+        // default receives HTTP 403 for these public portraits on the TV WebView device.
+        if (posterHost == "commons.wikimedia.org" || posterHost == "upload.wikimedia.org") {
+            addHeader("User-Agent", "Aminema/0.18.9 (personal Android TV metadata; https://github.com/AminAsadollah25/aminema-tv)")
+        }
         if (!posterHost.isNullOrBlank() && posterHost.equals(pageHost, true)) {
             CookieManager.getInstance().getCookie(posterUrl)
                 ?.takeIf { it.isNotBlank() }
@@ -113,6 +120,35 @@ private fun posterRequest(
     }
 
 /** Poster card for a "latest" catalog row. Opens the service's normal detail page. */
+@Composable
+fun LargeTitlePoster(
+    thumbnailUrl: String,
+    detailUrl: String,
+    pageUrl: String,
+    title: String,
+    widthPx: Int,
+    heightPx: Int,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit
+) {
+    var detailLoaded by remember(detailUrl, pageUrl) { mutableStateOf(false) }
+    val fallback = authenticatedPosterModel(thumbnailUrl, pageUrl, widthPx, heightPx)
+    val detail = authenticatedPosterModel(detailUrl, pageUrl, widthPx, heightPx)
+    Box(modifier) {
+        if (!detailLoaded) AsyncImage(
+            model = fallback, contentDescription = title, contentScale = contentScale,
+            modifier = Modifier.fillMaxSize()
+        )
+        if (detailUrl.isNotBlank() && detailUrl != thumbnailUrl && detail != null) AsyncImage(
+            model = detail, contentDescription = title, contentScale = contentScale,
+            onSuccess = { detailLoaded = true },
+            onError = { detailLoaded = false },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+/** Lightweight rail thumbnails deliberately do not request detail-page artwork. */
 @Composable
 fun CatalogCard(
     item: CatalogItem,

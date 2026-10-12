@@ -33,7 +33,7 @@ class PublicTitleMetadataEnricher {
     ): TitleMetadata? = withContext(Dispatchers.IO) {
         val needsIranianSolarYear = item.serviceId.equals("parsiflix", true) &&
             known?.year?.filter(Char::isDigit)?.take(4)?.toIntOrNull() !in 1300..1499
-        if (known?.isDecisionComplete() == true && !needsIranianSolarYear) {
+        if (known?.isDecisionComplete() == true && !needsIranianSolarYear && !needsPortraits(known)) {
             return@withContext null
         }
 
@@ -60,7 +60,7 @@ class PublicTitleMetadataEnricher {
             iranianMetadata != null -> iranianMetadata
             else -> known
         }
-        if (effectiveKnown?.isDecisionComplete() == true) {
+        if (effectiveKnown?.isDecisionComplete() == true && !needsPortraits(effectiveKnown)) {
             return@withContext iranianMetadata
         }
 
@@ -80,6 +80,7 @@ class PublicTitleMetadataEnricher {
         val genreIds = entityIds(claims, "P136").take(4)
         val countryIds = entityIds(claims, "P495").take(3)
         val languageIds = entityIds(claims, "P364").take(3)
+        val portraits = portraitsFor((directorIds + castIds).distinct())
         val labels = labelsFor(
             (directorIds + castIds + genreIds + countryIds + languageIds).distinct()
         )
@@ -109,12 +110,16 @@ class PublicTitleMetadataEnricher {
             language = if (effectiveKnown?.language.isNullOrBlank()) {
                 languageIds.mapNotNull(labels::get).joinToString("، ")
             } else "",
-            directors = if (effectiveKnown?.directors.isNullOrEmpty()) {
-                directorIds.mapNotNull { id -> labels[id]?.let { PersonRef(it, id) } }
-            } else emptyList(),
-            cast = if (effectiveKnown?.cast.isNullOrEmpty()) {
-                castIds.mapNotNull { id -> labels[id]?.let { PersonRef(it, id) } }
-            } else emptyList(),
+            directors = PersonPortraitPolicy.fill(
+                effectiveKnown?.directors?.takeIf { it.isNotEmpty() }
+                    ?: directorIds.mapNotNull { id -> labels[id]?.let { PersonRef(it, id) } },
+                portraits.filter { it.qid in directorIds }
+            ),
+            cast = PersonPortraitPolicy.fill(
+                effectiveKnown?.cast?.takeIf { it.isNotEmpty() }
+                    ?: castIds.mapNotNull { id -> labels[id]?.let { PersonRef(it, id) } },
+                portraits.filter { it.qid in castIds }
+            ),
             imdbId = expectedImdb.ifBlank { imdbId },
             externalLookupAt = now,
             externalLookupVersion = LOOKUP_VERSION,
@@ -211,6 +216,29 @@ class PublicTitleMetadataEnricher {
             "format" to "json"
         )
     )?.optJSONObject("entities")?.optJSONObject(qid)
+
+    private fun portraitsFor(ids: List<String>): List<TrustedPortrait> {
+        if (ids.isEmpty()) return emptyList()
+        val entities = getJson(WIKIDATA_API, mapOf(
+            "action" to "wbgetentities", "ids" to ids.take(11).joinToString("|"),
+            "props" to "claims|labels|aliases", "languages" to "fa|en", "format" to "json"
+        ))?.optJSONObject("entities") ?: return emptyList()
+        return ids.mapNotNull { id ->
+            val entity = entities.optJSONObject(id) ?: return@mapNotNull null
+            val file = claimStrings(entity.optJSONObject("claims") ?: JSONObject(), "P18")
+                .firstOrNull()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            val names = buildSet {
+                for (language in listOf("fa", "en")) {
+                    entity.optJSONObject("labels")?.optJSONObject(language)?.optString("value")
+                        ?.takeIf { it.isNotBlank() }?.let(::add)
+                    val aliases = entity.optJSONObject("aliases")?.optJSONArray(language) ?: JSONArray()
+                    for (i in 0 until aliases.length()) aliases.optJSONObject(i)?.optString("value")
+                        ?.takeIf { it.isNotBlank() }?.let(::add)
+                }
+            }
+            TrustedPortrait(id, names, "https://commons.wikimedia.org/wiki/Special:FilePath/${encode(file)}?width=192")
+        }
+    }
 
     private fun labelsFor(ids: List<String>): Map<String, String> {
         if (ids.isEmpty()) return emptyMap()
@@ -378,12 +406,15 @@ class PublicTitleMetadataEnricher {
         )
         const val EXTERNAL_RETRY_MS = 30L * 24L * 60L * 60L * 1_000L
         // v5 adds the official public Sheyda title UI as an Iranian credits fallback.
-        const val LOOKUP_VERSION = 5
+        const val LOOKUP_VERSION = 6
+
+        private fun needsPortraits(metadata: TitleMetadata?): Boolean =
+            (metadata?.cast.orEmpty() + metadata?.directors.orEmpty()).any { it.imageUrl.isBlank() }
 
         fun shouldLookup(metadata: TitleMetadata?, item: SpotlightItem? = null): Boolean {
             val needsIranianSolarYear = item?.serviceId?.equals("parsiflix", true) == true &&
                 metadata?.year?.filter(Char::isDigit)?.take(4)?.toIntOrNull() !in 1300..1499
-            return (metadata?.isDecisionComplete() != true || needsIranianSolarYear) &&
+            return (metadata?.isDecisionComplete() != true || needsIranianSolarYear || needsPortraits(metadata)) &&
                 ((metadata?.externalLookupVersion ?: 0) < LOOKUP_VERSION ||
                     System.currentTimeMillis() - (metadata?.externalLookupAt ?: 0L) >
                     EXTERNAL_RETRY_MS)
