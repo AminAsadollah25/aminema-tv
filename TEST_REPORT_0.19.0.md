@@ -45,3 +45,9 @@ APK نهایی پس از crop۷۸٪ با install-r نصب شد؛ code54/name0.19
 DPAD از Continue به دسته خانوادگی رفت؛ ردیف نهایی بدون نوشتهٔ دوباره و با
 فوکوس واضح دیده شد: /private/tmp/aminema-0190-preview-final.png.
 این تصویر نسخه تحویل است؛ screenshots قبلی مراحل QA پیش از crop آخرند.
+
+## انتشار بعد از QA
+
+با مجوز مالک Commitd2afc27/Tagv0.19.0 منتشر شدند. Build دوباره موفق و SHA
+مطابق همین APK؛ GitHub Latest API/code54 و دارایی‌های دانلودشده/امضا تأیید شدند.
+RELEASE_REPORT_0.19.0.md مرجع وضعیت جاری است؛ عبارت‌های Candidate بالا تاریخی‌اند.

@@ -1,13 +1,15 @@
 # سند فنی مداوم Aminema
 
-## Candidate0.19.0 — ردیف ژانر با مسکات
+## منتشرشده0.19.0 — ردیف ژانر با مسکات
 
 GenreDiscovery.kt: alias دقیق ژانر از cache، سال معتبر<=2000 برای کلاسیک،
 SERIES برای ماراتون، canonical dedupe محافظه‌کارانه فقط هنگام انتخاب روی Default.
 GenreDiscoveryRow.kt: atlas مشترک محلی روی IO، Canvas srcRect و labels native؛
 زیر Hero در LazyColumn. Library با providerIds خالی هیچ pagination شبکه‌ای ندارد.
-هیچ metadata/playback/provider/session migration انجام نشده. هنوز منتشر نشده؛
-جزئیات، Asset provenance و محدودیت‌ها در DEVELOPMENT_LOG_0.19.0.md.
+هیچ metadata/playback/provider/session migration انجام نشده. Commitd2afc27 و
+Tagv0.19.0 با مجوز مالک منتشر و APK/SHA دانلودشده تأیید شدند.
+جزئیات، Asset provenance و محدودیت‌ها در DEVELOPMENT_LOG_0.19.0.md؛
+شواهد انتشار در RELEASE_REPORT_0.19.0.md.
 
 ## منتشرشده0.18.10/code53 — 2026-10-12
 

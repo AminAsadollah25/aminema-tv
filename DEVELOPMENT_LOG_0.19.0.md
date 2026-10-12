@@ -54,3 +54,6 @@ Commit/Push/Tag/Release نیازمند تأیید جداست. Coverage فقط ca
 Gate نهایی۹۳تست، صفر خطا؛ lint صفر خطا/۱۳۱هشدار؛ assemble موفق. موس ترسناک۱۲۴
 و DPAD خانوادگی۷۳عنوان را نشان دادند؛ Back به Home موفق، restore دقیق کارت
 هنوز تضمین نیست. SoftReference/crop نهایی در بیلد تحویل هستند؛ Release انجام نشده.
+
+انتشار بعدی با مجوز مالک تأیید شد: Commitd2afc27، Tagv0.19.0، دانلود واقعی
+APK/SHA و Latest API/code54 مطابق‌اند؛ RELEASE_REPORT_0.19.0.md مرجع جاری است.
