@@ -62,4 +62,3 @@ QA چیدمان آخر با APK تحویل: کارت واقعی Ted Lasso از H
 امضای SHA256 همان ba6ac8c4c2e1828462e7a6b122ad60856a054a18389af36bc001a1ee38ba13d3.
 SHA256 نهایی (جایگزین تمام checksumهای Candidate پایین):
 50d9653049b3f6ca7040c9028ab3a04a04371ad33f71506fab8049c616459008
-

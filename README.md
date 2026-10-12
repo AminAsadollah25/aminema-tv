@@ -4,12 +4,12 @@ A premium personal Android TV streaming hub — a Netflix-style dashboard that o
 
 ## Current release
 
-**Published:** [Aminema 0.18.9 — Episode Resume & Title Artwork](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.9) (`versionCode 52`)
+**Published:** [Aminema 0.18.10 — Artwork & Presentation Polish](https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.18.10) (`versionCode 53`)
 
-Release notes: [0.18.9](RELEASE_NOTES_0.18.9.md). Verified assets and SHA:
-[release report](RELEASE_REPORT_0.18.9.md).
+Release notes: [0.18.10](RELEASE_NOTES_0.18.10.md). Verified assets and SHA:
+[release report](RELEASE_REPORT_0.18.10.md).
 
-**Local candidate, not published:** 0.18.10 (`versionCode 53`). Larger verified
+**Included in 0.18.10:** Larger verified
 FilmRooz detail portraits, Iranian cast photos from exact-title public metadata,
 consistent labels and source choices, adaptive Hero contrast, cached-thumbnail
 continuity and bounded image memory/decode/network work. See

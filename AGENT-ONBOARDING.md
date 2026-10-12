@@ -2,8 +2,8 @@
 
 این سند برای ابزاری است که **به فایل‌سیستم و ترمینال این مک دسترسی دارد**.
 
-وضعیت تازه2026-10-12: Release0.18.9/code52 منتشر شده؛ Candidate0.18.10/code53
-محلی است. اول DEVELOPMENT_LOG_0.18.10.md و TEST_REPORT_0.18.10.md را بخوان.
+وضعیت تازه2026-10-12: Release0.18.10/code53 منتشر شده؛ Commit68627fb.
+اول RELEASE_REPORT_0.18.10.md، DEVELOPMENT_LOG_0.18.10.md و TEST_REPORT_0.18.10.md را بخوان.
 به علت EOF کش داخل iCloud، فرمان Gradle با
 `--project-cache-dir /Users/aminasadollah/Library/Caches/AminemaBuild/project-cache`
 اجرا شود؛ کش قبلی یا داده‌های برنامه حذف نشوند. تاریخچهٔ نسخه‌های پایین قدیمی است.

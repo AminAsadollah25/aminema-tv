@@ -1,15 +1,16 @@
 # سند فنی مداوم Aminema
 
-## Candidate0.18.10/code53 — 2026-10-12
+## منتشرشده0.18.10/code53 — 2026-10-12
 
 DOM عنوان FilmRooz در viewport مخفی SVGplaceholder با ابعاد معتبرنما داشت؛
 data-src واقعی همان image اندازه‌گیری شد، بدون href پخش. artworkLookupVersion4
-و cache freshness بدون الزام banner؛ lookup عمومی7 با Filmnet avatar_image.path
+و cache freshness بدون الزام banner؛ lookup عمومی8 با Filmnet avatar_image.path
 فقط عنوان/شخص تطبیق‌دقیق؛ نمای نمایش منابع dedupe است، routes حفظ‌اند.
 copy هیرو از luminance سطح خود و رنگ غالب portrait خوانا می‌شود. Coil lazy
 factory محدودیت cache/decode/network دارد؛ disk/session/data حفظ‌اند.
 مرجع فنی/QA: DEVELOPMENT_LOG_0.18.10.md و TEST_REPORT_0.18.10.md.
-این Candidate منتشر نشده؛ تاریخچهٔ Releaseهای پایین وضعیت آن را تغییر نمی‌دهد.
+انتشار با Commit68627fb/Tag v0.18.10؛ ۸۸ تست موفق. تطبیق سال شمسی به میلادی
+با +621 و تلورانس±1 اصلاح شد. شواهد در RELEASE_REPORT_0.18.10.md؛ بخش‌های پایین تاریخی‌اند.
 
 انتشار 2026-10-12: 0.18.9/code52، Commit81e7669 و Tag v0.18.9.
 GitHub Latest/Assets و checksum دانلود تازه تأیید شدند؛ جزئیات در
