@@ -1,5 +1,9 @@
 # سند فنی مداوم Aminema
 
+انتشار 2026-10-12: 0.18.9/code52، Commit81e7669 و Tag v0.18.9.
+GitHub Latest/Assets و checksum دانلود تازه تأیید شدند؛ جزئیات در
+RELEASE_REPORT_0.18.9.md. بخش‌های Candidate زیر تاریخی‌اند.
+
 ## تغییر محلی — 2026-10-12، 0.18.9/code52
 
 detailPosterUrl/ artworkLookupVersion1 متادیتای MyMoviz را از thumbnail جدا
