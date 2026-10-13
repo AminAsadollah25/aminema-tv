@@ -1,5 +1,15 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## وضعیت معتبر جاری — انتشار0.20.0/code55، 2026-10-13
+
+Commit97699e0، Tagv0.20.0؛ Release و دانلود/Checksum/امضا تأیید شدند:
+https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.20.0
+RELEASE_REPORT_0.20.0.md مرجع؛115تست بدونfailure؛211رکورد مرجع فعلی match.
+کش lookup روی دستگاه است و داخل APK نیست؛ TV یک بار تطبیق صریح لازم دارد.
+اسناد اطلس و CINEMA-DISCOVERY-RESEARCH-FA.md در مخزن‌اند؛ جوایز/موضوع/اقتباس
+هنوز اجرا نشده‌اند. پیشنهاد بعدی نمونهٔ اسکار است، نه مجوز شروع implementation.
+بخش‌های Candidate پایین تاریخی‌اند. اسکریپت‌های نامرتبط و نشست‌ها حفظ شدند.
+
 ## تحقیق ماراتون — 2026-10-12، بدون اجرای اپ
 
 مالک خواست ابتدا لیست استخراج شود. MARATHON-UNIVERSES-RESEARCH-FA.md مرجع

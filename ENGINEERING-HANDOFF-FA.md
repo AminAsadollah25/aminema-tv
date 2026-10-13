@@ -1,5 +1,13 @@
 # سند فنی مداوم Aminema
 
+## آخرین انتشار تأییدشده — 0.20.0/code55، 2026-10-13
+
+Commit97699e0 و Tagv0.20.0 منتشر شدند؛ APK/SHA دانلودشده، امضای قبلی و
+Latest API تأیید شدند. مرجع RELEASE_REPORT_0.20.0.md؛115تست موفق.
+lookup device-local؛211match مرجع فعلی، نه تضمین تمام فصل‌ها/تاریخ کامل.
+پژوهش جوایز، موضوع و اقتباس در CINEMA-DISCOVERY-RESEARCH-FA.md ثبت است؛
+هیچ فیچر جدید مربوط به آن‌ها اجرا نشده. وضعیت‌های Candidate پایین تاریخی‌اند.
+
 ## تحقیق مرجع ماراتون‌ها — 2026-10-12
 
 MARATHON-UNIVERSES-RESEARCH-FA.md دادهٔ تحقیق است، نه asset runtime. مدل آینده
