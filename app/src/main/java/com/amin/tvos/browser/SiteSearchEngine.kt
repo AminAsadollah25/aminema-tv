@@ -29,7 +29,9 @@ import org.json.JSONObject
 class SiteSearchEngine(
     context: Context,
     private val onResults: (serviceId: String, results: List<SearchResult>) -> Unit,
-    private val onFailure: (serviceId: String, reason: String) -> Unit
+    private val onFailure: (serviceId: String, reason: String) -> Unit,
+    private val metadataOnly: Boolean = false,
+    private val onStage: (String) -> Unit = {}
 ) {
 
     private var pendingService: StreamingService? = null
@@ -49,6 +51,8 @@ class SiteSearchEngine(
             allowFileAccess = false
             allowContentAccess = false
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            // Explicit reference lookup needs the origin, not all homepage artwork.
+            blockNetworkImage = metadataOnly
         }
     }
 
@@ -61,16 +65,25 @@ class SiteSearchEngine(
         }
         webView.addJavascriptInterface(Bridge(), "AminSearch")
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                onStage("navigation")
+            }
+            override fun onPageCommitVisible(view: WebView, url: String) {
+                onStage("committed")
+                if (metadataOnly) startScript(view, url, 100L)
+            }
             override fun onPageFinished(view: WebView, url: String) {
-                val service = pendingService ?: return
-                if (scriptStarted) return
-                if (!Uri.parse(url).host.orEmpty()
-                        .equals(Uri.parse(service.url).host.orEmpty(), true)
-                ) return
-                scriptStarted = true
-                view.postDelayed({ view.evaluateJavascript(script(service, pendingQuery), null) }, 900L)
+                onStage("finished")
+                startScript(view, url, 900L)
             }
         }
+    }
+
+    private fun startScript(view: WebView, url: String, delay: Long) {
+        val service = pendingService ?: return
+        if (scriptStarted || !Uri.parse(url).host.orEmpty().equals(Uri.parse(service.url).host.orEmpty(), true)) return
+        scriptStarted = true
+        view.postDelayed({ onStage("searching"); view.evaluateJavascript(script(service, pendingQuery), null) }, delay)
     }
 
     /** Loads the service origin once, then queries it from inside that origin. */

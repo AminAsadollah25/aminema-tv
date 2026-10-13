@@ -1,5 +1,14 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## تحقیق ماراتون — 2026-10-12، بدون اجرای اپ
+
+مالک خواست ابتدا لیست استخراج شود. MARATHON-UNIVERSES-RESEARCH-FA.md مرجع
+تحقیق0.1 مارول/DC/Star Wars با منبع‌ها، فیلم‌ها، فصل‌ها و صف ممیزی است.
+مارول۴کارت، عضویت چندلیستی و فصل مستقل/ترتیب انتشار؛ DC جهان‌های مستقل دارد.
+۳۸فیلم MCU با تاریخ اکران ثبت؛ Legacy/انیمیشن/کوتاه و بعضی تاریخ فصل‌ها هنوز
+ممیزی کامل می‌خواهند. موجودی Provider و routing بررسی نشده؛ availabilityunknown.
+هیچ code/version/build/release تغییر نکرده؛ Release همچنان0.19.0/code54 است.
+
 ## منتشرشده0.19.0/code54 — 2026-10-12
 
 ردیف مسکات۱۲دسته زیر Hero؛ GenreDiscovery از cache فقط هنگام کلیک انتخاب
@@ -813,3 +822,20 @@ CatalogIndex خارج Main ساخته می‌شود؛ Library قبل از آما
 بهبود عددی زمان شروع اثبات نشده؛ تست Box واقعی/Playback/Continue باقی است.
 APK جدید و SHA در TEST_REPORT_STARTUP_CATALOG_2026-10-09.md آمده‌اند.
 لاگین/داده‌ها پاک نشدند. تغییرات قبلی عامل دیگر حفظ شده‌اند؛ بدون تأیید انتشار نکنید.
+
+# Candidate0.20.0/code55 — 2026-10-13، منتشر نشده
+
+دو hub مستقل Marvel/Marathon در MainActivity و دو ورودی زیر ژانرها ساخته شدند.
+JourneyCatalog.kt مرجع lazy و match دقیق عنوان/سال/نوع است؛ JourneyScreen.kt
+فیلتر قالب/فقط‌تطبیق‌ها، Lazy timeline و مسکات ثور دارد. عنوان بی‌تطبیق URL
+حدسی ندارد. چهار مجموعه مارول +vast/doomsday؛ ماراتون چهار خانواده اولیه.
+فهرست تاریخی هنوز جامع نیست؛ فصل‌ها SELECT_EPISODE، نه انتخاب خودکار فصل.
+DEVELOPMENT_LOG_0.20.0.md و TEST_REPORT_0.20.0.md را بخوان؛ بدون تأیید منتشر نکن.
+Release عمومی همچنان0.19.0 است؛ لاگین‌ها و فایل‌های dirty قبلی حفظ شدند.
+
+تکمیل0.20.0: بنرها زیر هر دو featured rail هستند.356query واقعی/صفرfailure،
+211/211رکورد فعلی match؛115تست و Gate پاس. JourneyLookupRepository/Planner و
+JourneySyncActivity جدیدند؛ data در files/journey_lookup*.jsonِ امولاتور است،
+نه Source/APK. TV تازه یک بار دکمهٔ تطبیق لازم دارد. DNS امولاتور با restart
+همانAVD و -dns-server1.1.1.1,8.8.8.8 درست شد، بدون wipe. APK نهایی و SHA در
+TEST_REPORT_0.20.0.md؛ هنوز Commit/Push/Tag/Release نکن بدون تایید مالک.

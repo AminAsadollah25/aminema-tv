@@ -1,5 +1,15 @@
 # سند فنی مداوم Aminema
 
+## تحقیق مرجع ماراتون‌ها — 2026-10-12
+
+MARATHON-UNIVERSES-RESEARCH-FA.md دادهٔ تحقیق است، نه asset runtime. مدل آینده
+باید workId/season/releaseDate/datePrecision/continuity و collectionIds جدا
+از providerMatches داشته باشد؛ عنوان می‌تواند چند Membership بگیرد و فصل
+دو سریال هم‌نام بدون شناسه معتبر Merge نشود. ترتیب شروع فصل، ترتیب دقیق
+اپیزودها نیست. IMDb/عنوان+سال+نوع برای matching؛ URL یا شماره فصل حدس زده نشود.
+اطلاعات ناشر رسمی و شاخص‌های عمومی با مرزِ verified/pending ثبت شدند؛ اثبات
+وجود محتوا در Provider هنوز نداریم. هیچ کد یا نسخهٔ برنامه تغییر نکرده است.
+
 ## منتشرشده0.19.0 — ردیف ژانر با مسکات
 
 GenreDiscovery.kt: alias دقیق ژانر از cache، سال معتبر<=2000 برای کلاسیک،
@@ -849,3 +859,22 @@ View All با موس و حفظ موقعیت اسکرول پس از Back روی �
 `/private/tmp/Aminema-0.18.8-performance-candidate.apk` با SHA
 `d41e61c74edc90e99c8eab7960f85ff3503d5e8d19a23a757ad154400c512ef8`.
 Commit/Push/Release انجام نشده. جزئیات و موارد تست‌نشده در گزارش امروز است.
+
+# ادامهٔ فنی 2026-10-13 — Journey Hubs / Candidate0.20.0
+
+ساختار مستقل marathon/marvel و مرجع lazy: JourneyCatalog/JourneyScreen؛ توضیح
+الگوریتم، فایل‌ها، تصمیم‌های UX، منابع و حدود عدم‌قطعیت در DEVELOPMENT_LOG_0.20.0.md.
+هیچ data migration، cookie cleanup، provider route یا API پخش تغییر نکرده است.
+Reference membership مستقل از provider match؛ سال شروع سریال برای فصل‌های بعدی
+ثابت است. candidates دقیق title/year/kind با CanonicalLibrary ادغام می‌شوند؛
+ambiguous identity حل خودکار نمی‌شود. shared watch progress فقط مرحلهٔ آینده است.
+vast و complete فعلاً union یکسان‌اند؛ تاریخ‌های year-only ترتیب دقیق هم‌سال را
+اثبات نمی‌کنند. Doomsday curation است نه canon رسمی. Publication هنوز انجام نشده.
+
+مرحلهٔ دوم کامل: عنوان‌های ثبت‌شده با جستجوی واقعی2سایت تطبیق یافتند؛
+356query،211match/211مرجع،115تست. منطق exact query/سال/id و بررسی محدود detail
+هم‌نام‌ها در DEVELOPMENT_LOG_0.20.0.md آمده؛ Ghost تولید/اکران، GuardiansVol2
+cache conflict، GiftedUS/Thai و One-Shot prefix رگرسیون‌های واقعی‌اند. همهٔ
+انتخاب/indexing روی Default، persistence رویIO باAtomicFile است. Startup هیچ
+WebView/journey search جدیدی ندارد. runtimecache داخلAPK نیست؛ رویTV یک بار
+تطبیق باید اجرا شود. شناسه/امضا/کوکی‌ها حفظ شدند؛ publication هنوز انجام نشده.

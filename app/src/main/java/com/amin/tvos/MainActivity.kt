@@ -35,6 +35,11 @@ import com.amin.tvos.browser.CatalogBackgroundSync
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
 import com.amin.tvos.ui.home.CatalogLibraryScreen
+import com.amin.tvos.ui.home.JourneyScreen
+import com.amin.tvos.ui.spotlight.SpotlightActivity
+import com.amin.tvos.data.model.SpotlightItem
+import com.amin.tvos.data.model.CatalogKind
+import com.amin.tvos.data.model.defaultSpotlightAction
 import com.amin.tvos.data.model.CatalogItem
 import com.amin.tvos.ui.settings.SettingsScreen
 import com.amin.tvos.ui.theme.AminTvTheme
@@ -113,6 +118,7 @@ class MainActivity : ComponentActivity() {
                                 if (!introVisible) {
                                 HomeScreen(
                                     onOpenSettings = { navController.navigate("settings") },
+                                    onOpenJourney = { marvel -> navController.navigate(if (marvel) "marvel" else "marathon") },
                                     onOpenLibrary = { title, itemsSelector, openItem, services ->
                                         libraryTitle = title
                                         libraryItemsSelector = itemsSelector
@@ -161,6 +167,37 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("settings") {
                                 SettingsScreen(onBack = { navController.popBackStack() })
+                            }
+                            listOf("marvel", "marathon").forEach { route ->
+                                composable(route) {
+                                    val services by homeViewModel.services.collectAsStateWithLifecycle()
+                                    val metadata by homeViewModel.titleMetadata.collectAsStateWithLifecycle()
+                                    val journeyRepo = app.journeyLookupRepository
+                                    val lookupRecords by journeyRepo.records.collectAsStateWithLifecycle()
+                                    val lookupItems by androidx.compose.runtime.produceState<List<CatalogItem>>(emptyList(), lookupRecords) {
+                                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                            com.amin.tvos.data.JourneyLookupPlanner.bestItems(lookupRecords)
+                                        }
+                                    }
+                                    LaunchedEffect(Unit) { runCatching { journeyRepo.load() } }
+                                    JourneyScreen(route == "marvel", catalogSnapshot, fullCatalogReady,
+                                        metadata, services.associate { it.id to it.name },
+                                        lookupItems = lookupItems,
+                                        onMatchAll = { startActivity(android.content.Intent(this@MainActivity, com.amin.tvos.ui.home.JourneySyncActivity::class.java)) },
+                                        onBack = { navController.popBackStack() }, onOpen = { media ->
+                                            val item = media.representative
+                                            startActivity(SpotlightActivity.intent(this@MainActivity, SpotlightItem(
+                                                title = item.title, kind = item.kind, contentUrl = item.contentUrl,
+                                                posterUrl = item.posterUrl, backdropUrl = item.backdropUrl,
+                                                serviceId = item.serviceId, year = item.year, summary = item.summary,
+                                                rating = item.rating, genres = item.genres, cast = item.cast, directors = item.directors,
+                                                hasPersianDub = item.hasPersianDub, hasPersianSubtitle = item.hasPersianSubtitle,
+                                                primaryAction = item.kind.defaultSpotlightAction(),
+                                                directPlay = item.kind == CatalogKind.MOVIE && services.firstOrNull { it.id == item.serviceId }?.directPlay != null,
+                                                canonicalId = media.canonicalId, sourceVariants = media.variants
+                                            )))
+                                        })
+                                }
                             }
                         }
 

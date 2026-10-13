@@ -54,7 +54,7 @@ fun GenreDiscoveryRow(onSelect: (DiscoveryCategory) -> Unit, onFocused: () -> Un
             GenreAtlasCache.load(resources)
         }
     }
-    SectionRow(title = "امروز چه حال‌وهوایی داری؟", items = DiscoveryCategory.entries,
+    SectionRow(title = "امروز چه حال‌وهوایی داری؟", items = DiscoveryCategory.entries.filter { it != DiscoveryCategory.MARATHON },
         key = { it.name }) { category ->
         FocusableCard(
             modifier = Modifier.width(188.dp).semantics { contentDescription = category.label },

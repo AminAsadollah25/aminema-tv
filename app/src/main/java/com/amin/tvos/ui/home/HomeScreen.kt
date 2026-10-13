@@ -79,6 +79,7 @@ import com.amin.tvos.diagnostics.StartupDiagnostics
 @Composable
 fun HomeScreen(
     onOpenSettings: () -> Unit,
+    onOpenJourney: (Boolean) -> Unit = {},
     onOpenLibrary: (
         String,
         (List<CatalogSection>) -> List<CatalogItem>,
@@ -850,12 +851,16 @@ fun HomeScreen(
         item(key = "genre-discovery", contentType = "genre-rail") {
             GenreDiscoveryRow(
                 onSelect = { category ->
+                    if (category == com.amin.tvos.data.DiscoveryCategory.MARATHON) {
+                        onOpenJourney(false)
+                    } else {
                     onOpenLibrary(
                         category.libraryTitle,
                         { sections -> GenreDiscovery.select(category, sections, titleMetadata) },
                         { item -> openSpotlight(spotlightForCatalog(item)) },
                         emptySet() // Cache-only discovery; no background provider pagination.
                     )
+                    }
                 },
                 onFocused = { heroOwnsBackdrop = false }
             )
@@ -1119,6 +1124,11 @@ fun HomeScreen(
                 }
                 }
             }
+        }
+
+        // Journey entry points follow BOTH providers' editorial picks, not the Hero.
+        item(key = "journey-entries", contentType = "journey-entries") {
+            JourneyEntryRow(onOpen = onOpenJourney, onFocused = { heroOwnsBackdrop = false })
         }
 
         // ---------- Native Live TV removed (Moved to dedicated tab) ----------
