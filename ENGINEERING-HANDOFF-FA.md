@@ -1,5 +1,11 @@
 # سند فنی مداوم Aminema
 
+## انتشار0.21.0/code56 — 2026-10-14
+
+Commit9e6d99a/Tagv0.21.0 و Release Latest تأیید شدند؛ APK/SHA دانلود تازه
+تطبیق شدند. RELEASE_REPORT_0.21.0.md مرجع عملیات؛ وضعیت Candidate پایین تاریخی است.
+ده ژانر MyMoviz متصل‌اند؛ دانلودروز pending، مسیر پخش/نشست‌ها unchanged.
+
 ## Candidate آرشیو ده ژانر — 0.21.0/code56، 2026-10-14
 
 ArchiveGenre/GenreArchiveQuery ژانرهای واقعی فرم MyMoviz را به search وصل می‌کنند؛

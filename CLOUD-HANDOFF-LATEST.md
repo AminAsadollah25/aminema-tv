@@ -1,5 +1,12 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## منتشرشده0.21.0/code56 — 2026-10-14
+
+Commit9e6d99a و Tagv0.21.0 Push و Release عمومی Latest تأیید شدند.
+RELEASE_REPORT_0.21.0.md مرجع لینک و SHA واقعی؛123تست وlint/build موفق.
+APK دانلودشده checksum معتبر دارد؛ ده ژانر MyMoviz، FilmRooz هنوزpending.
+بخش‌های Candidate پایین تاریخی‌اند. تحقیق و اسکریپت‌های نامرتبط حفظ شدند.
+
 ## تعمیم Candidate0.21.0/code56 — 2026-10-14
 
 ده ژانر مسکات‌ها به آرشیو MyMoviz وصل شدند؛ کلاسیک/marathon مستقل باقی‌اند.
