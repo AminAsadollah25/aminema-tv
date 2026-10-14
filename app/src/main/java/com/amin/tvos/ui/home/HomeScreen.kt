@@ -79,6 +79,7 @@ import com.amin.tvos.diagnostics.StartupDiagnostics
 @Composable
 fun HomeScreen(
     onOpenSettings: () -> Unit,
+    onOpenGenreArchive: ((com.amin.tvos.data.DiscoveryCategory) -> Unit)? = null,
     onOpenJourney: (Boolean) -> Unit = {},
     onOpenLibrary: (
         String,
@@ -853,6 +854,8 @@ fun HomeScreen(
                 onSelect = { category ->
                     if (category == com.amin.tvos.data.DiscoveryCategory.MARATHON) {
                         onOpenJourney(false)
+                    } else if (com.amin.tvos.data.ArchiveGenre.forCategory(category) != null && onOpenGenreArchive != null) {
+                        onOpenGenreArchive(category)
                     } else {
                     onOpenLibrary(
                         category.libraryTitle,

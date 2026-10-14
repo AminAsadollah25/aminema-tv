@@ -118,6 +118,8 @@ class MainActivity : ComponentActivity() {
                                 if (!introVisible) {
                                 HomeScreen(
                                     onOpenSettings = { navController.navigate("settings") },
+                                    onOpenGenreArchive = { category -> startActivity(
+                                        com.amin.tvos.ui.home.GenreArchiveActivity.intent(this@MainActivity, category)) },
                                     onOpenJourney = { marvel -> navController.navigate(if (marvel) "marvel" else "marathon") },
                                     onOpenLibrary = { title, itemsSelector, openItem, services ->
                                         libraryTitle = title

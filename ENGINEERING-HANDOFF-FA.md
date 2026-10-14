@@ -1,5 +1,15 @@
 # سند فنی مداوم Aminema
 
+## Candidate آرشیو ده ژانر — 0.21.0/code56، 2026-10-14
+
+ArchiveGenre/GenreArchiveQuery ژانرهای واقعی فرم MyMoviz را به search وصل می‌کنند؛
+genre در cursor و cache identity لحاظ شده، default ROMANCE برای JSON قدیمی.
+Home دسته را Intent داخلی می‌دهد؛ cached fallback هم همان category است.
+24عنوان در هر صفحه و12صفحه در کل cache؛ فقط روی کلیک یک WebView موقت ایجاد
+می‌شود، نه startup scan. ده genre submit در مرورگر تأیید؛123تست وlint/build
+موفق. کلاسیک/ماراتون و Providerهای دیگر unchanged، FilmRooz pending.
+DEVELOPMENT_LOG_0.21.0.md/TEST_REPORT_0.21.0.md مرجع دقیق هستند؛ منتشر نشده.
+
 ## آخرین انتشار تأییدشده — 0.20.0/code55، 2026-10-13
 
 Commit97699e0 و Tagv0.20.0 منتشر شدند؛ APK/SHA دانلودشده، امضای قبلی و

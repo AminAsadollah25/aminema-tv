@@ -1,5 +1,36 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## تعمیم Candidate0.21.0/code56 — 2026-10-14
+
+ده ژانر مسکات‌ها به آرشیو MyMoviz وصل شدند؛ کلاسیک/marathon مستقل باقی‌اند.
+ArchiveGenre از فرم واقعی، default ROMANCE سازگار با cache قبلی؛40کلید query
+مستقل، سقف12صفحه کل cache. Header/fallback از category انتخابی استفاده می‌کنند.
+123تست بدونfailure/error؛ lint/build موفق؛ install-r با امضای قبلی تأیید.
+ده submit مرورگر و QA نمونهٔ native ترسناک/خانوادگی ثبت شد، نه همه40مسیر UI.
+TEST_REPORT_0.21.0.md بخش جدید مرجع APK/SHA است. دانلودروز هنوزpending؛
+هیچ Commit/Push/Tag/Release انجام نشده. توضیح عاشقانه‌فقط زیر تاریخی است.
+
+## Candidate محلی0.21.0/code56 — 2026-10-13
+
+DEVELOPMENT_LOG_0.21.0.md و TEST_REPORT_0.21.0.md را اول بخوانید.
+آرشیو واقعی Romance/MyMoviz با page24، latest/IMDb و movie/tv اضافه شد.
+cache مستقل12صفحه/TTL6h، بدون startup scanning؛ install-r با حفظ session.
+Gate122تست، lint0خطا/131هشدار، build موفق. صفحه1/2IMDb در APK نهایی تأیید.
+FilmRooz advancedSearch فقط قرارداد فرم مشاهده شده، submit فیلتر هنوز نامعتبر؛
+adapter آن اجرا نشده. Probe موقت حذف شده. انتشار همچنان0.20.0 است؛
+هیچ Commit/Push/Release0.21.0 انجام نشده. فایل‌های نامرتبط کاربر stage نشوند.
+
+## گردآوری پژوهشی اسکار — پس از0.20.0، بدون تغییر اپ
+
+در research/awards/oscars دادهٔ2337ردیف برنده از98صفحهٔ رسمی ذخیره شد؛
+115categoryExact و38family پیشنهادی. README-FA.md وضعیت پوشش/ابهام را ثبت
+می‌کند؛ WINNERS-READABLE-FA.md نمای2023ردیف روشن است. همهٔ identityها pending،
+بدون عکس/سال انتشار/ProviderMatch. افتخاری‌های مستقل/علمی‌فنی و nominees
+هنوز کامل نیستند. sourcePageYear با ceremonyDate متفاوت است؛ شمارهٔ دوره
+شناسهٔ اصلی باشد. هیچ داده را بی‌ممیزی به runtime یا شمارش trophies نبرند.
+validate_research.py فقط ساختار را کنترل می‌کند، نه حقیقت تاریخی همهٔ ردیف‌ها.
+هیچ Commit/Push/نسخه/Release در این مرحله انجام نشده است.
+
 ## وضعیت معتبر جاری — انتشار0.20.0/code55، 2026-10-13
 
 Commit97699e0، Tagv0.20.0؛ Release و دانلود/Checksum/امضا تأیید شدند:

@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.memory.MemoryCache
@@ -172,7 +173,9 @@ fun CatalogCard(
     onClick: () -> Unit,
     onFocused: (Boolean) -> Unit = {},
     /** Optional canonical/source status; ordinary rails keep their existing episode footer. */
-    footerLabel: String? = null
+    footerLabel: String? = null,
+    /** Compact archive grid; existing Home rails retain their original 270dp artwork. */
+    posterHeight: Dp = 270.dp
 ) {
     val posterModel = authenticatedPosterModel(item.posterUrl, item.contentUrl,360,540)
     FocusableCard(
@@ -182,7 +185,7 @@ fun CatalogCard(
         onInteractionFocusChanged = onFocused
     ) { focused ->
         Column(Modifier.padding(bottom = 8.dp)) {
-            Box(Modifier.fillMaxWidth().height(270.dp).background(SurfaceElevated)) {
+            Box(Modifier.fillMaxWidth().height(posterHeight).background(SurfaceElevated)) {
                 if (item.posterUrl.isNotBlank()) {
                     AsyncImage(
                         model = posterModel,
