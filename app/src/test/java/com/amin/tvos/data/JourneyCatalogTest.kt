@@ -58,7 +58,22 @@ class JourneyCatalogTest {
         val list = JourneyCatalog.select("middleearth", today = now)
         assertEquals(6, list.size)
         assertFalse(list.any { "mcu" in it.collections })
-        assertEquals(4, JourneyCatalog.marathonCollections.size)
+        assertEquals(12, JourneyCatalog.marathonCollections.size)
+        assertEquals(6, JourneyCatalog.marvelCollections.size)
+    }
+    @Test fun newMarathonsHaveRealReferenceListsAndDoNotLeakIntoMarvel() {
+        val counts = mapOf("bond" to 25, "mission" to 8, "wick" to 6, "diehard" to 5,
+            "bourne" to 5, "fast" to 11, "rocky" to 9, "madmax" to 5)
+        counts.forEach { (id, count) ->
+            val list = JourneyCatalog.select(id, today = now)
+            assertEquals(id, count, list.size)
+            assertEquals(list.size, list.map { it.id }.toSet().size)
+            assertTrue(list.all { it.collections == setOf(id) })
+            assertEquals(list.sortedBy { it.release }, list)
+            assertFalse(JourneyCatalog.select("complete", today = now).any { it.id in list.map { w -> w.id } })
+        }
+        assertEquals("The Continental: From the World of John Wick",
+            JourneyCatalog.select("wick", JourneyFormat.SERIES, now).single().title)
         assertEquals(6, JourneyCatalog.marvelCollections.size)
     }
     @Test fun oneShotFullTitleMapsWithoutConfusingSameNameSeries() {

@@ -45,6 +45,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".browser.FarsiLandActivity" android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:screenOrientation="landscape" />
+
         <activity
             android:name=".browser.BrowserActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
@@ -73,6 +77,9 @@
             android:name=".ui.home.JourneySyncActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
+
+        <activity android:name=".ui.home.MarathonDiscoveryActivity"
+            android:exported="false" android:screenOrientation="landscape" />
 
         <activity
             android:name=".ui.home.GenreArchiveActivity"

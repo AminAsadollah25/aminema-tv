@@ -63,7 +63,7 @@ class CatalogRepository(private val context: Context) {
         // Returning to Home must not temporarily replace already-loaded full rows with
         // a smaller window. Only a genuinely cold repository needs the fast projection.
         if (_sections.value.isEmpty() && snapshot != null) {
-            _homeSections.value = snapshot.sections
+            _homeSections.value = snapshot.sections.filterNot { RetiredParsiFlix.service(it.serviceId) }
             StartupDiagnostics.mark("catalog.home.cache.ready")
         }
         val decoded = runCatching {
@@ -71,10 +71,13 @@ class CatalogRepository(private val context: Context) {
         }
         val loaded = decoded.getOrDefault(emptyList())
         StartupDiagnostics.mark("catalog.decode.end")
-        val normalized = loaded.map(::normalize)
+        val normalized = loaded.filterNot { RetiredParsiFlix.service(it.serviceId) }.map(::normalize)
         StartupDiagnostics.mark("catalog.normalize.end")
         if (normalized != loaded) {
-            val saved = runCatching { file.writeText(json.encodeToString(normalized)) }.isSuccess
+            val saved = runCatching {
+                if(loaded.any {RetiredParsiFlix.service(it.serviceId)})RetiredParsiFlix.backup(file)
+                file.writeText(json.encodeToString(normalized))
+            }.isSuccess
             loadedSourceFingerprint = if (saved) sourceFingerprint() else readFingerprint
         } else {
             loadedSourceFingerprint = readFingerprint.takeIf { decoded.isSuccess }
@@ -96,6 +99,7 @@ class CatalogRepository(private val context: Context) {
         val metadata = runCatching {
             json.decodeFromString<List<TitleMetadata>>(metadataFile.readText())
         }.getOrDefault(emptyList())
+            .filterNot { RetiredParsiFlix.page(it.contentUrl) }
             .map(::normalize)
             .filter { it.contentUrl.isNotBlank() }
             .sortedByDescending { it.fetchedAt }

@@ -84,7 +84,9 @@ class CatalogBackgroundSync(
         val cachedLimit = app.catalogRepository.section(serviceId)?.loadedPageLimit ?: 0
         // View All grows MyMoviz in small, reliable batches. Even if several end-of-list
         // signals arrive close together, never turn them into dozens of concurrent requests.
-        val requestedLimit = if (serviceId == MYMOVIZ_ID && rawRequestedLimit > cachedLimit) {
+        val requestedLimit = if (serviceId == "farsiland" && rawRequestedLimit > cachedLimit) {
+            minOf(rawRequestedLimit, cachedLimit + 1)
+        } else if (serviceId == MYMOVIZ_ID && rawRequestedLimit > cachedLimit) {
             minOf(rawRequestedLimit, cachedLimit + MYMOVIZ_PAGE_BATCH)
         } else {
             rawRequestedLimit
@@ -182,7 +184,7 @@ class CatalogBackgroundSync(
                             ?.loadedPageLimit
                             ?: 0
                         val pageStart = if (
-                            serviceId == MYMOVIZ_ID && pageLimit > cachedLimit
+                            serviceId in setOf(MYMOVIZ_ID,"farsiland") && pageLimit > cachedLimit
                         ) {
                             cachedLimit + 1
                         } else {
@@ -558,7 +560,7 @@ class CatalogBackgroundSync(
         const val MYMOVIZ_PAGE_BATCH = 4
         // Keep a generous safety ceiling; the library requests the next window on demand.
         const val MAX_PAGE_LIMIT = 200
-        val SUPPORTED_IDS = setOf(PARSI_ID, FILMROOZ_ID, MYMOVIZ_ID)
+        val SUPPORTED_IDS = setOf("farsiland", FILMROOZ_ID, MYMOVIZ_ID)
 
         fun scriptFor(
             serviceId: String,
@@ -566,6 +568,7 @@ class CatalogBackgroundSync(
             pageStart: Int = 1
         ): String =
             (when (serviceId) {
+                "farsiland" -> FarsiLandScripts.catalog(pageLimit,pageStart)
                 PARSI_ID -> PARSI_SCRIPT
                 MYMOVIZ_ID -> MYMOVIZ_SCRIPT
                 else -> FILMROOZ_SCRIPT

@@ -429,7 +429,7 @@ class SearchActivity : ComponentActivity() {
     }
 
     private companion object {
-        const val IRANIAN_ID = "parsiflix"
+        const val IRANIAN_ID = "farsiland"
         const val INTERNATIONAL_ID = "filmrooz"
         const val MYMOVIZ_ID = "mymoviz"
         val SEARCH_SERVICE_IDS = listOf(IRANIAN_ID, INTERNATIONAL_ID, MYMOVIZ_ID)

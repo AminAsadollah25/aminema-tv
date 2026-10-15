@@ -164,6 +164,7 @@ class SiteSearchEngine(
     private fun script(service: StreamingService, query: String): String {
         val encoded = JSONObject.quote(query)
         return when (service.id) {
+            "farsiland" -> FarsiLandScripts.search(encoded)
             PARSI_ID -> parsiScript(encoded)
             MYMOVIZ_ID -> myMovizScript(encoded)
             else -> filmRoozScript(encoded)

@@ -41,6 +41,7 @@ class AminTvApp : Application(), coil.ImageLoaderFactory {
     val settingsRepository by lazy { SettingsRepository(this) }
     val updateRepository by lazy { UpdateRepository(this) }
     val journeyLookupRepository by lazy { com.amin.tvos.data.JourneyLookupRepository(this) }
+    val marathonDiscoveryRepository by lazy { com.amin.tvos.data.MarathonDiscoveryRepository(this) }
     private val liveCoordinator = lazy { LiveChannelHealthCoordinator(this) }
     val liveChannelHealthCoordinator get() = liveCoordinator.value
 

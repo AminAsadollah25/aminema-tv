@@ -42,8 +42,12 @@ class LibraryRepository(private val context: Context) {
         val loadedSessions = runCatching {
             json.decodeFromString<List<PlaybackSession>>(playbackFile.readText())
         }.getOrDefault(emptyList())
-        if (_items.value != loadedItems) _items.value = loadedItems
-        if (_playbackSessions.value != loadedSessions) _playbackSessions.value = loadedSessions
+        val retainedItems=loadedItems.filterNot { RetiredParsiFlix.service(it.serviceId) }
+        val retainedSessions=loadedSessions.filterNot { RetiredParsiFlix.service(it.serviceId) }
+        if(retainedItems!=loadedItems){RetiredParsiFlix.backup(file);persist(retainedItems)}
+        else if (_items.value != retainedItems) _items.value = retainedItems
+        if(retainedSessions!=loadedSessions){RetiredParsiFlix.backup(playbackFile);persistPlayback(retainedSessions)}
+        else if (_playbackSessions.value != retainedSessions) _playbackSessions.value = retainedSessions
     }
 
     /** Called by the browser layer whenever the user lands on a content page. */

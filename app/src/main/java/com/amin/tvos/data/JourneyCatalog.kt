@@ -36,7 +36,15 @@ object JourneyCatalog {
         JourneyCollection("middleearth", "سرزمین میانه", "ارباب حلقه‌ها و هابیت · ترتیب انتشار"),
         JourneyCollection("starwars", "جنگ ستارگان", "فیلم‌ها و فصل‌های ثبت‌شده · ترتیب انتشار"),
         JourneyCollection("dc", "DC · دنیای سینمایی", "DCEU · جهان‌های دیگر در مرحلهٔ تکمیل"),
-        JourneyCollection("potter", "دنیای جادوگری", "هری پاتر و جانوران شگفت‌انگیز")
+        JourneyCollection("potter", "دنیای جادوگری", "هری پاتر و جانوران شگفت‌انگیز"),
+        JourneyCollection("bond", "جیمز باند · 007", "فیلم‌های مجموعهٔ رسمی · ترتیب انتشار"),
+        JourneyCollection("mission", "مأموریت غیرممکن", "فیلم‌های سینمایی · ترتیب انتشار"),
+        JourneyCollection("wick", "دنیای جان ویک", "فیلم‌ها، بالرینا و مینی‌سریال کانتیننتال"),
+        JourneyCollection("diehard", "جان‌سخت", "پنج فیلم سینمایی · ترتیب انتشار"),
+        JourneyCollection("bourne", "جیسون بورن", "فیلم‌های سینمایی · شامل میراث بورن"),
+        JourneyCollection("fast", "سریع و خشن", "فیلم‌های سینمایی و هابز و شاو · کوتاه‌ها و انیمیشن در صف تکمیل"),
+        JourneyCollection("rocky", "راکی و کرید", "فیلم‌های سینمایی · ترتیب انتشار"),
+        JourneyCollection("madmax", "مکس دیوانه", "فیلم‌های سینمایی و فیوریوسا")
     )
 
     // Construction is lazy: Home only needs the two entry cards, never this registry.
@@ -235,6 +243,96 @@ object JourneyCatalog {
                 2023|Blue Beetle
                 2023|Aquaman and the Lost Kingdom
             """)
+            films("bond", """
+                1962|Dr. No
+                1963|From Russia with Love
+                1964|Goldfinger
+                1965|Thunderball
+                1967|You Only Live Twice
+                1969|On Her Majesty's Secret Service
+                1971|Diamonds Are Forever
+                1973|Live and Let Die
+                1974|The Man with the Golden Gun
+                1977|The Spy Who Loved Me
+                1979|Moonraker
+                1981|For Your Eyes Only
+                1983|Octopussy
+                1985|A View to a Kill
+                1987|The Living Daylights
+                1989|Licence to Kill
+                1995|GoldenEye
+                1997|Tomorrow Never Dies
+                1999|The World Is Not Enough
+                2002|Die Another Day
+                2006|Casino Royale
+                2008|Quantum of Solace
+                2012|Skyfall
+                2015|Spectre
+                2021|No Time to Die
+            """)
+            films("mission", """
+                1996|Mission: Impossible
+                2000|Mission: Impossible II
+                2006|Mission: Impossible III
+                2011|Mission: Impossible - Ghost Protocol
+                2015|Mission: Impossible - Rogue Nation
+                2018|Mission: Impossible - Fallout
+                2023|Mission: Impossible - Dead Reckoning Part One
+                2025|Mission: Impossible - The Final Reckoning
+            """)
+            films("wick", """
+                2014|John Wick
+                2017|John Wick: Chapter 2
+                2019|John Wick: Chapter 3 - Parabellum
+                2023|John Wick: Chapter 4
+                2025|From the World of John Wick: Ballerina
+            """)
+            show("wick", "The Continental: From the World of John Wick", "2023-09-22")
+            films("diehard", """
+                1988|Die Hard
+                1990|Die Hard 2
+                1995|Die Hard with a Vengeance
+                2007|Live Free or Die Hard
+                2013|A Good Day to Die Hard
+            """)
+            films("bourne", """
+                2002|The Bourne Identity
+                2004|The Bourne Supremacy
+                2007|The Bourne Ultimatum
+                2012|The Bourne Legacy
+                2016|Jason Bourne
+            """)
+            films("fast", """
+                2001|The Fast and the Furious
+                2003|2 Fast 2 Furious
+                2006|The Fast and the Furious: Tokyo Drift
+                2009|Fast & Furious
+                2011|Fast Five
+                2013|Fast & Furious 6
+                2015|Furious 7
+                2017|The Fate of the Furious
+                2019|Fast & Furious Presents: Hobbs & Shaw
+                2021|F9: The Fast Saga
+                2023|Fast X
+            """)
+            films("rocky", """
+                1976|Rocky
+                1979|Rocky II
+                1982|Rocky III
+                1985|Rocky IV
+                1990|Rocky V
+                2006|Rocky Balboa
+                2015|Creed
+                2018|Creed II
+                2023|Creed III
+            """)
+            films("madmax", """
+                1979|Mad Max
+                1981|Mad Max 2
+                1985|Mad Max Beyond Thunderdome
+                2015|Mad Max: Fury Road
+                2024|Furiosa: A Mad Max Saga
+            """)
             films("potter", """
                 2001|Harry Potter and the Sorcerer's Stone
                 2002|Harry Potter and the Chamber of Secrets
@@ -266,6 +364,12 @@ object JourneyCatalog {
                 "Ghost Rider: Spirit of Vengeance" -> work.copy(imdbId = "tt1071875")
                 "Skeleton Crew" -> work.copy(aliases = setOf("Star Wars: Skeleton Crew"), imdbId = "tt20600980")
                 "The Gifted" -> work.copy(imdbId = "tt4396630") // US 2017 detail page; not Thai tt9136312.
+                "Mission: Impossible - Dead Reckoning Part One" -> work.copy(aliases = setOf("Mission: Impossible - Dead Reckoning"))
+                "From the World of John Wick: Ballerina" -> work.copy(aliases = setOf("Ballerina"))
+                "The Continental: From the World of John Wick" -> work.copy(aliases = setOf("The Continental"))
+                "Mad Max 2" -> work.copy(aliases = setOf("The Road Warrior", "Mad Max 2: The Road Warrior"))
+                "Live Free or Die Hard" -> work.copy(aliases = setOf("Die Hard 4.0"))
+                "F9: The Fast Saga" -> work.copy(aliases = setOf("F9", "Fast & Furious 9"))
                 else -> work
             }
         }.distinctBy { it.id }

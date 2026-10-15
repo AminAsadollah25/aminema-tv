@@ -1,0 +1,7199 @@
+[
+  {
+    "id": "middleearth",
+    "title": "سرزمین میانه · فیلم‌های جکسون",
+    "sourceLabel": "Middle-earth",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "The Lord of the Rings",
+      "The Hobbit"
+    ],
+    "referenceId": "middleearth"
+  },
+  {
+    "id": "starwars",
+    "title": "جنگ ستارگان",
+    "sourceLabel": "Star Wars",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Star Wars"
+    ],
+    "referenceId": "starwars"
+  },
+  {
+    "id": "dc",
+    "title": "DC · دنیای سینمایی",
+    "sourceLabel": "DCEU",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Man of Steel",
+      "Batman",
+      "Justice League"
+    ],
+    "referenceId": "dc"
+  },
+  {
+    "id": "potter",
+    "title": "دنیای جادوگری",
+    "sourceLabel": "Harry Potter/Wizarding World و Fantastic Beasts",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Harry Potter",
+      "Fantastic Beasts"
+    ],
+    "referenceId": "potter"
+  },
+  {
+    "id": "bond",
+    "title": "جیمز باند · 007",
+    "sourceLabel": "James Bond رسمی",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "James Bond"
+    ],
+    "referenceId": "bond"
+  },
+  {
+    "id": "mission",
+    "title": "مأموریت غیرممکن",
+    "sourceLabel": "Mission: Impossible",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Mission: Impossible"
+    ],
+    "referenceId": "mission"
+  },
+  {
+    "id": "wick",
+    "title": "دنیای جان ویک",
+    "sourceLabel": "John Wick و اسپین‌آف‌ها",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "John Wick"
+    ],
+    "referenceId": "wick"
+  },
+  {
+    "id": "diehard",
+    "title": "جان‌سخت",
+    "sourceLabel": "Die Hard",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Die Hard"
+    ],
+    "referenceId": "diehard"
+  },
+  {
+    "id": "bourne",
+    "title": "جیسون بورن",
+    "sourceLabel": "Bourne",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Bourne"
+    ],
+    "referenceId": "bourne"
+  },
+  {
+    "id": "fast",
+    "title": "سریع و خشن",
+    "sourceLabel": "Fast & Furious",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Fast & Furious"
+    ],
+    "referenceId": "fast"
+  },
+  {
+    "id": "rocky",
+    "title": "راکی و کرید",
+    "sourceLabel": "Rocky/Creed",
+    "groups": [
+      "action",
+      "sport"
+    ],
+    "queries": [
+      "Rocky",
+      "Creed"
+    ],
+    "referenceId": "rocky"
+  },
+  {
+    "id": "madmax",
+    "title": "مکس دیوانه",
+    "sourceLabel": "Mad Max",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Mad Max"
+    ],
+    "referenceId": "madmax"
+  },
+  {
+    "id": "28-days-later",
+    "title": "28 Days Later",
+    "sourceLabel": "28 Days Later",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "28 Days Later"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "48-hrs",
+    "title": "48 Hrs",
+    "sourceLabel": "48 Hrs",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "48 Hrs"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "a-better-tomorrow",
+    "title": "A Better Tomorrow",
+    "sourceLabel": "A Better Tomorrow",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "A Better Tomorrow"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "aardman",
+    "title": "Aardman",
+    "sourceLabel": "Aardman",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Aardman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "abbott-costello",
+    "title": "Abbott & Costello",
+    "sourceLabel": "Abbott & Costello",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Abbott & Costello"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "abcs-of-death",
+    "title": "ABCs of Death",
+    "sourceLabel": "ABCs of Death",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "ABCs of Death"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ace-ventura",
+    "title": "Ace Ventura",
+    "sourceLabel": "Ace Ventura",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Ace Ventura"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "after",
+    "title": "After",
+    "sourceLabel": "After",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "After"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "air-bud-buddies",
+    "title": "Air Bud/Buddies",
+    "sourceLabel": "Air Bud/Buddies",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Air Bud",
+      "Buddies"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alice",
+    "title": "Alice",
+    "sourceLabel": "Alice adaptations",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Alice"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alien",
+    "title": "بیگانه",
+    "sourceLabel": "Alien",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Alien"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alien-predator",
+    "title": "Alien/Predator",
+    "sourceLabel": "Alien/Predator",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Alien",
+      "Predator"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alien-vs-predator",
+    "title": "Alien vs Predator",
+    "sourceLabel": "Alien vs Predator با عضویت چندگانه",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Alien vs Predator"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "all-dogs-go-to-heaven",
+    "title": "All Dogs Go to Heaven",
+    "sourceLabel": "All Dogs Go to Heaven",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "All Dogs Go to Heaven"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "along-with-the-gods",
+    "title": "Along with the Gods",
+    "sourceLabel": "Along with the Gods",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Along with the Gods"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alpha-and-omega",
+    "title": "Alpha and Omega",
+    "sourceLabel": "Alpha and Omega",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Alpha and Omega"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "alvin-and-the-chipmunks",
+    "title": "Alvin and the Chipmunks",
+    "sourceLabel": "Alvin and the Chipmunks",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Alvin and the Chipmunks"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "american-pie",
+    "title": "American Pie",
+    "sourceLabel": "American Pie",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "American Pie"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "amityville",
+    "title": "Amityville",
+    "sourceLabel": "Amityville",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Amityville"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "anaconda",
+    "title": "Anaconda",
+    "sourceLabel": "Anaconda",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Anaconda"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ang",
+    "title": "Ang",
+    "sourceLabel": "Angélique",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Ang"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "angry-birds",
+    "title": "Angry Birds",
+    "sourceLabel": "Angry Birds",
+    "groups": [
+      "animation",
+      "games"
+    ],
+    "queries": [
+      "Angry Birds"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "anne-of-green-gables",
+    "title": "Anne of Green Gables",
+    "sourceLabel": "Anne of Green Gables اقتباس‌ها",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Anne of Green Gables"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ant-man",
+    "title": "Ant-Man",
+    "sourceLabel": "Ant-Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Ant-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "antoine-doinel",
+    "title": "Antoine Doinel",
+    "sourceLabel": "Antoine Doinel",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Antoine Doinel"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "appleseed",
+    "title": "Appleseed",
+    "sourceLabel": "Appleseed",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Appleseed"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "aquaman",
+    "title": "Aquaman",
+    "sourceLabel": "Aquaman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Aquaman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "arcane",
+    "title": "Arcane",
+    "sourceLabel": "Arcane",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Arcane"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "arrowverse",
+    "title": "Arrowverse",
+    "sourceLabel": "Arrowverse",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Arrowverse"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "assassin-s-creed",
+    "title": "Assassin's Creed",
+    "sourceLabel": "Assassin's Creed",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Assassin's Creed"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ast",
+    "title": "Ast",
+    "sourceLabel": "Astérix زنده و انیمیشن",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Ast"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "attack-on-titan",
+    "title": "Attack on Titan",
+    "sourceLabel": "Attack on Titan",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Attack on Titan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "austin-powers",
+    "title": "Austin Powers",
+    "sourceLabel": "Austin Powers",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Austin Powers"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "avengers",
+    "title": "انتقام‌جویان",
+    "sourceLabel": "Avengers",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Avengers"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "avengers-assemble",
+    "title": "Avengers Assemble",
+    "sourceLabel": "Avengers Assemble",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Avengers Assemble"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "avengers-earth-s-mightiest-heroes",
+    "title": "Avengers: Earth's Mightiest Heroes",
+    "sourceLabel": "Avengers: Earth's Mightiest Heroes",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Avengers: Earth's Mightiest Heroes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "avengers-united-they-stand",
+    "title": "Avengers: United They Stand",
+    "sourceLabel": "Avengers: United They Stand",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Avengers: United They Stand"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "baaghi",
+    "title": "Baaghi",
+    "sourceLabel": "Baaghi",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Baaghi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "baahubali",
+    "title": "Baahubali",
+    "sourceLabel": "Baahubali",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Baahubali"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "babylon-5",
+    "title": "Babylon 5",
+    "sourceLabel": "Babylon 5",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Babylon 5"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "back-to-the-future",
+    "title": "بازگشت به آینده",
+    "sourceLabel": "Back to the Future",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Back to the Future"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bad-boys",
+    "title": "پسران بد",
+    "sourceLabel": "Bad Boys",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Bad Boys"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "balto",
+    "title": "Balto",
+    "sourceLabel": "Balto",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Balto"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "barbershop",
+    "title": "Barbershop",
+    "sourceLabel": "Barbershop",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Barbershop"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "barbie",
+    "title": "Barbie",
+    "sourceLabel": "Barbie",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Barbie"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "basket-case",
+    "title": "Basket Case",
+    "sourceLabel": "Basket Case",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Basket Case"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "batman",
+    "title": "بتمن",
+    "sourceLabel": "Batman زنده",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Batman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "batman-beyond",
+    "title": "Batman Beyond",
+    "sourceLabel": "Batman Beyond",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Batman Beyond"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "batman-the-animated-series",
+    "title": "Batman: The Animated Series",
+    "sourceLabel": "Batman: The Animated Series",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Batman: The Animated Series"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "battlestar-galactica",
+    "title": "Battlestar Galactica",
+    "sourceLabel": "Battlestar Galactica",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Battlestar Galactica"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "beastmaster",
+    "title": "Beastmaster",
+    "sourceLabel": "Beastmaster",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Beastmaster"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "beck",
+    "title": "Beck",
+    "sourceLabel": "Beck",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Beck"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "before",
+    "title": "Before",
+    "sourceLabel": "Before trilogy",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Before"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "berserk",
+    "title": "Berserk",
+    "sourceLabel": "Berserk",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Berserk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "best-of-the-best",
+    "title": "Best of the Best",
+    "sourceLabel": "Best of the Best",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Best of the Best"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "beverly-hills-cop",
+    "title": "پلیس بورلی هیلز",
+    "sourceLabel": "Beverly Hills Cop",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Beverly Hills Cop"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "beware-the-batman",
+    "title": "Beware the Batman",
+    "sourceLabel": "Beware the Batman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Beware the Batman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bhool-bhulaiyaa",
+    "title": "Bhool Bhulaiyaa",
+    "sourceLabel": "Bhool Bhulaiyaa",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Bhool Bhulaiyaa"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "big-momma-s-house",
+    "title": "Big Momma's House",
+    "sourceLabel": "Big Momma's House",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Big Momma's House"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bill-ted",
+    "title": "Bill & Ted",
+    "sourceLabel": "Bill & Ted",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Bill & Ted"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "black-panther",
+    "title": "پلنگ سیاه",
+    "sourceLabel": "Black Panther",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Black Panther"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "blade",
+    "title": "Blade",
+    "sourceLabel": "Blade",
+    "groups": [
+      "comic",
+      "horror"
+    ],
+    "queries": [
+      "Blade"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "blade-runner",
+    "title": "Blade Runner",
+    "sourceLabel": "Blade Runner",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Blade Runner"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bleach",
+    "title": "Bleach",
+    "sourceLabel": "Bleach",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Bleach"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bloodsport",
+    "title": "Bloodsport",
+    "sourceLabel": "Bloodsport",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Bloodsport"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "blue-sky",
+    "title": "Blue Sky",
+    "sourceLabel": "Blue Sky",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Blue Sky"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "boss-baby",
+    "title": "Boss Baby",
+    "sourceLabel": "Boss Baby",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Boss Baby"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "brave-and-the-bold",
+    "title": "Brave and the Bold",
+    "sourceLabel": "Brave and the Bold",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Brave and the Bold"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bridget-jones",
+    "title": "Bridget Jones",
+    "sourceLabel": "Bridget Jones",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Bridget Jones"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "bring-it-on",
+    "title": "Bring It On",
+    "sourceLabel": "Bring It On",
+    "groups": [
+      "romance",
+      "sport"
+    ],
+    "queries": [
+      "Bring It On"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "candyman",
+    "title": "Candyman",
+    "sourceLabel": "Candyman",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Candyman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cannonball-run",
+    "title": "Cannonball Run",
+    "sourceLabel": "Cannonball Run",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Cannonball Run"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "captain-america",
+    "title": "کاپیتان آمریکا",
+    "sourceLabel": "Captain America",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Captain America"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "care-bears",
+    "title": "Care Bears",
+    "sourceLabel": "Care Bears",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Care Bears"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "carry-on",
+    "title": "Carry On",
+    "sourceLabel": "Carry On",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Carry On"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cars",
+    "title": "Cars",
+    "sourceLabel": "Cars",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Cars"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cartoon-saloon",
+    "title": "Cartoon Saloon",
+    "sourceLabel": "Cartoon Saloon",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Cartoon Saloon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "castlevania",
+    "title": "Castlevania",
+    "sourceLabel": "Castlevania",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Castlevania"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cheech-chong",
+    "title": "Cheech & Chong",
+    "sourceLabel": "Cheech & Chong",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Cheech & Chong"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "chicken-run",
+    "title": "Chicken Run",
+    "sourceLabel": "Chicken Run",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Chicken Run"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "child-s-play-chucky",
+    "title": "Child's Play/Chucky",
+    "sourceLabel": "Child's Play/Chucky",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Child's Play",
+      "Chucky"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "children-of-the-corn",
+    "title": "Children of the Corn",
+    "sourceLabel": "Children of the Corn",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Children of the Corn"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "city-hunter",
+    "title": "City Hunter",
+    "sourceLabel": "City Hunter",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "City Hunter"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cloudy-with-a-chance-of-meatballs",
+    "title": "Cloudy with a Chance of Meatballs",
+    "sourceLabel": "Cloudy with a Chance of Meatballs",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Cloudy with a Chance of Meatballs"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "collector",
+    "title": "Collector",
+    "sourceLabel": "Collector",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Collector"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "conan",
+    "title": "Conan",
+    "sourceLabel": "Conan",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Conan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "conjuring-annabelle-nun",
+    "title": "احضار · آنابل · راهبه",
+    "sourceLabel": "Conjuring/Annabelle/Nun",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Conjuring",
+      "Annabelle",
+      "Nun"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "constantine",
+    "title": "Constantine",
+    "sourceLabel": "Constantine",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Constantine"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "crank",
+    "title": "Crank",
+    "sourceLabel": "Crank",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Crank"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "crayon-shin-chan",
+    "title": "Crayon Shin-chan",
+    "sourceLabel": "Crayon Shin-chan",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Crayon Shin-chan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "creepshow",
+    "title": "Creepshow",
+    "sourceLabel": "Creepshow",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Creepshow"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "critters",
+    "title": "Critters",
+    "sourceLabel": "Critters",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Critters"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "croods",
+    "title": "Croods",
+    "sourceLabel": "Croods",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Croods"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cube",
+    "title": "Cube",
+    "sourceLabel": "Cube",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Cube"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "cyberpunk",
+    "title": "Cyberpunk",
+    "sourceLabel": "Cyberpunk",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Cyberpunk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dabangg",
+    "title": "Dabangg",
+    "sourceLabel": "Dabangg",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Dabangg"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "daredevil",
+    "title": "Daredevil",
+    "sourceLabel": "Daredevil",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Daredevil"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dark-crystal",
+    "title": "Dark Crystal",
+    "sourceLabel": "Dark Crystal",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Dark Crystal"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dc-super-hero-girls",
+    "title": "DC Super Hero Girls",
+    "sourceLabel": "DC Super Hero Girls",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "DC Super Hero Girls"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dcamu",
+    "title": "DCAMU",
+    "sourceLabel": "DCAMU",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Justice League War",
+      "Justice League Dark",
+      "Son of Batman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dcau",
+    "title": "DCAU",
+    "sourceLabel": "DCAU",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Batman The Animated Series",
+      "Justice League",
+      "Batman Beyond"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dcu",
+    "title": "DCU",
+    "sourceLabel": "DCU",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman",
+      "Creature Commandos"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "deadpool",
+    "title": "Deadpool",
+    "sourceLabel": "Deadpool",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Deadpool"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "death-race",
+    "title": "Death Race",
+    "sourceLabel": "Death Race",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Death Race"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "death-wish",
+    "title": "Death Wish",
+    "sourceLabel": "Death Wish",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Death Wish"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "defenders",
+    "title": "Defenders",
+    "sourceLabel": "Defenders",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Defenders"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dekalog",
+    "title": "Dekalog",
+    "sourceLabel": "Dekalog",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Dekalog"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "demon-slayer",
+    "title": "Demon Slayer",
+    "sourceLabel": "Demon Slayer",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Demon Slayer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "demons",
+    "title": "Demons",
+    "sourceLabel": "Demons",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Demons"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "department-q",
+    "title": "Department Q",
+    "sourceLabel": "Department Q",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Department Q"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "descendants",
+    "title": "Descendants",
+    "sourceLabel": "Descendants",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Descendants"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "despicable-me-minions",
+    "title": "من نفرت‌انگیز و مینیون‌ها",
+    "sourceLabel": "Despicable Me / Minions",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Despicable Me",
+      "Minions"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "detective-chinatown",
+    "title": "Detective Chinatown",
+    "sourceLabel": "Detective Chinatown",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Detective Chinatown"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "detective-conan",
+    "title": "Detective Conan",
+    "sourceLabel": "Detective Conan",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Detective Conan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "detective-dee",
+    "title": "Detective Dee",
+    "sourceLabel": "Detective Dee",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Detective Dee"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "deus-ex",
+    "title": "Deus Ex",
+    "sourceLabel": "Deus Ex adaptations در صورت وجود اثر منتشرشده",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Deus Ex"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dhamaal",
+    "title": "Dhamaal",
+    "sourceLabel": "Dhamaal",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Dhamaal"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dhoom",
+    "title": "Dhoom",
+    "sourceLabel": "Dhoom",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Dhoom"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "digimon",
+    "title": "Digimon",
+    "sourceLabel": "Digimon",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Digimon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dirty-dancing",
+    "title": "Dirty Dancing",
+    "sourceLabel": "Dirty Dancing",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Dirty Dancing"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dirty-harry",
+    "title": "Dirty Harry",
+    "sourceLabel": "Dirty Harry",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Dirty Harry"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "disney-live-action-remakes",
+    "title": "Disney live-action remakes",
+    "sourceLabel": "Disney live-action remakes",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Disney live-action remakes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "disney-television",
+    "title": "Disney Television",
+    "sourceLabel": "Disney Television",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Disney Television"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "disneytoon",
+    "title": "Disneytoon",
+    "sourceLabel": "Disneytoon",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Disneytoon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "divergent",
+    "title": "دایورجنت",
+    "sourceLabel": "Divergent",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Divergent"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "doctor-strange",
+    "title": "دکتر استرنج",
+    "sourceLabel": "Doctor Strange",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Doctor Strange"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "doctor-who",
+    "title": "Doctor Who",
+    "sourceLabel": "Doctor Who",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Doctor Who"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "don",
+    "title": "Don",
+    "sourceLabel": "Don با تفکیک اقتباس",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Don"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "doom-patrol",
+    "title": "Doom Patrol",
+    "sourceLabel": "Doom Patrol",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Doom Patrol"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "doraemon",
+    "title": "Doraemon",
+    "sourceLabel": "Doraemon",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Doraemon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dota",
+    "title": "Dota",
+    "sourceLabel": "Dota",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Dota"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dragon-age",
+    "title": "Dragon Age",
+    "sourceLabel": "Dragon Age",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Dragon Age"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dragon-ball",
+    "title": "Dragon Ball",
+    "sourceLabel": "Dragon Ball",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Dragon Ball"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dragonheart",
+    "title": "Dragonheart",
+    "sourceLabel": "Dragonheart",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Dragonheart"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dreamworks",
+    "title": "دریم‌ورکس",
+    "sourceLabel": "DreamWorks",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "DreamWorks"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "drishyam",
+    "title": "Drishyam",
+    "sourceLabel": "Drishyam و بازسازی‌ها",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Drishyam"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "drunken-master",
+    "title": "Drunken Master",
+    "sourceLabel": "Drunken Master",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Drunken Master"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dumb-and-dumber",
+    "title": "Dumb and Dumber",
+    "sourceLabel": "Dumb and Dumber",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Dumb and Dumber"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dune",
+    "title": "تل‌ماسه",
+    "sourceLabel": "Dune",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Dune"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "dungeons-dragons",
+    "title": "Dungeons & Dragons",
+    "sourceLabel": "Dungeons & Dragons",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Dungeons & Dragons"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "earthsea",
+    "title": "Earthsea",
+    "sourceLabel": "Earthsea",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Earthsea"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "emmanuelle",
+    "title": "Emmanuelle",
+    "sourceLabel": "Emmanuelle فقط با سیاست محتوایی مالک",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Emmanuelle"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "enchanted",
+    "title": "Enchanted",
+    "sourceLabel": "Enchanted",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Enchanted"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "equalizer",
+    "title": "Equalizer",
+    "sourceLabel": "Equalizer",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Equalizer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ernest",
+    "title": "Ernest",
+    "sourceLabel": "Ernest",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Ernest"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "escape-plan",
+    "title": "Escape Plan",
+    "sourceLabel": "Escape Plan",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Escape Plan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "escape-room",
+    "title": "Escape Room",
+    "sourceLabel": "Escape Room",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Escape Room"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "evangelion",
+    "title": "Evangelion",
+    "sourceLabel": "Evangelion و Rebuild جدا",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Evangelion"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "evil-dead",
+    "title": "مردهٔ شریر",
+    "sourceLabel": "Evil Dead",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Evil Dead"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "exorcist",
+    "title": "Exorcist",
+    "sourceLabel": "Exorcist",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Exorcist"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "extraction",
+    "title": "Extraction",
+    "sourceLabel": "Extraction",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Extraction"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fallout",
+    "title": "Fallout",
+    "sourceLabel": "Fallout",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Fallout"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fant",
+    "title": "Fant",
+    "sourceLabel": "Fantômas",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Fant"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fantastic-four",
+    "title": "Fantastic Four",
+    "sourceLabel": "Fantastic Four",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Fantastic Four"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fantastic-four-1967",
+    "title": "Fantastic Four 1967",
+    "sourceLabel": "Fantastic Four 1967 و 1978",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Fantastic Four"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fantastic-four-world-s-greatest-heroes",
+    "title": "Fantastic Four: World's Greatest Heroes",
+    "sourceLabel": "Fantastic Four: World's Greatest Heroes",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Fantastic Four: World's Greatest Heroes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fate",
+    "title": "Fate",
+    "sourceLabel": "Fate با مسیرهای جدا",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Fate"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fear-street",
+    "title": "Fear Street",
+    "sourceLabel": "Fear Street",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Fear Street"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fifty-shades",
+    "title": "Fifty Shades",
+    "sourceLabel": "Fifty Shades",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Fifty Shades"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "final-destination",
+    "title": "مقصد نهایی",
+    "sourceLabel": "Final Destination",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Final Destination"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "final-fantasy",
+    "title": "Final Fantasy",
+    "sourceLabel": "Final Fantasy",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Final Fantasy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "finding-nemo-finding-dory",
+    "title": "Finding Nemo / Finding Dory",
+    "sourceLabel": "Finding Nemo / Finding Dory",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Finding Nemo",
+      "Finding Dory"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "firefly-serenity",
+    "title": "Firefly/Serenity",
+    "sourceLabel": "Firefly/Serenity",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Firefly",
+      "Serenity"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "flash",
+    "title": "Flash",
+    "sourceLabel": "Flash",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Flash"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fletch",
+    "title": "Fletch",
+    "sourceLabel": "Fletch",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Fletch"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fong-sai-yuk",
+    "title": "Fong Sai-yuk",
+    "sourceLabel": "Fong Sai-yuk",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Fong Sai-yuk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "freddy-vs-jason",
+    "title": "Freddy vs Jason",
+    "sourceLabel": "Freddy vs Jason عضو هر دو",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Freddy vs Jason"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "friday",
+    "title": "Friday",
+    "sourceLabel": "Friday",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Friday"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "friday-the-13th",
+    "title": "Friday the 13th",
+    "sourceLabel": "Friday the 13th",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Friday the 13th"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fukrey",
+    "title": "Fukrey",
+    "sourceLabel": "Fukrey",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Fukrey"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "fullmetal-alchemist",
+    "title": "Fullmetal Alchemist",
+    "sourceLabel": "Fullmetal Alchemist",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Fullmetal Alchemist"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "galaxy-quest",
+    "title": "Galaxy Quest",
+    "sourceLabel": "Galaxy Quest",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Galaxy Quest"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "game-of-thrones-house-of-the-dragon",
+    "title": "Game of Thrones/House of the Dragon",
+    "sourceLabel": "Game of Thrones/House of the Dragon و شاخه‌ها",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Game of Thrones",
+      "House of the Dragon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gamera",
+    "title": "Gamera",
+    "sourceLabel": "Gamera",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Gamera"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gamera-godzilla",
+    "title": "Gamera/Godzilla",
+    "sourceLabel": "Gamera/Godzilla",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Gamera",
+      "Godzilla"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "garfield",
+    "title": "Garfield",
+    "sourceLabel": "Garfield",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Garfield"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gendarme",
+    "title": "Gendarme",
+    "sourceLabel": "Gendarme",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Gendarme"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "get-smart",
+    "title": "Get Smart",
+    "sourceLabel": "Get Smart",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Get Smart"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ghibli",
+    "title": "استودیو جیبلی",
+    "sourceLabel": "Ghibli",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Ghibli"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ghost-in-the-shell",
+    "title": "Ghost in the Shell",
+    "sourceLabel": "Ghost in the Shell",
+    "groups": [
+      "scifi",
+      "anime"
+    ],
+    "queries": [
+      "Ghost in the Shell"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ghost-rider",
+    "title": "Ghost Rider",
+    "sourceLabel": "Ghost Rider",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Ghost Rider"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ghostbusters",
+    "title": "شکارچیان روح",
+    "sourceLabel": "Ghostbusters",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Ghostbusters"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ghoulies",
+    "title": "Ghoulies",
+    "sourceLabel": "Ghoulies",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Ghoulies"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ginger-snaps",
+    "title": "Ginger Snaps",
+    "sourceLabel": "Ginger Snaps",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Ginger Snaps"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "goal",
+    "title": "Goal!",
+    "sourceLabel": "Goal!",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Goal!"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "godzilla",
+    "title": "Godzilla",
+    "sourceLabel": "Godzilla ژاپنی",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Godzilla"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "golmaal",
+    "title": "Golmaal",
+    "sourceLabel": "Golmaal",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Golmaal"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "goon",
+    "title": "Goon",
+    "sourceLabel": "Goon",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Goon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gotham",
+    "title": "Gotham",
+    "sourceLabel": "Gotham",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Gotham"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "grease",
+    "title": "Grease",
+    "sourceLabel": "Grease",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Grease"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "green-lantern",
+    "title": "Green Lantern",
+    "sourceLabel": "Green Lantern",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Green Lantern"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gremlins",
+    "title": "Gremlins",
+    "sourceLabel": "Gremlins",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Gremlins"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "guardians",
+    "title": "Guardians",
+    "sourceLabel": "Guardians",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Guardians"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "gundam",
+    "title": "Gundam",
+    "sourceLabel": "Gundam با جهان‌های جدا",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Gundam"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "halloween",
+    "title": "هالووین",
+    "sourceLabel": "Halloween و خط‌های زمانی جدا",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Halloween"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "halo",
+    "title": "Halo",
+    "sourceLabel": "Halo",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Halo"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hammer-dracula-frankenstein-mummy",
+    "title": "Hammer Dracula/Frankenstein/Mummy",
+    "sourceLabel": "Hammer Dracula/Frankenstein/Mummy",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Hammer Dracula",
+      "Frankenstein",
+      "Mummy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hangover",
+    "title": "Hangover",
+    "sourceLabel": "Hangover",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Hangover"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hannibal-lecter",
+    "title": "Hannibal Lecter",
+    "sourceLabel": "Hannibal Lecter",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Hannibal Lecter"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "harley-quinn",
+    "title": "Harley Quinn",
+    "sourceLabel": "Harley Quinn",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Harley Quinn"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "harold-kumar",
+    "title": "Harold & Kumar",
+    "sourceLabel": "Harold & Kumar",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Harold & Kumar"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "has-fallen",
+    "title": "Has Fallen",
+    "sourceLabel": "Has Fallen",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Has Fallen"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hatchet",
+    "title": "Hatchet",
+    "sourceLabel": "Hatchet",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Hatchet"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hellboy",
+    "title": "Hellboy",
+    "sourceLabel": "Hellboy",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Hellboy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hellraiser",
+    "title": "Hellraiser",
+    "sourceLabel": "Hellraiser",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Hellraiser"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hera-pheri",
+    "title": "Hera Pheri",
+    "sourceLabel": "Hera Pheri",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Hera Pheri"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "herbie",
+    "title": "Herbie",
+    "sourceLabel": "Herbie",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Herbie"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "high-school-musical",
+    "title": "High School Musical",
+    "sourceLabel": "High School Musical",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "High School Musical"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "highlander",
+    "title": "Highlander",
+    "sourceLabel": "Highlander",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Highlander"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hills-run-red",
+    "title": "Hills Run Red",
+    "sourceLabel": "Hills Run Red و موارد تک‌اثر در ممیزی ژانری",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Hills Run Red"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "his-dark-materials",
+    "title": "His Dark Materials",
+    "sourceLabel": "His Dark Materials",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "His Dark Materials"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hitman",
+    "title": "Hitman",
+    "sourceLabel": "Hitman",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Hitman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "home-alone",
+    "title": "تنها در خانه",
+    "sourceLabel": "Home Alone",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Home Alone"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hostel",
+    "title": "Hostel",
+    "sourceLabel": "Hostel",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Hostel"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hot-shots",
+    "title": "Hot Shots",
+    "sourceLabel": "Hot Shots",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Hot Shots"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hotel-transylvania",
+    "title": "هتل ترانسیلوانیا",
+    "sourceLabel": "Hotel Transylvania",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Hotel Transylvania"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "house",
+    "title": "House",
+    "sourceLabel": "House",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "House"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "housefull",
+    "title": "Housefull",
+    "sourceLabel": "Housefull",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Housefull"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "how-to-train-your-dragon",
+    "title": "چگونه اژدهای خود را تربیت کنیم",
+    "sourceLabel": "How to Train Your Dragon",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "How to Train Your Dragon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "howling",
+    "title": "Howling",
+    "sourceLabel": "Howling",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Howling"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hulk",
+    "title": "Hulk",
+    "sourceLabel": "Hulk",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Hulk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hulk-and-the-agents-of-s-m-a-s-h",
+    "title": "Hulk and the Agents of S.M.A.S.H",
+    "sourceLabel": "Hulk and the Agents of S.M.A.S.H",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Hulk and the Agents of S.M.A.S.H"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "hunger-games",
+    "title": "بازی‌های گرسنگی",
+    "sourceLabel": "Hunger Games",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Hunger Games"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "i-know-what-you-did-last-summer",
+    "title": "I Know What You Did Last Summer",
+    "sourceLabel": "I Know What You Did Last Summer",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "I Know What You Did Last Summer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ice-age",
+    "title": "عصر یخبندان",
+    "sourceLabel": "Ice Age",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Ice Age"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "illumination",
+    "title": "ایلومینیشن",
+    "sourceLabel": "Illumination",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Illumination"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "incredible-hulk-1982",
+    "title": "Incredible Hulk 1982",
+    "sourceLabel": "Incredible Hulk 1982",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Incredible Hulk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "incredible-hulk-1996",
+    "title": "Incredible Hulk 1996",
+    "sourceLabel": "Incredible Hulk 1996",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Incredible Hulk"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "incredibles",
+    "title": "The Incredibles",
+    "sourceLabel": "The Incredibles",
+    "groups": [
+      "comic",
+      "animation"
+    ],
+    "queries": [
+      "The Incredibles"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "indiana-jones",
+    "title": "ایندیانا جونز",
+    "sourceLabel": "Indiana Jones و Young Indiana Jones",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Indiana Jones"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "infernal-affairs",
+    "title": "Infernal Affairs",
+    "sourceLabel": "Infernal Affairs",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Infernal Affairs"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "initial-d-mf-ghost",
+    "title": "Initial D/MF Ghost",
+    "sourceLabel": "Initial D/MF Ghost",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Initial D",
+      "MF Ghost"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "inside-out",
+    "title": "درون و بیرون",
+    "sourceLabel": "Inside Out",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Inside Out"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "insidious",
+    "title": "Insidious",
+    "sourceLabel": "Insidious",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Insidious"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "invincible",
+    "title": "Invincible",
+    "sourceLabel": "Invincible",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Invincible"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ip-man",
+    "title": "ایپ من",
+    "sourceLabel": "Ip Man با تفکیک اصلی/اسپین‌آف",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Ip Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "iron-man",
+    "title": "مرد آهنی",
+    "sourceLabel": "Iron Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Iron Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "iron-man-armored-adventures",
+    "title": "Iron Man: Armored Adventures",
+    "sourceLabel": "Iron Man: Armored Adventures",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Iron Man: Armored Adventures"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "it-s-alive",
+    "title": "It's Alive",
+    "sourceLabel": "It's Alive",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "It's Alive"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "izombie",
+    "title": "iZombie",
+    "sourceLabel": "iZombie",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "iZombie"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jack-irish",
+    "title": "Jack Irish",
+    "sourceLabel": "Jack Irish",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Jack Irish"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jack-reacher",
+    "title": "Jack Reacher",
+    "sourceLabel": "Jack Reacher",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Jack Reacher"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jack-ryan",
+    "title": "Jack Ryan",
+    "sourceLabel": "Jack Ryan",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Jack Ryan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jaws",
+    "title": "Jaws",
+    "sourceLabel": "Jaws",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Jaws"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jeepers-creepers",
+    "title": "Jeepers Creepers",
+    "sourceLabel": "Jeepers Creepers",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Jeepers Creepers"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jesse-stone",
+    "title": "Jesse Stone",
+    "sourceLabel": "Jesse Stone",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Jesse Stone"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "johnny-english",
+    "title": "Johnny English",
+    "sourceLabel": "Johnny English",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Johnny English"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "journey",
+    "title": "Journey",
+    "sourceLabel": "Journey adaptations",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Journey"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ju-on-grudge",
+    "title": "Ju-On/Grudge",
+    "sourceLabel": "Ju-On/Grudge",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Ju-On",
+      "Grudge"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "judge-dredd",
+    "title": "Judge Dredd",
+    "sourceLabel": "Judge Dredd",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Judge Dredd"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jujutsu-kaisen",
+    "title": "Jujutsu Kaisen",
+    "sourceLabel": "Jujutsu Kaisen",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Jujutsu Kaisen"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jumanji-zathura",
+    "title": "Jumanji/Zathura",
+    "sourceLabel": "Jumanji/Zathura با برچسب رابطه",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Jumanji",
+      "Zathura"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "jurassic-park-world",
+    "title": "پارک و دنیای ژوراسیک",
+    "sourceLabel": "Jurassic Park/World و انیمیشن‌ها",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Jurassic Park",
+      "World"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "justice-league",
+    "title": "Justice League",
+    "sourceLabel": "Justice League و Unlimited",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Justice League"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "karate-kid-cobra-kai",
+    "title": "Karate Kid/Cobra Kai",
+    "sourceLabel": "Karate Kid/Cobra Kai",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Karate Kid",
+      "Cobra Kai"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kgf",
+    "title": "KGF",
+    "sourceLabel": "KGF",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "KGF"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kick-ass",
+    "title": "Kick-Ass",
+    "sourceLabel": "Kick-Ass",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Kick-Ass"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kickboxer",
+    "title": "Kickboxer",
+    "sourceLabel": "Kickboxer",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Kickboxer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "king-kong",
+    "title": "King Kong",
+    "sourceLabel": "King Kong اقتباس‌ها",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "King Kong"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kingsman",
+    "title": "Kingsman",
+    "sourceLabel": "Kingsman",
+    "groups": [
+      "comic",
+      "action"
+    ],
+    "queries": [
+      "Kingsman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kissing-booth",
+    "title": "Kissing Booth",
+    "sourceLabel": "Kissing Booth",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Kissing Booth"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "knives-out",
+    "title": "Knives Out",
+    "sourceLabel": "Knives Out",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Knives Out"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "krrish-koi-mil-gaya",
+    "title": "Krrish/Koi... Mil Gaya",
+    "sourceLabel": "Krrish/Koi... Mil Gaya",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Krrish",
+      "Koi... Mil Gaya"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "krypto",
+    "title": "Krypto",
+    "sourceLabel": "Krypto و آثار جدیدتر",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Krypto"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "kung-fu-panda",
+    "title": "پاندای کونگ‌فوکار",
+    "sourceLabel": "Kung Fu Panda",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Kung Fu Panda"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "labyrinth",
+    "title": "Labyrinth",
+    "sourceLabel": "Labyrinth",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Labyrinth"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "laika",
+    "title": "Laika",
+    "sourceLabel": "Laika",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Laika"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lake-placid",
+    "title": "Lake Placid",
+    "sourceLabel": "Lake Placid",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Lake Placid"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "land-before-time",
+    "title": "Land Before Time",
+    "sourceLabel": "Land Before Time",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Land Before Time"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "laurel-hardy",
+    "title": "Laurel & Hardy",
+    "sourceLabel": "Laurel & Hardy",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Laurel & Hardy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "legally-blonde",
+    "title": "Legally Blonde",
+    "sourceLabel": "Legally Blonde",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Legally Blonde"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "legend-of-the-galactic-heroes",
+    "title": "Legend of the Galactic Heroes",
+    "sourceLabel": "Legend of the Galactic Heroes",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Legend of the Galactic Heroes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "legend-of-the-seeker",
+    "title": "Legend of the Seeker",
+    "sourceLabel": "Legend of the Seeker",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Legend of the Seeker"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "legion-of-super-heroes",
+    "title": "Legion of Super Heroes",
+    "sourceLabel": "Legion of Super Heroes",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Legion of Super Heroes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lego",
+    "title": "LEGO",
+    "sourceLabel": "LEGO",
+    "groups": [
+      "comic",
+      "animation"
+    ],
+    "queries": [
+      "LEGO"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "leprechaun",
+    "title": "Leprechaun",
+    "sourceLabel": "Leprechaun",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Leprechaun"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "les-visiteurs",
+    "title": "Les Visiteurs",
+    "sourceLabel": "Les Visiteurs",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Les Visiteurs"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lethal-weapon",
+    "title": "اسلحهٔ مرگبار",
+    "sourceLabel": "Lethal Weapon",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Lethal Weapon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "little-women",
+    "title": "Little Women",
+    "sourceLabel": "Little Women اقتباس‌ها",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Little Women"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lokesh-cinematic-universe",
+    "title": "Lokesh Cinematic Universe",
+    "sourceLabel": "Lokesh Cinematic Universe",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Lokesh Cinematic Universe"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lone-wolf-and-cub",
+    "title": "Lone Wolf and Cub",
+    "sourceLabel": "Lone Wolf and Cub",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Lone Wolf and Cub"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "looney-tunes",
+    "title": "Looney Tunes",
+    "sourceLabel": "Looney Tunes",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Looney Tunes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lucifer",
+    "title": "Lucifer",
+    "sourceLabel": "Lucifer",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Lucifer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "lupin-iii",
+    "title": "Lupin III",
+    "sourceLabel": "Lupin III",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Lupin III"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "macross",
+    "title": "Macross",
+    "sourceLabel": "Macross",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Macross"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "madagascar-penguins",
+    "title": "Madagascar / Penguins",
+    "sourceLabel": "Madagascar / Penguins",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Madagascar",
+      "Penguins"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "madea",
+    "title": "Madea",
+    "sourceLabel": "Madea",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Madea"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "major-league",
+    "title": "Major League",
+    "sourceLabel": "Major League",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Major League"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mamma-mia",
+    "title": "Mamma Mia",
+    "sourceLabel": "Mamma Mia",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Mamma Mia"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mario",
+    "title": "Mario",
+    "sourceLabel": "Mario",
+    "groups": [
+      "games",
+      "animation"
+    ],
+    "queries": [
+      "Mario"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "marvel",
+    "title": "خانوادهٔ مارول",
+    "sourceLabel": "Marvel",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Marvel"
+    ],
+    "referenceId": "complete"
+  },
+  {
+    "id": "masters-of-horror",
+    "title": "Masters of Horror",
+    "sourceLabel": "Masters of Horror",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Masters of Horror"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "matrix",
+    "title": "ماتریکس و انیماتریکس",
+    "sourceLabel": "Matrix و Animatrix",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Matrix"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "maze-runner",
+    "title": "Maze Runner",
+    "sourceLabel": "Maze Runner",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Maze Runner"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mcu",
+    "title": "جهان سینمایی مارول",
+    "sourceLabel": "MCU",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "MCU"
+    ],
+    "referenceId": "mcu"
+  },
+  {
+    "id": "mechanic",
+    "title": "Mechanic",
+    "sourceLabel": "Mechanic",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Mechanic"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "meet-the-parents",
+    "title": "Meet the Parents",
+    "sourceLabel": "Meet the Parents",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Meet the Parents"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "men-in-black",
+    "title": "مردان سیاه‌پوش",
+    "sourceLabel": "Men in Black",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Men in Black"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "merlin",
+    "title": "Merlin",
+    "sourceLabel": "Merlin",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Merlin"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "middleearth-adaptations",
+    "title": "سرزمین میانه · همهٔ اقتباس‌ها",
+    "sourceLabel": "Middle-earth adaptations",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "The Lord of the Rings",
+      "The Hobbit",
+      "The Rings of Power"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mighty-ducks",
+    "title": "Mighty Ducks",
+    "sourceLabel": "Mighty Ducks",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Mighty Ducks"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "millennium",
+    "title": "Millennium",
+    "sourceLabel": "Millennium با تفکیک اقتباس",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Millennium"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "miss-congeniality",
+    "title": "Miss Congeniality",
+    "sourceLabel": "Miss Congeniality",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Miss Congeniality"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "monster-high",
+    "title": "Monster High",
+    "sourceLabel": "Monster High",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Monster High"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "monsters-inc",
+    "title": "Monsters Inc",
+    "sourceLabel": "Monsters Inc",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Monsters Inc"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "monsterverse",
+    "title": "MonsterVerse",
+    "sourceLabel": "MonsterVerse",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "MonsterVerse"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mortal-instruments-shadowhunters",
+    "title": "Mortal Instruments/Shadowhunters",
+    "sourceLabel": "Mortal Instruments/Shadowhunters",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Mortal Instruments",
+      "Shadowhunters"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "mortal-kombat",
+    "title": "Mortal Kombat",
+    "sourceLabel": "Mortal Kombat",
+    "groups": [
+      "martial",
+      "games"
+    ],
+    "queries": [
+      "Mortal Kombat"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "muppets",
+    "title": "Muppets",
+    "sourceLabel": "Muppets",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Muppets"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "musashi",
+    "title": "Musashi",
+    "sourceLabel": "Musashi اقتباس‌ها",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Musashi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "my-little-pony",
+    "title": "My Little Pony",
+    "sourceLabel": "My Little Pony",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "My Little Pony"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "naked-gun-police-squad",
+    "title": "Naked Gun/Police Squad",
+    "sourceLabel": "Naked Gun/Police Squad",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Naked Gun",
+      "Police Squad"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "narnia",
+    "title": "Narnia",
+    "sourceLabel": "Narnia",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Narnia"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "naruto-boruto",
+    "title": "Naruto/Boruto",
+    "sourceLabel": "Naruto/Boruto",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Naruto",
+      "Boruto"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "national-treasure",
+    "title": "National Treasure",
+    "sourceLabel": "National Treasure",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "National Treasure"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "neverending-story",
+    "title": "NeverEnding Story",
+    "sourceLabel": "NeverEnding Story",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "NeverEnding Story"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "new-adventures-of-superman",
+    "title": "New Adventures of Superman",
+    "sourceLabel": "New Adventures of Superman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "New Adventures of Superman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "new-batman-adventures",
+    "title": "New Batman Adventures",
+    "sourceLabel": "New Batman Adventures",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "New Batman Adventures"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "night-at-the-museum",
+    "title": "شب در موزه",
+    "sourceLabel": "Night at the Museum",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Night at the Museum"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "nightmare-on-elm-street",
+    "title": "Nightmare on Elm Street",
+    "sourceLabel": "Nightmare on Elm Street",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Nightmare on Elm Street"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ninja",
+    "title": "Ninja",
+    "sourceLabel": "Ninja",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Ninja"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "now-you-see-me",
+    "title": "Now You See Me",
+    "sourceLabel": "Now You See Me",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Now You See Me"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ocean-s",
+    "title": "Ocean's",
+    "sourceLabel": "Ocean's",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Ocean's"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "omen",
+    "title": "Omen",
+    "sourceLabel": "Omen",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Omen"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "once-upon-a-time",
+    "title": "Once Upon a Time",
+    "sourceLabel": "Once Upon a Time",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Once Upon a Time"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "once-upon-a-time-in-china",
+    "title": "Once Upon a Time in China",
+    "sourceLabel": "Once Upon a Time in China",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Once Upon a Time in China"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "one-missed-call",
+    "title": "One Missed Call",
+    "sourceLabel": "One Missed Call",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "One Missed Call"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "one-piece",
+    "title": "One Piece",
+    "sourceLabel": "One Piece",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "One Piece"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ong-bak",
+    "title": "Ong-Bak",
+    "sourceLabel": "Ong-Bak",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Ong-Bak"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "open-season",
+    "title": "Open Season",
+    "sourceLabel": "Open Season",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Open Season"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "oss 117",
+    "title": "OSS117",
+    "sourceLabel": "OSS117",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "OSS117"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "oss-117",
+    "title": "OSS 117",
+    "sourceLabel": "OSS 117",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "OSS 117"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "otoko-wa-tsurai-yo",
+    "title": "Otoko wa Tsurai yo",
+    "sourceLabel": "Otoko wa Tsurai yo",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Otoko wa Tsurai yo"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "outlander",
+    "title": "Outlander",
+    "sourceLabel": "Outlander",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Outlander"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "oz",
+    "title": "Oz",
+    "sourceLabel": "Oz",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Oz"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pacific-rim",
+    "title": "Pacific Rim",
+    "sourceLabel": "Pacific Rim",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Pacific Rim"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "paddington",
+    "title": "Paddington",
+    "sourceLabel": "Paddington",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Paddington"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "painted-skin",
+    "title": "Painted Skin",
+    "sourceLabel": "Painted Skin",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Painted Skin"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "paranormal-activity",
+    "title": "Paranormal Activity",
+    "sourceLabel": "Paranormal Activity",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Paranormal Activity"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "patlabor",
+    "title": "Patlabor",
+    "sourceLabel": "Patlabor",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Patlabor"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "peanuts",
+    "title": "Peanuts",
+    "sourceLabel": "Peanuts",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Peanuts"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pennyworth",
+    "title": "Pennyworth",
+    "sourceLabel": "Pennyworth",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Pennyworth"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "percy-jackson",
+    "title": "Percy Jackson",
+    "sourceLabel": "Percy Jackson",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Percy Jackson"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "peter-rabbit",
+    "title": "Peter Rabbit",
+    "sourceLabel": "Peter Rabbit",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Peter Rabbit"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "phantasm",
+    "title": "Phantasm",
+    "sourceLabel": "Phantasm",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Phantasm"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pirates-of-the-caribbean",
+    "title": "دزدان دریایی کارائیب",
+    "sourceLabel": "Pirates of the Caribbean",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Pirates of the Caribbean"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pitch-perfect",
+    "title": "Pitch Perfect",
+    "sourceLabel": "Pitch Perfect",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Pitch Perfect"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pixar",
+    "title": "پیکسار",
+    "sourceLabel": "Pixar",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Pixar"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pixar-shorts",
+    "title": "Pixar shorts",
+    "sourceLabel": "Pixar shorts",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Pixar shorts"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "planet-of-the-apes",
+    "title": "سیارهٔ میمون‌ها",
+    "sourceLabel": "Planet of the Apes",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Planet of the Apes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "plastic-man",
+    "title": "Plastic Man",
+    "sourceLabel": "Plastic Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Plastic Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pok",
+    "title": "Pok",
+    "sourceLabel": "Pokémon",
+    "groups": [
+      "anime",
+      "games"
+    ],
+    "queries": [
+      "Pok"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "police-academy",
+    "title": "دانشکدهٔ پلیس",
+    "sourceLabel": "Police Academy",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Police Academy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "police-story",
+    "title": "Police Story",
+    "sourceLabel": "Police Story",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Police Story"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "poltergeist",
+    "title": "Poltergeist",
+    "sourceLabel": "Poltergeist",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Poltergeist"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "predator",
+    "title": "غارتگر",
+    "sourceLabel": "Predator",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Predator"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "prince-of-persia",
+    "title": "Prince of Persia",
+    "sourceLabel": "Prince of Persia",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Prince of Persia"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "princess-diaries",
+    "title": "Princess Diaries",
+    "sourceLabel": "Princess Diaries",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Princess Diaries"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "project-a",
+    "title": "Project A",
+    "sourceLabel": "Project A",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Project A"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "prom-night",
+    "title": "Prom Night",
+    "sourceLabel": "Prom Night",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Prom Night"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "psycho",
+    "title": "Psycho",
+    "sourceLabel": "Psycho",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Psycho"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "psycho-pass",
+    "title": "Psycho-Pass",
+    "sourceLabel": "Psycho-Pass",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Psycho-Pass"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pumpkinhead",
+    "title": "Pumpkinhead",
+    "sourceLabel": "Pumpkinhead",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Pumpkinhead"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "punisher",
+    "title": "Punisher",
+    "sourceLabel": "Punisher",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Punisher"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "puppet-master",
+    "title": "Puppet Master",
+    "sourceLabel": "Puppet Master",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Puppet Master"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "pushpa",
+    "title": "Pushpa",
+    "sourceLabel": "Pushpa",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Pushpa"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "quarantine",
+    "title": "Quarantine",
+    "sourceLabel": "Quarantine",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Quarantine"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "quatermass",
+    "title": "Quatermass",
+    "sourceLabel": "Quatermass",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Quatermass"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "race",
+    "title": "Race",
+    "sourceLabel": "Race",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Race"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "rambo",
+    "title": "رمبو",
+    "sourceLabel": "Rambo",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Rambo"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "re-animator",
+    "title": "Re-Animator",
+    "sourceLabel": "Re-Animator",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Re-Animator"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "rec",
+    "title": "REC",
+    "sourceLabel": "REC",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "REC"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "red",
+    "title": "RED",
+    "sourceLabel": "RED",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "RED"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "resident-evil",
+    "title": "رزیدنت ایول",
+    "sourceLabel": "Resident Evil زنده/انیمیشن/بازسازی جدا",
+    "groups": [
+      "horror",
+      "games"
+    ],
+    "queries": [
+      "Resident Evil"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "return-of-the-living-dead",
+    "title": "Return of the Living Dead",
+    "sourceLabel": "Return of the Living Dead جدا",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Return of the Living Dead"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "riddick",
+    "title": "Riddick",
+    "sourceLabel": "Riddick",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Riddick"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ride-along",
+    "title": "Ride Along",
+    "sourceLabel": "Ride Along",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Ride Along"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ring-ringu",
+    "title": "Ring/Ringu",
+    "sourceLabel": "Ring/Ringu با تفکیک اقتباس",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Ring",
+      "Ringu"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "rio",
+    "title": "Rio",
+    "sourceLabel": "Rio",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Rio"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "robin-hood",
+    "title": "Robin Hood",
+    "sourceLabel": "Robin Hood",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Robin Hood"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "robocop",
+    "title": "پلیس آهنی",
+    "sourceLabel": "RoboCop",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "RoboCop"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "romero-living-dead",
+    "title": "Romero Living Dead",
+    "sourceLabel": "Romero Living Dead",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Romero Living Dead"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "rurouni-kenshin",
+    "title": "Rurouni Kenshin",
+    "sourceLabel": "Rurouni Kenshin",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Rurouni Kenshin"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "rush-hour",
+    "title": "Rush Hour",
+    "sourceLabel": "Rush Hour",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Rush Hour"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sailor-moon",
+    "title": "Sailor Moon",
+    "sourceLabel": "Sailor Moon",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Sailor Moon"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "saint-seiya",
+    "title": "Saint Seiya",
+    "sourceLabel": "Saint Seiya",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Saint Seiya"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "samurai",
+    "title": "Samurai",
+    "sourceLabel": "Samurai trilogy",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Samurai"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sandman",
+    "title": "Sandman",
+    "sourceLabel": "Sandman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Sandman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "satyajit-ray",
+    "title": "Satyajit Ray",
+    "sourceLabel": "فیلم‌های Satyajit Ray در مسیر سازنده، نه جهان مشترک",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Satyajit Ray"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "saw",
+    "title": "اره",
+    "sourceLabel": "Saw",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Saw"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "scanners",
+    "title": "Scanners",
+    "sourceLabel": "Scanners",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Scanners"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "scary-movie",
+    "title": "Scary Movie",
+    "sourceLabel": "Scary Movie",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Scary Movie"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "scooby-doo",
+    "title": "Scooby-Doo",
+    "sourceLabel": "Scooby-Doo",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Scooby-Doo"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "scream",
+    "title": "جیغ",
+    "sourceLabel": "Scream",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Scream"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sex-and-the-city",
+    "title": "Sex and the City",
+    "sourceLabel": "Sex and the City و شاخه‌ها",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Sex and the City"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shaft",
+    "title": "Shaft",
+    "sourceLabel": "Shaft",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Shaft"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shannara",
+    "title": "Shannara",
+    "sourceLabel": "Shannara",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Shannara"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sharknado",
+    "title": "Sharknado",
+    "sourceLabel": "Sharknado",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Sharknado"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shaun-the-sheep",
+    "title": "Shaun the Sheep",
+    "sourceLabel": "Shaun the Sheep",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Shaun the Sheep"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shazam",
+    "title": "Shazam",
+    "sourceLabel": "Shazam",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Shazam"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sherlock-holmes",
+    "title": "Sherlock Holmes",
+    "sourceLabel": "Sherlock Holmes",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Sherlock Holmes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shinobi",
+    "title": "Shinobi",
+    "sourceLabel": "Shinobi",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Shinobi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shogun",
+    "title": "Shogun",
+    "sourceLabel": "Shogun اقتباس‌ها",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Shogun"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "shrek-puss-in-boots",
+    "title": "شرک و گربهٔ چکمه‌پوش",
+    "sourceLabel": "Shrek / Puss in Boots",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Shrek",
+      "Puss in Boots"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sicario",
+    "title": "Sicario",
+    "sourceLabel": "Sicario",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "Sicario"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "silent-hill",
+    "title": "Silent Hill",
+    "sourceLabel": "Silent Hill",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Silent Hill"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "silent-night",
+    "title": "Silent Night",
+    "sourceLabel": "Silent Night, Deadly Night",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Silent Night"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "silver-surfer",
+    "title": "Silver Surfer",
+    "sourceLabel": "Silver Surfer",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Silver Surfer"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sin-city",
+    "title": "Sin City",
+    "sourceLabel": "Sin City",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Sin City"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sing",
+    "title": "Sing",
+    "sourceLabel": "Sing",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Sing"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "singham-cop-universe",
+    "title": "Singham/Cop Universe",
+    "sourceLabel": "Singham/Cop Universe",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Singham",
+      "Cop Universe"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sister-act",
+    "title": "Sister Act",
+    "sourceLabel": "Sister Act",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Sister Act"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sisterhood-of-the-traveling-pants",
+    "title": "Sisterhood of the Traveling Pants",
+    "sourceLabel": "Sisterhood of the Traveling Pants",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Sisterhood of the Traveling Pants"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "slap-shot",
+    "title": "Slap Shot",
+    "sourceLabel": "Slap Shot",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Slap Shot"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sleepaway-camp",
+    "title": "Sleepaway Camp",
+    "sourceLabel": "Sleepaway Camp",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Sleepaway Camp"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "slumber-party-massacre",
+    "title": "Slumber Party Massacre",
+    "sourceLabel": "Slumber Party Massacre",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Slumber Party Massacre"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "smallville",
+    "title": "Smallville",
+    "sourceLabel": "Smallville",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Smallville"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "smokey-and-the-bandit",
+    "title": "Smokey and the Bandit",
+    "sourceLabel": "Smokey and the Bandit",
+    "groups": [
+      "sport"
+    ],
+    "queries": [
+      "Smokey and the Bandit"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "smurfs",
+    "title": "Smurfs",
+    "sourceLabel": "Smurfs",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Smurfs"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sniper",
+    "title": "Sniper",
+    "sourceLabel": "Sniper",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Sniper"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "soldier",
+    "title": "Soldier",
+    "sourceLabel": "Soldier adaptations در صورت اثبات رابطه",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Soldier"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sonic",
+    "title": "Sonic",
+    "sourceLabel": "Sonic",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Sonic"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sony-pictures",
+    "title": "Sony Pictures Animation",
+    "sourceLabel": "Sony Pictures Animation",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Sony Pictures Animation"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "space-battleship-yamato",
+    "title": "Space Battleship Yamato",
+    "sourceLabel": "Space Battleship Yamato",
+    "groups": [
+      "scifi",
+      "anime"
+    ],
+    "queries": [
+      "Space Battleship Yamato"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spawn",
+    "title": "Spawn",
+    "sourceLabel": "Spawn",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spawn"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "species",
+    "title": "Species",
+    "sourceLabel": "Species",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Species"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spectacular-spider-man",
+    "title": "Spectacular Spider-Man",
+    "sourceLabel": "Spectacular Spider-Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spectacular Spider-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man",
+    "title": "مرد عنکبوتی",
+    "sourceLabel": "Spider-Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man"
+    ],
+    "referenceId": "spider"
+  },
+  {
+    "id": "spider-man-1967",
+    "title": "Spider-Man 1967",
+    "sourceLabel": "Spider-Man 1967",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man-1981",
+    "title": "Spider-Man 1981",
+    "sourceLabel": "Spider-Man 1981",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man-1994",
+    "title": "Spider-Man 1994",
+    "sourceLabel": "Spider-Man 1994",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man-and-his-amazing-friends",
+    "title": "Spider-Man and His Amazing Friends",
+    "sourceLabel": "Spider-Man and His Amazing Friends",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man and His Amazing Friends"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man-the-new-animated-series",
+    "title": "Spider-Man: The New Animated Series",
+    "sourceLabel": "Spider-Man: The New Animated Series",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man: The New Animated Series"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-man-unlimited",
+    "title": "Spider-Man Unlimited",
+    "sourceLabel": "Spider-Man Unlimited",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Man Unlimited"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spider-woman",
+    "title": "Spider-Woman",
+    "sourceLabel": "Spider-Woman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Spider-Woman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spirit",
+    "title": "Spirit",
+    "sourceLabel": "Spirit",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Spirit"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spl",
+    "title": "SPL",
+    "sourceLabel": "SPL",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "SPL"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "spongebob",
+    "title": "SpongeBob",
+    "sourceLabel": "SpongeBob",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "SpongeBob"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "star-trek",
+    "title": "پیشتازان فضا",
+    "sourceLabel": "Star Trek",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Star Trek"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "stargate",
+    "title": "دروازهٔ ستارگان",
+    "sourceLabel": "Stargate",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Stargate"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "static-shock",
+    "title": "Static Shock",
+    "sourceLabel": "Static Shock",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Static Shock"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "step-up",
+    "title": "Step Up",
+    "sourceLabel": "Step Up",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "Step Up"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "stephen-king",
+    "title": "Stephen King",
+    "sourceLabel": "Stephen King اقتباس‌ها، نه جهان مشترک خودکار",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Stephen King"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "stree-maddock-horror-comedy-universe",
+    "title": "Stree/Maddock Horror Comedy Universe",
+    "sourceLabel": "Stree/Maddock Horror Comedy Universe",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Stree",
+      "Maddock Horror Comedy Universe"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "street-fighter",
+    "title": "Street Fighter",
+    "sourceLabel": "Street Fighter",
+    "groups": [
+      "martial",
+      "games"
+    ],
+    "queries": [
+      "Street Fighter"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "stuart-little",
+    "title": "Stuart Little",
+    "sourceLabel": "Stuart Little",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Stuart Little"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "suicide-squad",
+    "title": "Suicide Squad",
+    "sourceLabel": "Suicide Squad",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Suicide Squad"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "super-friends",
+    "title": "Super Friends",
+    "sourceLabel": "Super Friends و شاخه‌هایش",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Super Friends"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "super-hero-squad",
+    "title": "Super Hero Squad",
+    "sourceLabel": "Super Hero Squad",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Super Hero Squad"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "superman",
+    "title": "سوپرمن",
+    "sourceLabel": "Superman زنده",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "superman-1988",
+    "title": "Superman 1988",
+    "sourceLabel": "Superman 1988",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "superman-aquaman-hour",
+    "title": "Superman/Aquaman Hour",
+    "sourceLabel": "Superman/Aquaman Hour",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman",
+      "Aquaman Hour"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "superman-the-animated-series",
+    "title": "Superman: The Animated Series",
+    "sourceLabel": "Superman: The Animated Series",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman: The Animated Series"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "swamp-thing",
+    "title": "Swamp Thing",
+    "sourceLabel": "Swamp Thing",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Swamp Thing"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "swan-princess",
+    "title": "Swan Princess",
+    "sourceLabel": "Swan Princess",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Swan Princess"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "sword-art-online",
+    "title": "Sword Art Online",
+    "sourceLabel": "Sword Art Online",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Sword Art Online"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "taken",
+    "title": "Taken",
+    "sourceLabel": "Taken",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Taken"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tales-from-the-crypt",
+    "title": "Tales from the Crypt",
+    "sourceLabel": "Tales from the Crypt",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Tales from the Crypt"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tales-from-the-darkside",
+    "title": "Tales from the Darkside",
+    "sourceLabel": "Tales from the Darkside",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Tales from the Darkside"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tarzan",
+    "title": "Tarzan",
+    "sourceLabel": "Tarzan",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Tarzan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "taxi",
+    "title": "Taxi",
+    "sourceLabel": "Taxi فرانسه و بازسازی‌ها",
+    "groups": [
+      "sport",
+      "world"
+    ],
+    "queries": [
+      "Taxi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tazza",
+    "title": "Tazza",
+    "sourceLabel": "Tazza",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Tazza"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "teen-titans",
+    "title": "Teen Titans",
+    "sourceLabel": "Teen Titans",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Teen Titans"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "teen-titans-go",
+    "title": "Teen Titans Go",
+    "sourceLabel": "Teen Titans Go",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Teen Titans Go"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "teenage-mutant-ninja-turtles",
+    "title": "Teenage Mutant Ninja Turtles",
+    "sourceLabel": "Teenage Mutant Ninja Turtles",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Teenage Mutant Ninja Turtles"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tekken",
+    "title": "Tekken",
+    "sourceLabel": "Tekken",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "Tekken"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "terminator",
+    "title": "ترمیناتور",
+    "sourceLabel": "Terminator",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Terminator"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "terrifier",
+    "title": "Terrifier",
+    "sourceLabel": "Terrifier",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Terrifier"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "texas-chainsaw-massacre",
+    "title": "Texas Chainsaw Massacre",
+    "sourceLabel": "Texas Chainsaw Massacre",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Texas Chainsaw Massacre"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-apu",
+    "title": "The Apu",
+    "sourceLabel": "The Apu Trilogy",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "The Apu"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-batman",
+    "title": "The Batman",
+    "sourceLabel": "The Batman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Batman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-best-exotic-marigold-hotel",
+    "title": "The Best Exotic Marigold Hotel",
+    "sourceLabel": "The Best Exotic Marigold Hotel",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "The Best Exotic Marigold Hotel"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-best-man",
+    "title": "The Best Man",
+    "sourceLabel": "The Best Man",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "The Best Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-boys-gen-v",
+    "title": "The Boys/Gen V",
+    "sourceLabel": "The Boys/Gen V",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Boys",
+      "Gen V"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-crow",
+    "title": "The Crow",
+    "sourceLabel": "The Crow",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Crow"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-expanse",
+    "title": "The Expanse",
+    "sourceLabel": "The Expanse",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "The Expanse"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-expendables",
+    "title": "بی‌مصرف‌ها",
+    "sourceLabel": "The Expendables",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "The Expendables"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-giver",
+    "title": "The Giver",
+    "sourceLabel": "The Giver adaptations",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "The Giver"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-godfather",
+    "title": "پدرخوانده",
+    "sourceLabel": "The Godfather",
+    "groups": [
+      "crime",
+      "drama"
+    ],
+    "queries": [
+      "The Godfather"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-hills-have-eyes",
+    "title": "The Hills Have Eyes",
+    "sourceLabel": "The Hills Have Eyes",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "The Hills Have Eyes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-human-condition",
+    "title": "The Human Condition",
+    "sourceLabel": "The Human Condition",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "The Human Condition"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-italian-job",
+    "title": "The Italian Job",
+    "sourceLabel": "The Italian Job اقتباس‌ها",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "The Italian Job"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-last-of-us",
+    "title": "The Last of Us",
+    "sourceLabel": "The Last of Us",
+    "groups": [
+      "games"
+    ],
+    "queries": [
+      "The Last of Us"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-man-from-u-n-c-l-e",
+    "title": "The Man from U.N.C.L.E",
+    "sourceLabel": "The Man from U.N.C.L.E",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "The Man from U.N.C.L.E"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-marvel-super-heroes",
+    "title": "The Marvel Super Heroes",
+    "sourceLabel": "The Marvel Super Heroes",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Marvel Super Heroes"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-mask",
+    "title": "The Mask",
+    "sourceLabel": "The Mask",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Mask"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-mummy",
+    "title": "The Mummy",
+    "sourceLabel": "The Mummy با تفکیک نسخه‌ها",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "The Mummy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-old-guard",
+    "title": "The Old Guard",
+    "sourceLabel": "The Old Guard",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Old Guard"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-outlaws-the-roundup",
+    "title": "The Outlaws/The Roundup",
+    "sourceLabel": "The Outlaws/The Roundup",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "The Outlaws",
+      "The Roundup"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-pink-panther",
+    "title": "The Pink Panther",
+    "sourceLabel": "The Pink Panther",
+    "groups": [
+      "crime"
+    ],
+    "queries": [
+      "The Pink Panther"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-purge",
+    "title": "The Purge",
+    "sourceLabel": "The Purge",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "The Purge"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-raid",
+    "title": "The Raid",
+    "sourceLabel": "The Raid",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "The Raid"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-secret-life-of-pets",
+    "title": "The Secret Life of Pets",
+    "sourceLabel": "The Secret Life of Pets",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "The Secret Life of Pets"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-shining-doctor-sleep",
+    "title": "The Shining/Doctor Sleep",
+    "sourceLabel": "The Shining/Doctor Sleep",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "The Shining",
+      "Doctor Sleep"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-thing",
+    "title": "The Thing",
+    "sourceLabel": "The Thing اقتباس‌ها",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "The Thing"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-tick",
+    "title": "The Tick",
+    "sourceLabel": "The Tick",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "The Tick"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-wandering-earth",
+    "title": "The Wandering Earth",
+    "sourceLabel": "The Wandering Earth",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "The Wandering Earth"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "the-witcher",
+    "title": "The Witcher",
+    "sourceLabel": "The Witcher",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "The Witcher"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "thor",
+    "title": "ثور",
+    "sourceLabel": "Thor",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Thor"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "three-colours",
+    "title": "Three Colours",
+    "sourceLabel": "Three Colours",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Three Colours"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tinker-bell",
+    "title": "Tinker Bell",
+    "sourceLabel": "Tinker Bell",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Tinker Bell"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "titans",
+    "title": "Titans",
+    "sourceLabel": "Titans",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Titans"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "to-all-the-boys",
+    "title": "To All the Boys",
+    "sourceLabel": "To All the Boys",
+    "groups": [
+      "romance"
+    ],
+    "queries": [
+      "To All the Boys"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tom-and-jerry",
+    "title": "Tom and Jerry",
+    "sourceLabel": "Tom and Jerry",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Tom and Jerry"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tom-yum-goong",
+    "title": "Tom-Yum-Goong",
+    "sourceLabel": "Tom-Yum-Goong",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Tom-Yum-Goong"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tomb-raider",
+    "title": "Tomb Raider",
+    "sourceLabel": "Tomb Raider",
+    "groups": [
+      "adventure",
+      "games"
+    ],
+    "queries": [
+      "Tomb Raider"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tomorrowverse",
+    "title": "Tomorrowverse",
+    "sourceLabel": "Tomorrowverse",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman Man of Tomorrow",
+      "Justice Society World War II",
+      "Justice League Crisis on Infinite Earths"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "toy-story",
+    "title": "داستان اسباب‌بازی",
+    "sourceLabel": "Toy Story",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Toy Story"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "train-to-busan",
+    "title": "Train to Busan",
+    "sourceLabel": "Train to Busan خانواده",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Train to Busan"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "train-to-busan-seoul-station-peninsula",
+    "title": "Train to Busan/Seoul Station/Peninsula",
+    "sourceLabel": "Train to Busan/Seoul Station/Peninsula",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Train to Busan",
+      "Seoul Station",
+      "Peninsula"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "transformers",
+    "title": "تبدیل‌شوندگان",
+    "sourceLabel": "Transformers",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Transformers"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "transporter",
+    "title": "Transporter",
+    "sourceLabel": "Transporter",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Transporter"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tremors",
+    "title": "Tremors",
+    "sourceLabel": "Tremors",
+    "groups": [
+      "scifi",
+      "horror"
+    ],
+    "queries": [
+      "Tremors"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "trigun",
+    "title": "Trigun",
+    "sourceLabel": "Trigun",
+    "groups": [
+      "anime"
+    ],
+    "queries": [
+      "Trigun"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "trolls",
+    "title": "Trolls",
+    "sourceLabel": "Trolls",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Trolls"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "tron",
+    "title": "Tron",
+    "sourceLabel": "Tron",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Tron"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "twilight",
+    "title": "Twilight",
+    "sourceLabel": "Twilight",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Twilight"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "twilight-zone",
+    "title": "Twilight Zone",
+    "sourceLabel": "Twilight Zone",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Twilight Zone"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "ultimate-spider-man",
+    "title": "Ultimate Spider-Man",
+    "sourceLabel": "Ultimate Spider-Man",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Ultimate Spider-Man"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "umbrella-academy",
+    "title": "Umbrella Academy",
+    "sourceLabel": "Umbrella Academy",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Umbrella Academy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "uncharted",
+    "title": "Uncharted",
+    "sourceLabel": "Uncharted",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Uncharted"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "underworld",
+    "title": "Underworld",
+    "sourceLabel": "Underworld",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Underworld"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "undisputed",
+    "title": "Undisputed",
+    "sourceLabel": "Undisputed",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Undisputed"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "universal-classic-monsters",
+    "title": "Universal Classic Monsters",
+    "sourceLabel": "Universal Classic Monsters",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Universal Classic Monsters"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "universal-soldier",
+    "title": "Universal Soldier",
+    "sourceLabel": "Universal Soldier",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "Universal Soldier"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "up-documentary-series",
+    "title": "Up documentary series",
+    "sourceLabel": "Up documentary series",
+    "groups": [
+      "drama"
+    ],
+    "queries": [
+      "Up documentary series"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "urban-legend",
+    "title": "Urban Legend",
+    "sourceLabel": "Urban Legend",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Urban Legend"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "v-h-s",
+    "title": "V/H/S",
+    "sourceLabel": "V/H/S",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "V",
+      "H",
+      "S"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "vacation",
+    "title": "Vacation",
+    "sourceLabel": "Vacation",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Vacation"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "vampire-academy",
+    "title": "Vampire Academy",
+    "sourceLabel": "Vampire Academy",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Vampire Academy"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "varg-veum",
+    "title": "Varg Veum",
+    "sourceLabel": "Varg Veum",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Varg Veum"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wallace-gromit",
+    "title": "Wallace & Gromit",
+    "sourceLabel": "Wallace & Gromit",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Wallace & Gromit"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wallander",
+    "title": "Wallander",
+    "sourceLabel": "Wallander",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Wallander"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "walt-disney",
+    "title": "دیزنی انیمیشن",
+    "sourceLabel": "Walt Disney Animation",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Walt Disney"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "warcraft",
+    "title": "Warcraft",
+    "sourceLabel": "Warcraft",
+    "groups": [
+      "fantasy",
+      "games"
+    ],
+    "queries": [
+      "Warcraft"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "warlock",
+    "title": "Warlock",
+    "sourceLabel": "Warlock",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Warlock"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "warner",
+    "title": "Warner Animation",
+    "sourceLabel": "Warner animation",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Warner Animation"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "watchmen",
+    "title": "Watchmen",
+    "sourceLabel": "Watchmen",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Watchmen"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wayne-s-world",
+    "title": "Wayne's World",
+    "sourceLabel": "Wayne's World",
+    "groups": [
+      "comedy"
+    ],
+    "queries": [
+      "Wayne's World"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "westworld",
+    "title": "Westworld",
+    "sourceLabel": "Westworld",
+    "groups": [
+      "scifi"
+    ],
+    "queries": [
+      "Westworld"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wheel-of-time",
+    "title": "Wheel of Time",
+    "sourceLabel": "Wheel of Time",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Wheel of Time"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "willow",
+    "title": "Willow",
+    "sourceLabel": "Willow",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Willow"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "winnie-the-pooh",
+    "title": "Winnie the Pooh",
+    "sourceLabel": "Winnie the Pooh",
+    "groups": [
+      "animation"
+    ],
+    "queries": [
+      "Winnie the Pooh"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wishmaster",
+    "title": "Wishmaster",
+    "sourceLabel": "Wishmaster",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Wishmaster"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "witchboard",
+    "title": "Witchboard",
+    "sourceLabel": "Witchboard",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Witchboard"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "witchcraft",
+    "title": "Witchcraft",
+    "sourceLabel": "Witchcraft",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Witchcraft"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wolf-creek",
+    "title": "Wolf Creek",
+    "sourceLabel": "Wolf Creek",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Wolf Creek"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wolf-warrior",
+    "title": "Wolf Warrior",
+    "sourceLabel": "Wolf Warrior",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Wolf Warrior"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wolverine",
+    "title": "Wolverine",
+    "sourceLabel": "Wolverine",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Wolverine"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wolverine-and-the-x-men",
+    "title": "Wolverine and the X-Men",
+    "sourceLabel": "Wolverine and the X-Men",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Wolverine and the X-Men"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wonder-woman",
+    "title": "Wonder Woman",
+    "sourceLabel": "Wonder Woman",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Wonder Woman"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wong-fei-hung",
+    "title": "Wong Fei-hung",
+    "sourceLabel": "Wong Fei-hung اقتباس‌ها",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Wong Fei-hung"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "wrong-turn",
+    "title": "Wrong Turn",
+    "sourceLabel": "Wrong Turn",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Wrong Turn"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "x-men",
+    "title": "ایکس‌من",
+    "sourceLabel": "X-Men",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "X-Men"
+    ],
+    "referenceId": "xmen"
+  },
+  {
+    "id": "x-men-1992",
+    "title": "X-Men 1992",
+    "sourceLabel": "X-Men 1992",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "X-Men"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "x-men-evolution",
+    "title": "X-Men: Evolution",
+    "sourceLabel": "X-Men: Evolution",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "X-Men: Evolution"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "xxx",
+    "title": "xXx",
+    "sourceLabel": "xXx",
+    "groups": [
+      "action"
+    ],
+    "queries": [
+      "xXx"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "yakuza-battles-without-honor-and-humanity",
+    "title": "Yakuza/Battles Without Honor and Humanity",
+    "sourceLabel": "Yakuza/Battles Without Honor and Humanity",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "Yakuza",
+      "Battles Without Honor and Humanity"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "young-and-dangerous",
+    "title": "Young and Dangerous",
+    "sourceLabel": "Young and Dangerous",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Young and Dangerous"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "young-justice",
+    "title": "Young Justice",
+    "sourceLabel": "Young Justice",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Young Justice"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "yrf-spy-universe",
+    "title": "YRF Spy Universe",
+    "sourceLabel": "YRF Spy Universe",
+    "groups": [
+      "world"
+    ],
+    "queries": [
+      "YRF Spy Universe"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "zatoichi",
+    "title": "Zatoichi",
+    "sourceLabel": "Zatoichi",
+    "groups": [
+      "martial"
+    ],
+    "queries": [
+      "Zatoichi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "zombi",
+    "title": "Zombi",
+    "sourceLabel": "Zombi",
+    "groups": [
+      "horror"
+    ],
+    "queries": [
+      "Zombi"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "zombies",
+    "title": "Zombies",
+    "sourceLabel": "Zombies",
+    "groups": [
+      "fantasy"
+    ],
+    "queries": [
+      "Zombies"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "zorro",
+    "title": "Zorro",
+    "sourceLabel": "Zorro",
+    "groups": [
+      "adventure"
+    ],
+    "queries": [
+      "Zorro"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "اخراجی-ها",
+    "title": "اخراجی‌ها",
+    "sourceLabel": "اخراجی‌ها",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "اخراجی‌ها"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "پایتخت",
+    "title": "پایتخت",
+    "sourceLabel": "پایتخت، نون خ، زیرخاکی و دیگر فصل‌های سریالی، در مدل «ماراتون سریال» جدا",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "پایتخت"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "تگزاس",
+    "title": "تگزاس",
+    "sourceLabel": "تگزاس",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "تگزاس"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "خوب-بد-جلف",
+    "title": "خوب بد جلف",
+    "sourceLabel": "خوب بد جلف",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "خوب بد جلف"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "دینامیت-هتل",
+    "title": "دینامیت/هتل",
+    "sourceLabel": "دینامیت/هتل فقط در صورت اثبات پیوند، نه صرفاً عوامل مشترک",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "دینامیت",
+      "هتل"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "رسوایی",
+    "title": "رسوایی",
+    "sourceLabel": "رسوایی",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "رسوایی"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "شهر-موش-ها",
+    "title": "شهر موش‌ها",
+    "sourceLabel": "شهر موش‌ها",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "شهر موش‌ها"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "کلاه-قرمزی",
+    "title": "کلاه‌قرمزی",
+    "sourceLabel": "کلاه‌قرمزی",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "کلاه‌قرمزی"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "گشت-ارشاد",
+    "title": "گشت ارشاد",
+    "sourceLabel": "گشت ارشاد",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "گشت ارشاد"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "نهنگ-عنبر",
+    "title": "نهنگ عنبر",
+    "sourceLabel": "نهنگ عنبر",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "نهنگ عنبر"
+    ],
+    "referenceId": ""
+  },
+  {
+    "id": "نون-خ",
+    "title": "نون خ",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "نون خ"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "زیرخاکی",
+    "title": "زیرخاکی",
+    "groups": [
+      "iran"
+    ],
+    "queries": [
+      "زیرخاکی"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "fantastic-four-1978",
+    "title": "Fantastic Four · 1978",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Fantastic Four"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "fantastic-four-1994",
+    "title": "Fantastic Four · 1994",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Fantastic Four"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "iron-man-1994",
+    "title": "Iron Man · 1994",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Iron Man"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "justice-league-unlimited",
+    "title": "Justice League Unlimited",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Justice League Unlimited"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  },
+  {
+    "id": "superman-fleischer",
+    "title": "Superman · Fleischer shorts",
+    "groups": [
+      "comic"
+    ],
+    "queries": [
+      "Superman"
+    ],
+    "sourceLabel": "شاخهٔ نام‌برده در فهرست مادر پژوهش",
+    "referenceId": ""
+  }
+]

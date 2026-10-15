@@ -412,7 +412,7 @@ class SpotlightActivity : ComponentActivity() {
     }
 
     companion object {
-        private val NATIVE_EPISODE_PROVIDERS = setOf("parsiflix", "filmrooz", "mymoviz")
+        private val NATIVE_EPISODE_PROVIDERS = setOf("farsiland", "filmrooz", "mymoviz")
         private const val EXTRA_ITEM = "spotlight_item"
         private const val METADATA_MAX_AGE_MS = 14L * 24L * 60L * 60L * 1_000L
         private val json = Json {

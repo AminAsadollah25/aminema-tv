@@ -30,6 +30,8 @@ data class PersonRef(
  * `/post/series/` (FilmRooz) are the same path segments the adapters already match on.
  */
 fun catalogKindFromUrl(url: String): CatalogKind? = when {
+    Regex("""https://(?:www\.)?farsiland\.com/movies/[^/?#]+""").containsMatchIn(url) -> CatalogKind.MOVIE
+    Regex("""https://(?:www\.)?farsiland\.com/(?:tvshows|episodes)/[^/?#]+""").containsMatchIn(url) -> CatalogKind.SERIES
     Regex("""/medias/movies/""").containsMatchIn(url) -> CatalogKind.MOVIE
     Regex("""/medias/series/""").containsMatchIn(url) -> CatalogKind.SERIES
     Regex("""/post/film/""").containsMatchIn(url) -> CatalogKind.MOVIE

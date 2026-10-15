@@ -50,7 +50,7 @@ object GenreDiscovery {
         sections: List<CatalogSection>,
         metadata: Map<String, TitleMetadata>
     ): List<CatalogItem> {
-        val lists = sections.filter { it.serviceId in setOf("parsiflix", "filmrooz", "mymoviz") }
+        val lists = sections.filter { it.serviceId in setOf("farsiland", "filmrooz", "mymoviz") }
             .map { section ->
                 (section.all + section.movies + section.series + section.popularSeries + section.featured)
                     .filter { matches(category, it, metadata[ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)]) }

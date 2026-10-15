@@ -185,6 +185,9 @@ class MainActivity : ComponentActivity() {
                                     JourneyScreen(route == "marvel", catalogSnapshot, fullCatalogReady,
                                         metadata, services.associate { it.id to it.name },
                                         lookupItems = lookupItems,
+                                        onDiscoverFamily = { familyId -> startActivity(android.content.Intent(this@MainActivity,
+                                            com.amin.tvos.ui.home.MarathonDiscoveryActivity::class.java)
+                                            .putExtra(com.amin.tvos.ui.home.MarathonDiscoveryActivity.FAMILY_ID, familyId)) },
                                         onMatchAll = { startActivity(android.content.Intent(this@MainActivity, com.amin.tvos.ui.home.JourneySyncActivity::class.java)) },
                                         onBack = { navController.popBackStack() }, onOpen = { media ->
                                             val item = media.representative

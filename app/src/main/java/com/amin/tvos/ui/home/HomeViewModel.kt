@@ -334,7 +334,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         /** Internal adapter ids; Home only ever shows «ایرانی» and «خارجی». */
-        const val IRANIAN_SERVICE_ID = "parsiflix"
+        const val IRANIAN_SERVICE_ID = "farsiland"
         const val INTERNATIONAL_SERVICE_ID = "filmrooz"
         const val MYMOVIZ_SERVICE_ID = "mymoviz"
     }

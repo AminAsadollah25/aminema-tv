@@ -51,7 +51,7 @@ class ServicesRepository(private val context: Context) {
 
         // Add newly shipped presentation metadata to existing installs without
         // replacing the user's URL, service order, or custom services.
-        val enrichedExisting = saved.map { current ->
+        val enrichedExisting = saved.filterNot { RetiredParsiFlix.service(it.id) }.map { current ->
             val defaults = bundled.firstOrNull { it.id == current.id }
             if (defaults == null) current else current.copy(
                 name = if (current.name in setOf("ParsiFlix", "FilmRooz")) {
@@ -129,7 +129,10 @@ class ServicesRepository(private val context: Context) {
         val enriched = enrichedExisting + bundled.filter { bundledService ->
             enrichedExisting.none { it.id == bundledService.id }
         }
-        if (enriched != saved) file.writeText(json.encodeToString(enriched))
+        if (enriched != saved) {
+            if(saved.any { RetiredParsiFlix.service(it.id) }) RetiredParsiFlix.backup(file)
+            file.writeText(json.encodeToString(enriched))
+        }
         if (_services.value != enriched) _services.value = enriched
     }
 

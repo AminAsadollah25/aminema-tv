@@ -603,7 +603,7 @@ private fun MetaPill(text: String) {
 private fun sourceLabel(serviceId: String): String = when (serviceId) {
     "filmrooz" -> "فیلم‌روز"
     "mymoviz" -> "مای‌موویز"
-    "parsiflix" -> "پارسی‌فلیکس"
+    "farsiland" -> "فارسی‌لند"
     else -> serviceId
 }
 

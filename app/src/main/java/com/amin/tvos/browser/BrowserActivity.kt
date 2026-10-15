@@ -115,7 +115,7 @@ class BrowserActivity : ComponentActivity() {
             smEpisode: String? = null,
             liveChannelKey: String? = null
         ): Intent =
-            Intent(context, BrowserActivity::class.java)
+            Intent(context, if(serviceId == FarsiLandPolicy.ID) FarsiLandActivity::class.java else BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
                 .putExtra(EXTRA_URL, url)
                 .putExtra(EXTRA_RESUME_POSITION, resumePosition)

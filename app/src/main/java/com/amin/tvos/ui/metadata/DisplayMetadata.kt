@@ -25,6 +25,7 @@ fun spotlightCategory(item: SpotlightItem): String = buildString {
 }
 
 fun SpotlightItem.isIranianTitle(): Boolean =
+    serviceId.equals("farsiland", ignoreCase = true) ||
     serviceId.equals("parsiflix", ignoreCase = true) ||
         country.contains("ایران", ignoreCase = true) ||
         country.contains("Iran", ignoreCase = true)

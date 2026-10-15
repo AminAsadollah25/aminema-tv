@@ -41,8 +41,10 @@ class EpisodeLoader(
     private var delivered = false
     private var extractionScheduled = false
     private var extractionAttempt = 0
+    private var farsiLand = false
+    private val loadTimeoutMs get()=if(farsiLand)40_000L else TIMEOUT_MS
     private val timeout = Runnable {
-        Log.d("EpisodeLoader", "Timed out after ${TIMEOUT_MS}ms; attempts=$extractionAttempt")
+        Log.d("EpisodeLoader", "Timed out after ${loadTimeoutMs}ms; attempts=$extractionAttempt")
         finish(null)
     }
 
@@ -53,6 +55,7 @@ class EpisodeLoader(
         delivered = false
         extractionScheduled = false
         extractionAttempt = 0
+        farsiLand = item.serviceId == "farsiland"
         val service = app.servicesRepository.findById(item.serviceId) ?: run {
             Log.d("EpisodeLoader", "Service not found: ${item.serviceId}")
             onFailed()
@@ -125,7 +128,7 @@ class EpisodeLoader(
             view,
             FrameLayout.LayoutParams(2, 2, Gravity.BOTTOM or Gravity.END)
         )
-        handler.postDelayed(timeout, TIMEOUT_MS)
+        handler.postDelayed(timeout, loadTimeoutMs)
         view.loadUrl(item.contentUrl)
     }
 
@@ -154,7 +157,7 @@ class EpisodeLoader(
             if (delivered || source !== webView) return@postDelayed
             extractionAttempt += 1
             Log.d("EpisodeLoader", "Executing EXTRACT_SCRIPT attempt=$extractionAttempt")
-            source.evaluateJavascript(EXTRACT_SCRIPT, null)
+            source.evaluateJavascript(if(farsiLand) com.amin.tvos.browser.FarsiLandScripts.episodes else EXTRACT_SCRIPT, null)
         }, delayMs)
     }
 
@@ -174,6 +177,7 @@ class EpisodeLoader(
                             val episodes = buildList {
                                 for (k in 0 until epsArr.length()) {
                                     val ep = epsArr.optJSONObject(k) ?: continue
+                                    if(farsiLand && !com.amin.tvos.browser.FarsiLandPolicy.isEpisode(ep.optString("actionPayload"))) continue
                                     add(Episode(
                                         id = ep.optString("id"),
                                         title = ep.optString("title"),

@@ -64,14 +64,26 @@ fun GenreDiscoveryRow(onSelect: (DiscoveryCategory) -> Unit, onFocused: () -> Un
             Column {
                 Canvas(Modifier.fillMaxWidth().height(146.dp)) {
                     atlas?.let { image ->
-                        val tileWidth = image.width / 4
-                        val tileHeight = image.height / 3
+                        // The atlas has baked gutters, not equal edge-to-edge cells.
+                        // Crop the actual illustration bounds (1448x1086 reference),
+                        // excluding both its embedded rounded frame and generated label.
+                        val columns = arrayOf(15 to 362, 374 to 718, 730 to 1075, 1087 to 1434)
+                        val rows = arrayOf(14 to 282, 366 to 638, 712 to 986)
+                        val column = columns[category.atlasIndex % 4]
+                        val row = rows[category.atlasIndex / 4]
+                        val left = column.first * image.width / 1448
+                        val top = row.first * image.height / 1086
+                        val width = (column.second - column.first) * image.width / 1448
+                        val height = (row.second - row.first) * image.height / 1086
+                        val targetRatio = size.width / size.height
+                        val cropWidth = minOf(width, (height * targetRatio).toInt())
+                        val cropHeight = minOf(height, (width / targetRatio).toInt())
                         // The generated labels are not UI text: render only the illustration,
                         // then use the app font below for crisp scalable Persian and semantics.
                         drawImage(image,
-                            srcOffset = IntOffset((category.atlasIndex % 4) * tileWidth,
-                                (category.atlasIndex / 4) * tileHeight),
-                            srcSize = IntSize(tileWidth, (tileHeight * 0.78f).toInt()),
+                            srcOffset = IntOffset(left + (width - cropWidth) / 2,
+                                top + (height - cropHeight) / 2),
+                            srcSize = IntSize(cropWidth, cropHeight),
                             dstSize = IntSize(size.width.toInt(), size.height.toInt()))
                     }
                 }

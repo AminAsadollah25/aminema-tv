@@ -738,14 +738,14 @@ fun HomeScreen(
                 FocusableCard(
                     shape = RoundedCornerShape(50),
                     onClick = {
-                        context.startActivity(
-                            android.content.Intent(context, AccountSyncActivity::class.java)
-                        )
+                        onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID)
+                        onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID)
+                        onRefreshCatalog(HomeViewModel.MYMOVIZ_SERVICE_ID)
                     }
                 ) {
                     Icon(
                         Icons.Filled.Sync,
-                        contentDescription = "همگام‌سازی حساب‌ها",
+                        contentDescription = "بروزرسانی آرشیوها",
                         modifier = Modifier.padding(12.dp).size(22.dp)
                     )
                 }
