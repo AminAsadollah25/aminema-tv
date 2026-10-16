@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.amin.tvos.R
 import com.amin.tvos.browser.AccountSyncActivity
 import com.amin.tvos.browser.BrowserActivity
@@ -91,20 +94,23 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val services by viewModel.services.collectAsState()
-    val continueWatching by viewModel.continueWatching.collectAsState()
-    val recents by viewModel.recentlyOpened.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
-    val mySeries by viewModel.mySeries.collectAsState()
-    val catalogSections by viewModel.catalogSections.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val homeLifecycle by lifecycleOwner.lifecycle.currentStateFlow
+        .collectAsStateWithLifecycle(minActiveState = Lifecycle.State.CREATED)
+    val services by viewModel.services.collectAsStateWithLifecycle()
+    val continueWatching by viewModel.continueWatching.collectAsStateWithLifecycle()
+    val recents by viewModel.recentlyOpened.collectAsStateWithLifecycle()
+    val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val mySeries by viewModel.mySeries.collectAsStateWithLifecycle()
+    val catalogSections by viewModel.catalogSections.collectAsStateWithLifecycle()
     LaunchedEffect(catalogSections) {
         if (catalogSections.any { it.all.isNotEmpty() || it.movies.isNotEmpty() || it.series.isNotEmpty() }) {
             androidx.compose.runtime.withFrameNanos { }
             StartupDiagnostics.mark("home.catalog.frame")
         }
     }
-    val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsState()
-    val titleMetadata by viewModel.titleMetadata.collectAsState()
+    val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsStateWithLifecycle()
+    val titleMetadata by viewModel.titleMetadata.collectAsStateWithLifecycle()
     val homeServices = remember(services) { services.filter { it.showOnHome } }
     val providerDoorways = remember(services) {
         services.filter {
@@ -619,10 +625,14 @@ fun HomeScreen(
     // left running, and again whenever the underlying data changes.
     var greetingVariant by remember { mutableIntStateOf(0) }
     var minuteTick by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(60_000L)
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            // Refresh immediately on return; no hidden Home clock/hero work in playback.
             minuteTick++
+            while (true) {
+                delay(60_000L)
+                minuteTick++
+            }
         }
     }
     val greeting = remember(
@@ -766,7 +776,7 @@ fun HomeScreen(
         Spacer(Modifier.height(18.dp))
 
         // ---------- Self-update ----------
-        val updateState by viewModel.updateState.collectAsState()
+        val updateState by viewModel.updateState.collectAsStateWithLifecycle()
         UpdateBanner(
             state = updateState,
             onInstall = { release -> viewModel.downloadAndInstall(release, context) },
@@ -840,7 +850,7 @@ fun HomeScreen(
                     }
                 },
                 onHeroFocused = { focused -> if (focused) heroOwnsBackdrop = true },
-                allowAutoAdvance = heroOwnsBackdrop
+                allowAutoAdvance = heroOwnsBackdrop && homeLifecycle == Lifecycle.State.RESUMED
             )
         }
         if (heroSlides.isNotEmpty()) {

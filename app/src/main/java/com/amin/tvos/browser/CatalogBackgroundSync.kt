@@ -149,6 +149,9 @@ class CatalogBackgroundSync(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
+                // FarsiLand's public cards are parsed from inert HTML; images never need
+                // decoding in the sync host. Playback/poster WebViews are unaffected.
+                if (serviceId == FarsiLandPolicy.ID) blockNetworkImage = true
                 @Suppress("DEPRECATION")
                 databaseEnabled = true
                 cacheMode = WebSettings.LOAD_DEFAULT
@@ -174,6 +177,7 @@ class CatalogBackgroundSync(
                 ) return
                 scriptStarted = true
                 val delay = when (serviceId) {
+                    FarsiLandPolicy.ID -> 0L
                     PARSI_ID -> 1_500L
                     MYMOVIZ_ID -> 700L
                     else -> 1_200L
@@ -207,7 +211,13 @@ class CatalogBackgroundSync(
             FrameLayout.LayoutParams(2, 2, Gravity.BOTTOM or Gravity.END)
         )
         handler.postDelayed(timeout, TIMEOUT_MS)
-        webView.loadUrl(
+        if (serviceId == FarsiLandPolicy.ID) {
+            // Keep the real HTTPS origin for the existing same-origin catalogue fetches,
+            // but do not render the site's homepage, third-party ads or autoplay scripts.
+            // DOMParser reads only cards from the fetched public archive pages.
+            webView.loadDataWithBaseURL(service.url, FarsiLandScripts.catalogHost,
+                "text/html", "UTF-8", service.url)
+        } else webView.loadUrl(
             if (serviceId == FILMROOZ_ID) {
                 service.url.trimEnd('/') + "/user/panel/"
             } else {

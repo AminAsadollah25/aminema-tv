@@ -33,4 +33,7 @@ object FarsiLandPolicy {
         return clean.indexOfFirst { it in setOf("server1","server 1","live on youtube","backup server") }
             .takeIf { it>=0 }
     }
+    /** Only verified official controls, each at most once per playback attempt. */
+    fun alternatePlayer(available:List<String>, tried:Set<String>):String? =
+        listOf("Player 1", "Player 2").firstOrNull { it in available && it !in tried }
 }

@@ -81,6 +81,7 @@ class EpisodeLoader(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
+                if (farsiLand) blockNetworkImage = true
                 cacheMode = WebSettings.LOAD_DEFAULT
                 allowFileAccess = false
                 allowContentAccess = false
@@ -95,7 +96,7 @@ class EpisodeLoader(
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(view, true)
         }
-        view.addJavascriptInterface(EpisodeBridge(), BRIDGE_NAME)
+        view.addJavascriptInterface(EpisodeBridge(view), BRIDGE_NAME)
         view.webViewClient = object : WebViewClient() {
             override fun onPageFinished(source: WebView, url: String) {
                 CookieManager.getInstance().flush()
@@ -106,6 +107,7 @@ class EpisodeLoader(
                 // timeout. A null bridge result is retried because SPA episode controls may
                 // hydrate after the document itself has finished loading.
                 val delay = when (item.serviceId) {
+                    "farsiland" -> 0L
                     "parsiflix" -> 2_000L
                     "mymoviz" -> 1_500L
                     else -> 1_200L
@@ -129,15 +131,19 @@ class EpisodeLoader(
             FrameLayout.LayoutParams(2, 2, Gravity.BOTTOM or Gravity.END)
         )
         handler.postDelayed(timeout, loadTimeoutMs)
-        view.loadUrl(item.contentUrl)
+        if (farsiLand) {
+            view.loadDataWithBaseURL(item.contentUrl,
+                com.amin.tvos.browser.FarsiLandScripts.catalogHost,
+                "text/html", "UTF-8", item.contentUrl)
+        } else view.loadUrl(item.contentUrl)
     }
 
-    private inner class EpisodeBridge {
+    private inner class EpisodeBridge(private val source: WebView) {
         @JavascriptInterface
         fun result(payload: String?) {
             Log.d("EpisodeLoader", "Bridge result received: ${payload?.take(200)}")
             handler.post {
-                if (delivered) return@post
+                if (delivered || source !== webView) return@post
                 val editions = parse(payload.orEmpty())
                 if (!editions.isNullOrEmpty()) {
                     finish(editions)
@@ -157,7 +163,8 @@ class EpisodeLoader(
             if (delivered || source !== webView) return@postDelayed
             extractionAttempt += 1
             Log.d("EpisodeLoader", "Executing EXTRACT_SCRIPT attempt=$extractionAttempt")
-            source.evaluateJavascript(if(farsiLand) com.amin.tvos.browser.FarsiLandScripts.episodes else EXTRACT_SCRIPT, null)
+            source.evaluateJavascript(if(farsiLand) "window.__aminPublicEpisodeHost=true;\n" +
+                com.amin.tvos.browser.FarsiLandScripts.episodes else EXTRACT_SCRIPT, null)
         }, delayMs)
     }
 

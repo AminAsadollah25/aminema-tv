@@ -5,6 +5,17 @@ import org.junit.Test
 import com.amin.tvos.data.RetiredParsiFlix
 
 class FarsiLandPolicyTest {
+    @Test fun failedPlayerOneCanTryVerifiedPlayerTwo(){
+        assertEquals("Player 2",FarsiLandPolicy.alternatePlayer(listOf("Player 2"),setOf("Player 1")))
+    }
+    @Test fun playerFallbackNeverBouncesToPreviouslyTriedEngine(){
+        assertEquals("Player 1",FarsiLandPolicy.alternatePlayer(listOf("Player 1"),setOf("Player 2")))
+        assertNull(FarsiLandPolicy.alternatePlayer(listOf("Player 1","Player 2"),setOf("Player 1","Player 2")))
+    }
+    @Test fun unknownHiddenOrAbsentPlayerIsNotInvented(){
+        assertNull(FarsiLandPolicy.alternatePlayer(listOf("Player 3","Advertisement","Player 10"),emptySet()))
+        assertNull(FarsiLandPolicy.alternatePlayer(emptyList(),emptySet()))
+    }
     @Test fun approvedIntermediaryHasRestrictedPaths(){
         assertTrue(FarsiLandPolicy.allowedPage("https://farsiland.buzz/"))
         assertTrue(FarsiLandPolicy.allowedPage("https://farsiland.buzz/redirect.php"))

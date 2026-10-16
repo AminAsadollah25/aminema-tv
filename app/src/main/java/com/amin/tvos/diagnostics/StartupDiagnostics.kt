@@ -18,6 +18,30 @@ object StartupDiagnostics {
         }
     }
 
+    /** Explicit debug profiling only. Read this app's last ANR, never dump a raw trace. */
+    fun inspectPreviousAnr(context: android.content.Context, enabled: Boolean) {
+        if (!enabled || !BuildConfig.DEBUG || android.os.Build.VERSION.SDK_INT < 30) return
+        val appContext = context.applicationContext
+        Thread({
+            runCatching {
+                val manager = appContext.getSystemService(android.app.ActivityManager::class.java)
+                val exit = manager.getHistoricalProcessExitReasons(appContext.packageName, 0, 8)
+                    .firstOrNull { it.reason == android.app.ApplicationExitInfo.REASON_ANR }
+                    ?: return@runCatching
+                val trace = exit.traceInputStream
+                val frames = trace?.bufferedReader()?.useLines { lines ->
+                    lines.take(16_000).dropWhile { !it.trimStart().startsWith("\"main\"") }.drop(1)
+                        .takeWhile { it.isNotBlank() }
+                        .map { it.trim() }
+                        .filter { (it.startsWith("at ") || it.startsWith("native:")) && !it.contains("://") }
+                        .take(40).map { it.take(300) }.toList()
+                }.orEmpty()
+                Log.d("AminAnr", "previousANR timestamp=${exit.timestamp} tracePresent=${trace != null} frames=${frames.size}")
+                frames.forEach { Log.d("AminAnr", it) }
+            }.onFailure { Log.d("AminAnr", "previousANR unavailable=${it.javaClass.simpleName}") }
+        }, "AminAnrReader").apply { isDaemon = true }.start()
+    }
+
     /** Opt-in sampling for `am start --ez profile_startup true`, not normal openings. */
     fun watchMainThread(enabled: Boolean) {
         if (!BuildConfig.DEBUG || !enabled || !watching.compareAndSet(false, true)) return

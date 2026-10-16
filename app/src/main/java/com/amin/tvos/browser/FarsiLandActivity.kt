@@ -27,6 +27,7 @@ class FarsiLandActivity:ComponentActivity() {
     private lateinit var loading:PlaybackLoadingView
     private lateinit var error:TvErrorView
     private val handler=Handler(Looper.getMainLooper())
+    private val asyncGuard=FarsiLandAsyncGuard()
     private val children=mutableSetOf<WebView>()
     private var startedAt=0L
     private var flowStartedAt=0L
@@ -39,7 +40,7 @@ class FarsiLandActivity:ComponentActivity() {
     private var chosenDocument=-1
     private val triedQualities=mutableSetOf<String>()
     private var recovering=false
-    private var triedAlternatePlayer=false
+    private val triedPlayers=mutableSetOf<String>()
     private var ticks=0
     private var custom:View?=null
     private var customCallback:WebChromeClient.CustomViewCallback?=null
@@ -50,8 +51,8 @@ class FarsiLandActivity:ComponentActivity() {
         if(preparing && !playing && (SystemClock.elapsedRealtime()-startedAt>45_000 || SystemClock.elapsedRealtime()-flowStartedAt>120_000)){
             recoverOrFail("پخش در مهلت مقرر آماده نشد؛ برای تلاش دوباره یا برگشت از کنترل استفاده کن.");return
         }
-        if(inFlight && SystemClock.elapsedRealtime()-inFlightAt>3000L)inFlight=false
-        if(!inFlight && FarsiLandPolicy.allowedPage(web.url.orEmpty()))inspect()
+        if(inFlight && SystemClock.elapsedRealtime()-inFlightAt>3000L){inFlight=false;asyncGuard.expireInspection()}
+        if(!inFlight && !recovering && FarsiLandPolicy.allowedPage(web.url.orEmpty()))inspect()
         handler.postDelayed(this,if(playing)1500L else 550L)
     } }
 
@@ -80,7 +81,6 @@ class FarsiLandActivity:ComponentActivity() {
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.getInstance().setAcceptThirdPartyCookies(web,true)
         root.addView(web,FrameLayout.LayoutParams(-1,-1))
-        web.setOnKeyListener { _,_,event -> handlePlaybackKey(event) }
         loading=PlaybackLoadingView(this);root.addView(loading,FrameLayout.LayoutParams(-1,-1))
         error=TvErrorView(this){begin(seed)}.apply {visibility=View.GONE}
         root.addView(error,FrameLayout.LayoutParams(-1,-1));setContentView(root)
@@ -102,6 +102,7 @@ class FarsiLandActivity:ComponentActivity() {
                     }
                     view.stopLoading();return
                 }
+                asyncGuard.invalidate();recovering=false
                 document++;chosenDocument=-1;inFlight=false;playing=false
                 if(FarsiLandPolicy.isEpisode(url) || (FarsiLandPolicy.isTitle(url) && url.contains("/movies/")))flowStartedAt=SystemClock.elapsedRealtime()
                 if(isPlayablePage(url))startedAt=SystemClock.elapsedRealtime()
@@ -152,14 +153,16 @@ class FarsiLandActivity:ComponentActivity() {
         p.startsWith("/movies/")||p.startsWith("/episodes/")||p.startsWith("/season/")||p.startsWith("/smart-play")
     }.getOrDefault(false)
     private fun begin(url:String){
+        asyncGuard.invalidate()
         stopped=false;playing=false;preparing=isPlayablePage(url);inFlight=false;chosenDocument=-1;startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt;ticks=0
-        triedQualities.clear();recovering=false;triedAlternatePlayer=false
+        triedQualities.clear();recovering=false;triedPlayers.clear()
         error.visibility=View.GONE;handler.removeCallbacks(tick);web.loadUrl(url);handler.post(tick)
     }
     private fun inspect(){
-        val generation=document;inFlight=true;inFlightAt=SystemClock.elapsedRealtime()
+        val request=asyncGuard.beginInspection();inFlight=true;inFlightAt=SystemClock.elapsedRealtime()
         web.evaluateJavascript(FarsiLandScripts.playback){encoded ->
-            if(generation!=document || stopped || isFinishing)return@evaluateJavascript
+            if(!asyncGuard.currentInspection(request) || stopped || isFinishing || isDestroyed)return@evaluateJavascript
+            asyncGuard.finishInspection(request)
             inFlight=false
             val data=runCatching {JSONObject(org.json.JSONTokener(encoded).nextValue() as String)}.getOrNull()
             val phase=data?.optString("state").orEmpty()
@@ -186,10 +189,13 @@ class FarsiLandActivity:ComponentActivity() {
         if(recovering)return
         if(live || playing || triedQualities.size>=3 || SystemClock.elapsedRealtime()-flowStartedAt>=120_000){fail(message);return}
         recovering=true
+        inFlight=false
+        val request=asyncGuard.beginRecovery()
         val nodes=FarsiLandScripts.playerQualityNodes
-        val player=FarsiLandScripts.alternatePlayerNode
-        web.evaluateJavascript("JSON.stringify({gate:/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''),alternatePlayer:!!($player),labels:$nodes.map(function(a){return a.querySelector('p').textContent.trim();})})"){encoded ->
-            if(stopped || isFinishing)return@evaluateJavascript
+        val players=FarsiLandScripts.alternatePlayerNodes
+        web.evaluateJavascript("JSON.stringify({gate:/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''),players:$players.map(function(a){return {label:a.querySelector('p').textContent.trim(),active:a.classList.contains('nonex')};}),labels:$nodes.map(function(a){return a.querySelector('p').textContent.trim();})})"){encoded ->
+            if(!asyncGuard.currentRecovery(request) || stopped || isFinishing || isDestroyed)return@evaluateJavascript
+            asyncGuard.finishRecovery(request)
             recovering=false
             val data=runCatching {JSONObject(org.json.JSONTokener(encoded).nextValue() as String)}.getOrNull()
             if(data?.optBoolean("gate")==true){
@@ -197,10 +203,16 @@ class FarsiLandActivity:ComponentActivity() {
                 android.widget.Toast.makeText(this,"سایت شرط دسترسی تبلیغاتی دارد؛ پخش بدون تبلیغ تأیید نشد.",android.widget.Toast.LENGTH_LONG).show()
                 return@evaluateJavascript
             }
-            if(!triedAlternatePlayer && data?.optBoolean("alternatePlayer")==true){
-                triedAlternatePlayer=true;startedAt=SystemClock.elapsedRealtime()
-                if(com.amin.tvos.BuildConfig.DEBUG)android.util.Log.d("AminFarsiLand","fallback-player=1")
-                web.evaluateJavascript("(function(){var a=$player;if(a)a.click();})()",null)
+            val playerArray=data?.optJSONArray("players")
+            val choices=(0 until (playerArray?.length()?:0)).mapNotNull { playerArray!!.optJSONObject(it) }
+            choices.filter {it.optBoolean("active")}.forEach {triedPlayers.add(it.optString("label"))}
+            val alternative=FarsiLandPolicy.alternatePlayer(
+                choices.filterNot {it.optBoolean("active")}.map {it.optString("label")},triedPlayers)
+            if(alternative!=null){
+                triedPlayers.add(alternative);startedAt=SystemClock.elapsedRealtime()
+                if(com.amin.tvos.BuildConfig.DEBUG)android.util.Log.d("AminFarsiLand","fallback-player=$alternative")
+                val label=JSONObject.quote(alternative)
+                web.evaluateJavascript("(function(){var a=$players.find(function(e){return e.querySelector('p').textContent.trim()===$label && !e.classList.contains('nonex');});if(a)a.click();})()",null)
                 handler.removeCallbacks(tick);handler.post(tick)
                 return@evaluateJavascript
             }
@@ -214,9 +226,12 @@ class FarsiLandActivity:ComponentActivity() {
             web.evaluateJavascript("(function(){var a=$nodes;if(a[$index])a[$index].click();})()",null)
             handler.removeCallbacks(tick);handler.post(tick)
         }
-        handler.postDelayed({if(recovering && !stopped){recovering=false;fail(message)}},3500L)
+        handler.postDelayed({if(asyncGuard.currentRecovery(request) && recovering && !stopped){
+            asyncGuard.finishRecovery(request);recovering=false;fail(message)
+        }},3500L)
     }
     private fun fail(message:String){
+        asyncGuard.invalidate();recovering=false;inFlight=false
         stopped=true;playing=false;handler.removeCallbacks(tick);loading.hide()
         web.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});",null)
         error.show("پخش آماده نشد",message);error.bringToFront()
@@ -225,21 +240,30 @@ class FarsiLandActivity:ComponentActivity() {
         hide(WindowInsetsCompat.Type.systemBars());systemBarsBehavior=WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }}
     private fun closeCustom(){custom?.let {root.removeView(it)};custom=null;customCallback?.onCustomViewHidden();customCallback=null}
+    @SuppressLint("RestrictedApi") // Same ComponentActivity key-dispatch contract as Main/Browser.
+    override fun dispatchKeyEvent(event:KeyEvent):Boolean {
+        // WebView/HTML focus may move while the provider swaps its player. The TV
+        // transport key belongs to the visible player, not a particular DOM focus target.
+        if(!stopped && ::error.isInitialized && error.visibility!=View.VISIBLE && handlePlaybackKey(event))return true
+        return super.dispatchKeyEvent(event)
+    }
     private fun handlePlaybackKey(event:KeyEvent):Boolean {
-        if(event.keyCode in setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_DPAD_CENTER) && playing){
+        if(event.keyCode in setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,KeyEvent.KEYCODE_NUMPAD_ENTER) && playing){
             if(event.action==KeyEvent.ACTION_UP)web.evaluateJavascript("(function(){var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');if(v){if(v.paused)v.play();else v.pause();}})()",null)
             return true
         }
         return false
     }
     override fun onPause(){
+        asyncGuard.invalidate()
         stopped=true;recovering=false;inFlight=false;handler.removeCallbacksAndMessages(null)
         children.toList().forEach {it.destroy()};children.clear()
         if(::web.isInitialized){web.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});",null);web.onPause()}
         super.onPause()
     }
     override fun onResume(){super.onResume();if(::web.isInitialized){web.onResume();stopped=false;startedAt=SystemClock.elapsedRealtime();if(!playing)flowStartedAt=startedAt;handler.removeCallbacks(tick);handler.post(tick)}}
-    override fun onDestroy(){stopped=true;handler.removeCallbacksAndMessages(null);closeCustom()
+    override fun onDestroy(){asyncGuard.invalidate();stopped=true;handler.removeCallbacksAndMessages(null);closeCustom()
         children.toList().forEach {it.destroy()};children.clear()
         if(::web.isInitialized){web.stopLoading();root.removeView(web);web.destroy()};super.onDestroy()}
 }

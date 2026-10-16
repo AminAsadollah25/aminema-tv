@@ -31,6 +31,8 @@ import com.amin.tvos.intro.IntroOverlay
 import com.amin.tvos.intro.IntroPreferences
 import com.amin.tvos.diagnostics.StartupDiagnostics
 import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
+import com.amin.tvos.browser.CatalogBootstrapPolicy
 import com.amin.tvos.browser.CatalogBackgroundSync
 import com.amin.tvos.ui.home.HomeScreen
 import com.amin.tvos.ui.home.HomeViewModel
@@ -56,9 +58,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         StartupDiagnostics.mark("main.create.start")
         StartupDiagnostics.watchMainThread(intent.getBooleanExtra("profile_startup", false))
+        StartupDiagnostics.inspectPreviousAnr(this, intent.getBooleanExtra("profile_startup", false))
         super.onCreate(savedInstanceState)
         // A configuration recreation is not a new app opening.
-        autoCatalogSyncLaunched = savedInstanceState != null
+        autoCatalogSyncLaunched = savedInstanceState?.getBoolean(CatalogBootstrapPolicy.SAVED_ATTEMPT) ?: false
 
         val introPrefs = IntroPreferences(this)
         // Cold start only. A recreated activity — configuration change, or process death while
@@ -87,6 +90,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val catalogSnapshot by homeViewModel.fullCatalogSections.collectAsStateWithLifecycle()
                         val fullCatalogReady by homeViewModel.fullCatalogReady.collectAsStateWithLifecycle()
+                        val configuredServices by homeViewModel.services.collectAsStateWithLifecycle()
                         var libraryItemsSelector by remember {
                             mutableStateOf<(List<com.amin.tvos.data.model.CatalogSection>) -> List<CatalogItem>>(
                                 { emptyList() }
@@ -105,6 +109,27 @@ class MainActivity : ComponentActivity() {
                             composable("home") {
                                 // Refresh library when returning from the browser
                                 val lifecycleOwner = LocalLifecycleOwner.current
+                                val homeLifecycleState by lifecycleOwner.lifecycle.currentStateFlow
+                                    .collectAsStateWithLifecycle(minActiveState = Lifecycle.State.CREATED)
+                                LaunchedEffect(introVisible, homeLifecycleState, fullCatalogReady,
+                                    configuredServices, catalogSnapshot) {
+                                    fun missingIranianCache() = CatalogBootstrapPolicy.needsBootstrap(
+                                        homeViewModel.fullCatalogReady.value, autoCatalogSyncLaunched,
+                                        homeViewModel.services.value.map { it.id }.toSet(),
+                                        homeViewModel.fullCatalogSections.value)
+                                    if (introVisible || homeLifecycleState != Lifecycle.State.RESUMED ||
+                                        !missingIranianCache()) return@LaunchedEffect
+                                    // Render Home first; only the new public provider gets this
+                                    // bounded first-page bootstrap. Existing providers do not scan.
+                                    withFrameNanos { }
+                                    delay(CatalogBootstrapPolicy.QUIET_DELAY_MS)
+                                    val sync = catalogSync ?: return@LaunchedEffect
+                                    if (lifecycleOwner.lifecycle.currentState != Lifecycle.State.RESUMED ||
+                                        !missingIranianCache()) return@LaunchedEffect
+                                    autoCatalogSyncLaunched = true
+                                    sync.refresh(CatalogBootstrapPolicy.SERVICE_ID,
+                                        pageLimit = CatalogBootstrapPolicy.PAGE_LIMIT)
+                                }
                                 DisposableEffect(lifecycleOwner) {
                                     val observer = LifecycleEventObserver { _, event ->
                                         if (event == Lifecycle.Event.ON_RESUME) homeViewModel.refresh()
@@ -206,18 +231,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Do not start hidden provider WebViews during cold start. The catalog
-                        // refresh is logically background work, but Android WebView still runs
-                        // its navigation/JS bridge on this app process and a live provider can
-                        // monopolize the TV box's UI thread for seconds (measured: >2,000 skipped
-                        // frames). That breaks the primary promise of Aminema: the Home screen
-                        // and player must remain immediately usable. Cached rows still render
-                        // instantly; Home's refresh button and View All pagination remain the
-                        // explicit, observable refresh entry points until catalog sync is moved
-                        // to an isolated process. Keep the flag for recreation compatibility.
-                        LaunchedEffect(Unit) {
-                            autoCatalogSyncLaunched = true
-                        }
+                        // General provider scans remain manual: their live WebViews previously
+                        // monopolized the UI thread. Only a missing FarsiLand cache is bootstrapped
+                        // above, after Home draws, using its inert public metadata host.
 
                         // Native data preloads during the intro; rich UI starts after it.
                         if (introVisible) {
@@ -234,6 +250,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         StartupDiagnostics.mark("main.create.end")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(CatalogBootstrapPolicy.SAVED_ATTEMPT, autoCatalogSyncLaunched)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onResume() {
