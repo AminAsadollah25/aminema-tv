@@ -25,6 +25,12 @@ object FarsiLandPolicy {
     fun isTitle(url:String):Boolean = allowedPage(url) && runCatching {
         Regex("^/(?:movies|tvshows)/[^/]+/?$").matches(URI(url).path.orEmpty())
     }.getOrDefault(false)
+    fun isPlayablePage(url:String):Boolean = allowedPage(url) && runCatching {
+        val path=URI(url).path.orEmpty()
+        Regex("^/(movies|episodes|movie|episode)/[^/]+/?$").matches(path) ||
+            path.trimEnd('/') in setOf("/season","/smart-play") ||
+            (URI(url).host.lowercase() in setOf("farsiplex.com","www.farsiplex.com") && path.startsWith("/play-"))
+    }.getOrDefault(false)
     fun qualityIndex(labels:List<String>, live:Boolean=false):Int? {
         val clean=labels.map { it.trim().lowercase().replace(Regex("\\s+")," ") }
         val preferred=if(live)listOf("hd","1080","1080p","720","720p","480","480p")

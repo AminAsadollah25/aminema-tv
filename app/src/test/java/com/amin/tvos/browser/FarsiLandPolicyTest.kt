@@ -5,6 +5,14 @@ import org.junit.Test
 import com.amin.tvos.data.RetiredParsiFlix
 
 class FarsiLandPolicyTest {
+    @Test fun currentPlayerAndDetailRoutesParticipateInPlaybackTimeouts(){
+        listOf("https://farsiplex.com/play-elite-player/","https://farsiplex.com/movie/a/",
+            "https://farsiplex.com/episode/a/","https://farsiland.com/episodes/a/").forEach {
+            assertTrue(it,FarsiLandPolicy.isPlayablePage(it))
+        }
+        assertFalse(FarsiLandPolicy.isPlayablePage("https://evil.test/play-elite-player/"))
+        assertFalse(FarsiLandPolicy.isPlayablePage("https://farsiplex.com/explore/"))
+    }
     @Test fun failedPlayerOneCanTryVerifiedPlayerTwo(){
         assertEquals("Player 2",FarsiLandPolicy.alternatePlayer(listOf("Player 2"),setOf("Player 1")))
     }

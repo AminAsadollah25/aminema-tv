@@ -4,8 +4,11 @@ package com.amin.tvos.browser
 object FarsiLandScripts {
     /** Trusted, inert origin host for public catalogue fetches; no site/ad scripts or artwork. */
     const val catalogHost = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Aminema catalog</title></head><body></body></html>"
+    // The .btn-row wrapper was removed on the real intermediary (2026-10-28).
+    val entryQualityNodes = """Array.from(document.querySelectorAll('a.btn-group')).filter(function(a){return /^(480p?|720p?|1080p?|2160p?|HD|Server ?1|Live on Youtube|Backup Server)$/i.test(a.textContent.trim()) && a.getClientRects().length>0 && getComputedStyle(a).visibility!=='hidden';})"""
     // Characterized on the site's smart-play quality controls; never read href/onclick.
-    val playerQualityNodes = """Array.from(document.querySelectorAll('a')).filter(function(a){var p=a.querySelector('p');return p && /^(480|720|1080)$/.test(p.textContent.trim()) && a.getClientRects().length>0;})"""
+    val playerQualityNodes = """Array.from(document.querySelectorAll('a,.plyr button[data-plyr="quality"]')).filter(function(a){if(a.matches('.plyr button[data-plyr="quality"]'))return /^(480|720|1080)$/.test(a.value);var p=a.querySelector('p');return p && /^(480|720|1080)$/.test(p.textContent.trim()) && a.getClientRects().length>0;})"""
+    val qualityLabel = """function(a){return a.getAttribute('data-plyr')==='quality'?a.value:(a.querySelector('p')?a.querySelector('p').textContent.trim():a.textContent.trim());}"""
     // Both controls were verified on the live site. Record the active choice too, so
     // recovery never bounces back to the engine that already failed on this title.
     val alternatePlayerNodes = """Array.from(document.querySelectorAll('a')).filter(function(a){var p=a.querySelector('p');return p && /^Player [12]$/.test(p.textContent.trim()) && a.getClientRects().length>0 && getComputedStyle(a).visibility!=='hidden';}).sort(function(a,b){return a.textContent.trim().localeCompare(b.textContent.trim());})"""
@@ -18,13 +21,22 @@ object FarsiLandScripts {
           var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');
           if(v){
             if(v.error)return JSON.stringify({state:'player-error',code:v.error.code});
+            if(location.hostname.replace(/^www\./,'')==='farsiplex.com' && !window.__aminInitialQualityChosen){
+              var quality=Array.from(document.querySelectorAll('.plyr button[data-plyr="quality"]')).filter(function(b){return /^(480|720|1080)$/.test(b.value);});
+              if(quality.length){window.__aminInitialQualityChosen=true;return JSON.stringify({state:'player-quality',labels:quality.map(function(b){return b.value;})});}
+            }
             if(window.__aminVideo!==v){window.__aminVideo=v;window.__aminEverPlayed=false;window.__aminStartTries=0;window.__aminLastStart=0;window.__aminPlayError='';window.__aminPlayClicked=false;var p=v.play();if(p && p.catch)p.catch(notePlayError);}
             if(!window.__aminEverPlayed && v.readyState>=1 && v.currentTime===0 && v.paused && window.__aminStartTries<3 && Date.now()-window.__aminLastStart>1500){
               window.__aminStartTries++;window.__aminLastStart=Date.now();var readyPlay=v.play();if(readyPlay && readyPlay.catch)readyPlay.catch(notePlayError);
             }
             if(v.readyState>=1){
               var box=v.closest('.jwplayer,.plyr')||v;
-              if(box.parentElement!==document.body)document.body.appendChild(box);
+              if(box.parentElement!==document.body){
+                // Chromium can pause media when its player is detached/reparented.
+                // Restore only playback interrupted by our own move, never a manual pause.
+                var wasPlaying=!v.paused && !v.ended;document.body.appendChild(box);
+                if(wasPlaying){var resumed=v.play();if(resumed && resumed.catch)resumed.catch(notePlayError);}
+              }
               if(!document.getElementById('aminema-theater-style')){
                 var st=document.createElement('style');st.id='aminema-theater-style';
                 st.textContent='html,body{background:#000!important;overflow:hidden!important;}'+
@@ -45,12 +57,17 @@ object FarsiLandScripts {
             return JSON.stringify({state:'buffering',ready:v.readyState,paused:v.paused,time:Math.floor(v.currentTime),playError:window.__aminPlayError||''});
           }
           if(/This video file cannot be played|Error Code:/i.test(text))return JSON.stringify({state:'player-error'});
-          if(location.hostname.replace(/^www\./,'')==='farsiland.com' && /^\/(movies|episodes)\/[^/]+\/?$/.test(location.pathname)){
+          // Current JW creates its video element only after the visible Play control.
+          // Scope to the main player; never click page-wide ads, links or access prompts.
+          var initialPlay=Array.from(document.querySelectorAll('#player [role="button"],.jwplayer [role="button"]')).find(function(b){return visible(b) && /^play(?:\s|$)/i.test(b.getAttribute('aria-label')||'');});
+          if(initialPlay && window.__aminInitialPlay!==initialPlay){window.__aminInitialPlay=initialPlay;initialPlay.click();return JSON.stringify({state:'opening-player'});}
+          if((location.hostname.replace(/^www\./,'')==='farsiland.com' && /^\/(movies|episodes)\/[^/]+\/?$/.test(location.pathname)) ||
+             (location.hostname.replace(/^www\./,'')==='farsiplex.com' && /^\/(movie|episode)\/[^/]+\/?$/.test(location.pathname))){
             var go=document.querySelector('.fakeplayer a[onclick]');
             if(visible(go) && !window.__aminEntryClicked){window.__aminEntryClicked=true;go.click();return JSON.stringify({state:'opening'});}
           }
           if((location.hostname.replace(/^www\./,'')==='farsiplex.com' && /^\/season\/?$/.test(location.pathname) && location.search) || location.hostname.replace(/^www\./,'')==='farsiland.buzz'){
-            var choices=Array.from(document.querySelectorAll('.btn-row a.btn-group')).filter(visible);
+            var choices=$entryQualityNodes;
             return JSON.stringify({state:'quality',labels:choices.map(function(a){return a.textContent.trim().slice(0,60);})});
           }
           return JSON.stringify({state:'waiting'});

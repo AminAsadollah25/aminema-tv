@@ -18,6 +18,11 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /** Isolated two-site browser. Uses the site's controls; no media URL/manifest/credential access. */
@@ -46,6 +51,9 @@ class FarsiLandActivity:ComponentActivity() {
     private var customCallback:WebChromeClient.CustomViewCallback?=null
     private var seed=""
     private var live=false
+    private var resolutionJob:Job?=null
+    private var resolutionEpoch=0L
+    private var resolving=false
     private val tick=object:Runnable { override fun run(){
         if(stopped || isFinishing || isDestroyed)return
         if(preparing && !playing && (SystemClock.elapsedRealtime()-startedAt>45_000 || SystemClock.elapsedRealtime()-flowStartedAt>120_000)){
@@ -148,15 +156,24 @@ class FarsiLandActivity:ComponentActivity() {
         onBackPressedDispatcher.addCallback(this,object:OnBackPressedCallback(true){override fun handleOnBackPressed(){finish()}})
         begin(seed)
     }
-    private fun isPlayablePage(url:String)=runCatching {
-        val p=java.net.URI(url).path.orEmpty()
-        p.startsWith("/movies/")||p.startsWith("/episodes/")||p.startsWith("/season/")||p.startsWith("/smart-play")
-    }.getOrDefault(false)
+    private fun isPlayablePage(url:String)=FarsiLandPolicy.isPlayablePage(url)
     private fun begin(url:String){
+        resolutionJob?.cancel();val epoch=++resolutionEpoch;resolving=false
         asyncGuard.invalidate()
         stopped=false;playing=false;preparing=isPlayablePage(url);inFlight=false;chosenDocument=-1;startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt;ticks=0
         triedQualities.clear();recovering=false;triedPlayers.clear()
-        error.visibility=View.GONE;handler.removeCallbacks(tick);web.loadUrl(url);handler.post(tick)
+        error.visibility=View.GONE;handler.removeCallbacks(tick)
+        if(!live && FarsiPlexPublicPages.isSource(url)){
+            resolving=true;loading.showPreparing(false,titleText=intent.getStringExtra("content_title").orEmpty())
+            resolutionJob=lifecycleScope.launch {
+                val canonical=withContext(Dispatchers.IO){FarsiPlexPublicPages.resolve(url)}
+                if(epoch!=resolutionEpoch || stopped || isFinishing || isDestroyed)return@launch
+                resolving=false
+                if(com.amin.tvos.BuildConfig.DEBUG)android.util.Log.d("AminFarsiLand","public-page-match=${canonical!=null}")
+                startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt
+                web.loadUrl(canonical?:url);handler.post(tick)
+            }
+        }else{web.loadUrl(url);handler.post(tick)}
     }
     private fun inspect(){
         val request=asyncGuard.beginInspection();inFlight=true;inFlightAt=SystemClock.elapsedRealtime()
@@ -171,12 +188,13 @@ class FarsiLandActivity:ComponentActivity() {
                 "playing", "paused" -> {playing=true;loading.hide();error.visibility=View.GONE}
                 "gate" -> {loading.hide();playing=false;stopped=true;handler.removeCallbacks(tick)
                     android.widget.Toast.makeText(this,"سایت برای دسترسی اقدام تبلیغاتی می‌خواهد؛ پخش بدون تبلیغ تأیید نشد.",android.widget.Toast.LENGTH_LONG).show()}
-                "quality" -> if(chosenDocument!=document){
+                "quality", "player-quality" -> if(phase=="player-quality" || chosenDocument!=document){
                     val array=data?.optJSONArray("labels")
                     val labels=(0 until (array?.length()?:0)).map {array!!.optString(it)}
                     val index=FarsiLandPolicy.qualityIndex(labels,live)
                     if(index!=null){chosenDocument=document;triedQualities.add(labels[index].trim())
-                        web.evaluateJavascript("(function(){var a=Array.from(document.querySelectorAll('.btn-row a.btn-group')).filter(function(e){return e.getClientRects().length>0 && getComputedStyle(e).visibility!=='hidden';});if(a[$index])a[$index].click();})()",null)}
+                        val nodes=if(phase=="player-quality")"Array.from(document.querySelectorAll('.plyr button[data-plyr=\"quality\"]')).filter(function(b){return /^(480|720|1080)$/.test(b.value);})" else FarsiLandScripts.entryQualityNodes
+                        web.evaluateJavascript("(function(){var a=$nodes;if(a[$index])a[$index].click();})()",null)}
                     else if(labels.isNotEmpty())fail("کیفیت مجاز پیدا نشد؛ گزینهٔ ۲۱۶۰ خودکار انتخاب نمی‌شود.")
                 }
                 "player-error" -> recoverOrFail("پلیر سایت خطا داد؛ دوباره تلاش کن یا سرور دیگری را در سایت انتخاب کن.")
@@ -193,7 +211,7 @@ class FarsiLandActivity:ComponentActivity() {
         val request=asyncGuard.beginRecovery()
         val nodes=FarsiLandScripts.playerQualityNodes
         val players=FarsiLandScripts.alternatePlayerNodes
-        web.evaluateJavascript("JSON.stringify({gate:/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''),players:$players.map(function(a){return {label:a.querySelector('p').textContent.trim(),active:a.classList.contains('nonex')};}),labels:$nodes.map(function(a){return a.querySelector('p').textContent.trim();})})"){encoded ->
+        web.evaluateJavascript("JSON.stringify({gate:/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''),players:$players.map(function(a){return {label:a.querySelector('p').textContent.trim(),active:a.classList.contains('nonex')};}),labels:$nodes.map(${FarsiLandScripts.qualityLabel})})"){encoded ->
             if(!asyncGuard.currentRecovery(request) || stopped || isFinishing || isDestroyed)return@evaluateJavascript
             asyncGuard.finishRecovery(request)
             recovering=false
@@ -256,14 +274,15 @@ class FarsiLandActivity:ComponentActivity() {
         return false
     }
     override fun onPause(){
+        resolutionJob?.cancel();resolutionEpoch++
         asyncGuard.invalidate()
         stopped=true;recovering=false;inFlight=false;handler.removeCallbacksAndMessages(null)
         children.toList().forEach {it.destroy()};children.clear()
         if(::web.isInitialized){web.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});",null);web.onPause()}
         super.onPause()
     }
-    override fun onResume(){super.onResume();if(::web.isInitialized){web.onResume();stopped=false;startedAt=SystemClock.elapsedRealtime();if(!playing)flowStartedAt=startedAt;handler.removeCallbacks(tick);handler.post(tick)}}
-    override fun onDestroy(){asyncGuard.invalidate();stopped=true;handler.removeCallbacksAndMessages(null);closeCustom()
+    override fun onResume(){super.onResume();if(::web.isInitialized){web.onResume();stopped=false;startedAt=SystemClock.elapsedRealtime();if(!playing)flowStartedAt=startedAt;handler.removeCallbacks(tick);if(resolving){if(resolutionJob?.isActive!=true)begin(seed)}else handler.post(tick)}}
+    override fun onDestroy(){resolutionJob?.cancel();resolutionEpoch++;asyncGuard.invalidate();stopped=true;handler.removeCallbacksAndMessages(null);closeCustom()
         children.toList().forEach {it.destroy()};children.clear()
         if(::web.isInitialized){web.stopLoading();root.removeView(web);web.destroy()};super.onDestroy()}
 }

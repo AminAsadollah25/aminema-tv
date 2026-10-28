@@ -1,5 +1,20 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## کار جاری0.24.2/code62 — 2026-10-28، محلی/منتشرنشده
+نهایی محلی: APK31,728,851بایت/SHAed0150cf032637cff2c92d35dd555e17256e452baa950f05feb4a42f1e27a551؛
+در outputs/Aminema-0.24.2-debug.apk +sha256،install-r و Home تأیید؛ runner در source/DEX/
+manifest/دستگاه نیست. Taxi۲ تکرار خودکار1080/time9→25/error0 و قبلاً میانه داشت؛ بافر مقطعی باقی است.
+168unit/9JS/lint0error135warning/build موفق. TEST_REPORT_0.24.2.md مرجع جزئیات/حدود است.
+نمونهٔ دقیق مالک Taxi قسمت۲ بود. خرابی مسیر قدیمی FL→Buzz و حذفwrapperکیفیت بازتولید شد؛
+ورودی جدید FP با تطبیق عمومی محافظه‌کارانه وصل شد. FarsiPlexPublicPages، FarsiLandActivity/
+Scripts/Policy فقط برای مسیر ایرانی تغییر کردند؛ HTTPمتادیتا بی‌کوکی، بدون لینک مدیا/توکن/حدس URL.
+Taxi h1 ناقص بود ولی h2 و ALL صحیح؛ قسمت۲ از ردیف واقعی FP انتخاب و1080/میانه پخش شد.
+168unit و9JSfixture موفق. برای خروجی عادی نهایی/عدم حضور runner/SHA و تکرار خودکار به انتهای
+TEST_REPORT_0.24.2.md مراجعه کنید. DEVELOPMENT_LOG/RELEASE_NOTES همان نسخه موجودند.
+اجازهٔ تازهٔ مالک در2026-10-28 برای انتشار GitHub دریافت شد؛ نتیجهٔ واقعی پس از تأیید
+در RELEASE_REPORT_0.24.2.md ثبت می‌شود. تا آن زمان انتشار تکمیل‌شده تلقی نشود.
+سایر dirtyها از تحقیق/مراحل قبلی‌اند؛ stage-all ممنوع. YT login همچنان موضوع جدا و حل‌نشده است.
+
 ## انتشار تأییدشده0.24.1/code61 — 2026-10-16
 Commitc2d3e137b658cd925ca90f21b41ffe3f0bfc0b6f/Tagv0.24.1،GitHubLatest و
 APK/SHA دانلود تازه تأیید؛ همان فایل با install-r و حفظ ورودها نصب شد.
