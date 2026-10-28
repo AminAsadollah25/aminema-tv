@@ -1,5 +1,13 @@
 # سند فنی مداوم Aminema
 
+## منتشرشده0.24.2/code62 — 2026-10-28
+Commita3d990034456bc22535e81317d6266431a04c4a8/Tagv0.24.2؛ Release عمومی و Latest،
+APK/SHA دانلود تازه و تطابق بایت‌به‌بایت/امضای ثابت تأیید شدند. RELEASE_REPORT_0.24.2.md
+مرجع لینک/شناسه/گیت انتشار است. 168unit/9JS/lint/build موفق؛ Taxi۲ آغاز1080 و میانه داشت.
+https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.24.2
+فقط اصلاح پخش ایرانی؛ ورودها/آرشیو و تغییرات محلی قبلی حفظ شدند. YT تغییری نکرد؛ TVBox
+واقعی/کل آرشیو/تبلیغ کل اثر تأیید نیست. متن Candidate پایین تاریخچهٔ قبل از انتشار است.
+
 ## جدیدترین کار: Candidate0.24.2/code62 — 2026-10-28، بدون انتشار
 خروجی عادی نهایی:31,728,851بایت،SHAed0150cf032637cff2c92d35dd555e17256e452baa950f05feb4a42f1e27a551؛
 install-r/Home موفق؛ runner موقت از source/manifest/DEX حذف و registration آن پاک شد. هیچ داده پاک نشد.

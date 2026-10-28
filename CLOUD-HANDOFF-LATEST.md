@@ -1,5 +1,13 @@
 # تحویل جاری Aminema برای Cloud / برنامه‌نویس بعدی
 
+## انتشار تأییدشده0.24.2/code62 — 2026-10-28
+Commita3d990034456bc22535e81317d6266431a04c4a8/Tagv0.24.2؛ GitHubLatest عمومی،
+APK31,728,851بایت/SHAed0150cf032637cff2c92d35dd555e17256e452baa950f05feb4a42f1e27a551
+دانلود تازه و cmp/امضای ثابت تأیید شدند. مرجع: RELEASE_REPORT_0.24.2.md و QA همان نسخه.
+https://github.com/AminAsadollah25/aminema-tv/releases/tag/v0.24.2
+فقط۱۴فایل مرتبط منتشر شد؛ dirtyهای قدیمی/YT حفظ و وارد ریلیز نشدند. تست باکس واقعی با مالک؛
+کل آرشیو/ad-free/شروع فوری تضمین نیست. Candidate پایین وضعیت تاریخیِ پیش از انتشار است.
+
 ## کار جاری0.24.2/code62 — 2026-10-28، محلی/منتشرنشده
 نهایی محلی: APK31,728,851بایت/SHAed0150cf032637cff2c92d35dd555e17256e452baa950f05feb4a42f1e27a551؛
 در outputs/Aminema-0.24.2-debug.apk +sha256،install-r و Home تأیید؛ runner در source/DEX/
