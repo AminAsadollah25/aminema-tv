@@ -12,47 +12,114 @@ object FarsiLandScripts {
     // Both controls were verified on the live site. Record the active choice too, so
     // recovery never bounces back to the engine that already failed on this title.
     val alternatePlayerNodes = """Array.from(document.querySelectorAll('a')).filter(function(a){var p=a.querySelector('p');return p && /^Player [12]$/.test(p.textContent.trim()) && a.getClientRects().length>0 && getComputedStyle(a).visibility!=='hidden';}).sort(function(a,b){return a.textContent.trim().localeCompare(b.textContent.trim());})"""
+    /** Verified IMA request failure contract on FarsiPlex's current ordinary player pages.
+     * Never report a successful ad, call resumeContent, read tags/media, or alter access gates.
+     * Let the site's own onFail waterfall complete instead of waiting 5s per blocked ad tag.
+     */
+    val adRequestFilter = """
+        (function(){
+          if(!/^(www\.)?farsiplex\.com$/.test(location.hostname) || !/^\/play-[a-z-]+\/?$/.test(location.pathname))return;
+          if(/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''))return;
+          if(window.__aminImaFilter)return;
+          if(typeof window.requestImaAd!=='function' || typeof window.playCriticalAd!=='function' || typeof window.resumeContent!=='function')return;
+          var code=Function.prototype.toString.call(window.requestImaAd);
+          if(code.indexOf('google.ima.AdsRequest')<0 || code.indexOf('adsLoader.requestAds')<0 || code.indexOf('onFail')<0)return;
+          var state={suspended:false,pending:[]};window.__aminImaFilter=state;
+          state.flush=function(){
+            if(state.suspended || window.__aminUserPaused)return;
+            var tasks=state.pending.splice(0,32);tasks.forEach(function(task){task();});
+          };
+          window.requestImaAd=function(_ignoredTag,_ignoredSuccess,onFail){
+            if(typeof onFail!=='function')return;
+            // Asynchronous failure, not a fabricated impression or completed advertisement.
+            setTimeout(function(){
+              if(state.suspended || window.__aminUserPaused){if(state.pending.length<32)state.pending.push(onFail);return;}
+              onFail();
+            },0);
+          };
+          document.addEventListener('click',function(e){
+            if(!e.isTrusted || !e.target.closest || !e.target.closest('.jw-icon-playback,.jw-icon-display,.plyr__control[data-plyr="play"]'))return;
+            var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');
+            if(v){window.__aminUserPaused=!v.paused;if(!window.__aminUserPaused)state.flush();}
+          },true);
+        })();
+    """.trimIndent()
+    val suspendPlayback = """(function(){if(window.__aminImaFilter)window.__aminImaFilter.suspended=true;document.querySelectorAll('video').forEach(function(v){v.pause();});})()"""
+    val resumeObservation = """(function(){if(window.__aminImaFilter){window.__aminImaFilter.suspended=false;window.__aminImaFilter.flush();}})()"""
+    val togglePlayback = """(function(){var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');if(v){window.__aminUserPaused=!v.paused;if(v.paused){v.play();if(window.__aminImaFilter)window.__aminImaFilter.flush();}else v.pause();}})()"""
+    val stalledQualitySnapshot = """
+        (function(){
+          var gate=/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:'');
+          var valid=/^(www\.)?farsiplex\.com$/.test(location.hostname)&&/^\/play-[a-z-]+\/?$/.test(location.pathname);
+          var v=valid&&!gate?(document.querySelector('#player video,video#player')||document.querySelector('.plyr video')):null;
+          return JSON.stringify({gate:gate||!valid,accessGate:gate,userPaused:!!window.__aminUserPaused,seeking:!!(v&&v.seeking),ready:v?v.readyState:-1,time:v&&isFinite(v.currentTime)?v.currentTime:-1,choices:!valid||gate?[]:Array.from(document.querySelectorAll('.plyr button[data-plyr="quality"]')).filter(function(b){return /^(480|720|1080)$/.test(b.value);}).map(function(b){return {label:b.value,selected:b.getAttribute('aria-checked')==='true'};})});
+        })();
+    """.trimIndent()
+    fun selectStalledQuality(label:String):String {
+        require(label in setOf("480","720","1080"))
+        return """(function(){if(!/^(www\.)?farsiplex\.com$/.test(location.hostname)||!/^\/play-[a-z-]+\/?$/.test(location.pathname)||window.__aminUserPaused||(window.__aminImaFilter&&window.__aminImaFilter.suspended)||/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''))return;var b=Array.from(document.querySelectorAll('.plyr button[data-plyr="quality"]')).find(function(e){return e.value==='$label'&&e.getAttribute('aria-checked')!=='true';});if(b)b.click();})()"""
+    }
+    /** Retry a stuck ordinary seek slightly earlier, never skip unseen content forward. */
+    val retryStalledSeek = """
+        (function(){
+          if(!/^(www\.)?farsiplex\.com$/.test(location.hostname)||!/^\/play-[a-z-]+\/?$/.test(location.pathname)||window.__aminUserPaused||(window.__aminImaFilter&&window.__aminImaFilter.suspended)||/Unlock more content|Take action to continue accessing/i.test(document.body?document.body.innerText:''))return false;
+          var v=document.querySelector('#player video,video#player')||document.querySelector('.plyr video');
+          if(!v||v.paused||!v.seeking||v.readyState>=2||!isFinite(v.currentTime)||v.currentTime<3)return false;
+          v.currentTime=Math.max(0,Math.floor(v.currentTime)-3);return true;
+        })();
+    """.trimIndent()
     val playback = """
         (function(){
           function visible(e){return e && e.getClientRects().length>0 && getComputedStyle(e).visibility!=='hidden';}
           function notePlayError(e){var name=e&&e.name;window.__aminPlayError=/^(NotAllowedError|AbortError|NotSupportedError|InvalidStateError)$/.test(name)?name:'Other';}
           var text=document.body?document.body.innerText:'';
           if(/Unlock more content|Take action to continue accessing/i.test(text))return JSON.stringify({state:'gate'});
+          $adRequestFilter
           var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');
           if(v){
             if(v.error)return JSON.stringify({state:'player-error',code:v.error.code});
+            var userPaused=!!window.__aminUserPaused;
+            // A provider quality/player swap must not cancel the user's explicit Pause.
+            if(userPaused && !v.paused)v.pause();
             if(location.hostname.replace(/^www\./,'')==='farsiplex.com' && !window.__aminInitialQualityChosen){
               var quality=Array.from(document.querySelectorAll('.plyr button[data-plyr="quality"]')).filter(function(b){return /^(480|720|1080)$/.test(b.value);});
-              if(quality.length){window.__aminInitialQualityChosen=true;return JSON.stringify({state:'player-quality',labels:quality.map(function(b){return b.value;})});}
+              if(quality.length){
+                window.__aminInitialQualityChosen=true;
+                var preferred=['1080','720','480'].find(function(label){return quality.some(function(b){return b.value===label;});});
+                var selected=quality.find(function(b){return b.value===preferred && b.getAttribute('aria-checked')==='true';});
+                if(!selected)return JSON.stringify({state:'player-quality',labels:quality.map(function(b){return b.value;})});
+              }
             }
-            if(window.__aminVideo!==v){window.__aminVideo=v;window.__aminEverPlayed=false;window.__aminStartTries=0;window.__aminLastStart=0;window.__aminPlayError='';window.__aminPlayClicked=false;var p=v.play();if(p && p.catch)p.catch(notePlayError);}
-            if(!window.__aminEverPlayed && v.readyState>=1 && v.currentTime===0 && v.paused && window.__aminStartTries<3 && Date.now()-window.__aminLastStart>1500){
+            if(window.__aminVideo!==v){window.__aminVideo=v;window.__aminEverPlayed=false;window.__aminStartTries=0;window.__aminLastStart=0;window.__aminPlayError='';window.__aminPlayClicked=false;if(!userPaused){var p=v.play();if(p && p.catch)p.catch(notePlayError);}}
+            if(!userPaused && !window.__aminEverPlayed && v.readyState>=1 && v.currentTime===0 && v.paused && window.__aminStartTries<3 && Date.now()-window.__aminLastStart>1500){
               window.__aminStartTries++;window.__aminLastStart=Date.now();var readyPlay=v.play();if(readyPlay && readyPlay.catch)readyPlay.catch(notePlayError);
             }
             if(v.readyState>=1){
               var box=v.closest('.jwplayer,.plyr')||v;
-              if(box.parentElement!==document.body){
-                // Chromium can pause media when its player is detached/reparented.
-                // Restore only playback interrupted by our own move, never a manual pause.
-                var wasPlaying=!v.paused && !v.ended;document.body.appendChild(box);
-                if(wasPlaying){var resumed=v.play();if(resumed && resumed.catch)resumed.catch(notePlayError);}
-              }
+              // Keep the media/player attached to its original DOM parent. Reparenting
+              // can interrupt Chromium playback/seeks; fixed CSS provides theater layout.
               if(!document.getElementById('aminema-theater-style')){
                 var st=document.createElement('style');st.id='aminema-theater-style';
                 st.textContent='html,body{background:#000!important;overflow:hidden!important;}'+
-                  '.aminema-theater{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;'+
+                  '.aminema-theater-ancestor{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}'+
+                  '.aminema-theater{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:100vw!important;height:100vh!important;'+
                   'max-width:none!important;max-height:none!important;margin:0!important;z-index:1000!important;background:#000!important;}'+
                   '.aminema-theater video,video.aminema-theater{width:100%!important;height:100%!important;object-fit:contain!important;}';
                 document.head.appendChild(st);
               }
               if(!box.classList.contains('aminema-theater'))box.classList.add('aminema-theater');
+              // A backdrop-filter ancestor establishes its own fixed containing block.
+              // Neutralize only the player's ancestors; never detach the media element.
+              for(var parent=box.parentElement;parent&&parent!==document.body;parent=parent.parentElement){
+                if(!parent.classList.contains('aminema-theater-ancestor'))parent.classList.add('aminema-theater-ancestor');
+              }
             }
-            if(v.readyState>=2 && (v.currentTime>0 || window.__aminEverPlayed)){
-              window.__aminEverPlayed=true;
-              return JSON.stringify({state:v.paused?'paused':'playing',paused:v.paused,time:Math.floor(v.currentTime),ready:v.readyState});
+            if((v.readyState>=2 && (v.currentTime>0 || window.__aminEverPlayed)) || (userPaused && v.paused)){
+              window.__aminEverPlayed=window.__aminEverPlayed || v.currentTime>0;
+              return JSON.stringify({state:v.paused?'paused':'playing',paused:v.paused,time:Math.floor(v.currentTime),ready:v.readyState,userPaused:!!window.__aminUserPaused});
             }
             var play=document.querySelector('.jw-icon-playback,.plyr__control[data-plyr="play"],button[aria-label="Play"]');
-            if(!window.__aminEverPlayed && v.paused && visible(play) && !window.__aminPlayClicked){window.__aminPlayClicked=true;play.click();}
+            if(!userPaused && !window.__aminEverPlayed && v.paused && visible(play) && !window.__aminPlayClicked){window.__aminPlayClicked=true;play.click();}
             if(/This video file cannot be played|Error Code:/i.test(text))return JSON.stringify({state:'player-error'});
             return JSON.stringify({state:'buffering',ready:v.readyState,paused:v.paused,time:Math.floor(v.currentTime),playError:window.__aminPlayError||''});
           }
@@ -60,7 +127,7 @@ object FarsiLandScripts {
           // Current JW creates its video element only after the visible Play control.
           // Scope to the main player; never click page-wide ads, links or access prompts.
           var initialPlay=Array.from(document.querySelectorAll('#player [role="button"],.jwplayer [role="button"]')).find(function(b){return visible(b) && /^play(?:\s|$)/i.test(b.getAttribute('aria-label')||'');});
-          if(initialPlay && window.__aminInitialPlay!==initialPlay){window.__aminInitialPlay=initialPlay;initialPlay.click();return JSON.stringify({state:'opening-player'});}
+          if(!window.__aminUserPaused && initialPlay && window.__aminInitialPlay!==initialPlay){window.__aminInitialPlay=initialPlay;initialPlay.click();return JSON.stringify({state:'opening-player'});}
           if((location.hostname.replace(/^www\./,'')==='farsiland.com' && /^\/(movies|episodes)\/[^/]+\/?$/.test(location.pathname)) ||
              (location.hostname.replace(/^www\./,'')==='farsiplex.com' && /^\/(movie|episode)\/[^/]+\/?$/.test(location.pathname))){
             var go=document.querySelector('.fakeplayer a[onclick]');

@@ -1,5 +1,35 @@
 # سند فنی مداوم Aminema
 
+## مجوز انتشار 0.24.4 — 2026-10-28
+دستور تازه مالک «خب منتشرش کن» شامل Commit/Push/Tag/GitHubRelease با APK تست‌شده است. گیت دوباره موفق و سورس runtime تغییر نکرد. پس از بررسی سرور، RELEASE_REPORT_0.24.4.md مرجع واقعی لینک/Commit/Tag/SHA خواهد بود؛ نتیجه پیشاپیش موفق اعلام نشود. پژوهش‌های نامرتبط و ورودها محفوظ می‌مانند.
+
+## اصلاح نهایی محلی 0.24.4/code64 — 2026-10-28
+
+مرجع دقیق: DEVELOPMENT_LOG/TEST_REPORT/RELEASE_NOTES_0.24.4.md. ۱۸۲unit/۲۵fixtureJS/lint/build موفق؛ APK31,728,747بایت با SHA `987ee116f5dd009f27097e9af4173b0920843287b3f984c8836d7406564cba8f` درoutputs آماده وinstall-r شده؛ امضا/ورود/داده‌ها ثابت. منتشر نشده؛ GitHub0.24.2 است.
+
+نکته فنی تازه: fixed کردن `.plyr` زیر والد دارای backdrop-filter بهviewport نمی‌چسبد. DOMreparent هم قطع پخش می‌آورد؛ بنابراین فقطCSSfixed و کلاس `aminema-theater-ancestor` رویوالدهای پلیر باbackdrop-filter:none استفاده شد. قاب واقعیx0/y0/960×540 وparentاصلی حفظ شد. inset علت تأییدشده نبود.
+
+یک باگ تازهٔintent باfixture قرمز اثبات شد:videoعوض‌شده باPauseصریح دوبارهplay می‌شد؛ هم initialization/retry/semanticPlay محافظت شدند، هم resumeناخواستهٔسایت pause می‌شود. ProgressGuard پس از۲۰ثانیه بی‌پیشروی واقعی فعال است؛ درseek گیرکرده فقط یک بار `max(0,floor(time)-3)` ودرصورتنیاز حداکثر یک کیفیت رسمی جایگزین. همهٔفرمان‌ها هنگام اجراPause/background/gate/host/route را مجدد بررسی می‌کنند. نهURLمدیا خوانده می‌شود نهfalse ad-success؛ filter قبلی فقطonFail رسمی async را حفظ می‌کند.
+
+درAPKنهایی گیر720/time82.87 بدونQAکمکی باخوداپ به79 و سپس90.77/ready4 رسید؛ Settings/Back مکث راحفظ کرد، میانه1994→2012.89 موفق. callbackکوتاه سایت هنوزوجوددارد؛ کل‌آرشیو/صدا/USBmouseفیزیکی/TVBox تضمین نشوند. گزارش قدیمی موس مرکز غلط تعبیر شده بود؛ دکمهٔ واقعیPause کارکرد. تاریخچهٔ شکستfallbackکیفیت پایینِگزارش QA نگه‌داشته شده و موفقیت تلقی نشود.
+
+## اصلاح محلی0.24.3/code63 — 2026-10-28،هنوز بدون انتشار
+مرحلهٔ اجرای درخواست مالک پس از تشخیص0.24.2:فیلترexactFP/play برایrequestImaAd شناخته‌شده
+باonFailasync رسمی،بدونsuccess/ad-impressionجعلی یاresumeContentمستقیم؛gate ثابت.صف محدود و
+deferهنگامPause/lifecycle،قصدPauseکاربر،حذف کلیک کیفیت انتخاب‌شده وFarsiLandStartupGate خالص.
+174unit/14JS/lint0error135warning/build موفق.دو شروع استخوان‌سوز1080،Pauseریموت۲۴ثانیه و
+Resume،Taxi۲ آغاز وseek998→1032.57 موفق؛مرجعDevelopment/QA0.24.3 وReplayتشخیص0.24.2.
+APK31,728,751بایت/SHA893318f39e97d44273b7c49a542c95301268148c1162c481b8dbf58de548b4a6
+درoutputs آماده وinstall-r شد؛امضا/ورود/آرشیو ثابت.موسِ مرکز Pause نکرد،TVBox/کل‌اثر تأیید نیست.
+هیچCommit/Push/Tag/Release تازه انجام نشد؛متن تشخیص قدیمی پایین تاریخی است،نه وضعیت کد فعلی.
+
+## یافتهٔ پس از انتشار: استخوان‌سوز/آغاز پلیر — 2026-10-28
+دو نوبت واقعی روی0.24.2:Pause حوالیtime1 باready4/1080/error0 وبدون ورودی؛ ادامهٔ خودکار بعدی.
+در ردیابی موقت callerهایpause ازcallback سایت وresume ازresumeContent/playCriticalAd آمدند؛
+نه اثبات علت تمام کندی‌ها یا مجوز عبور ازgate. Scripts پس ازtime>0،everPlayed=true وActivity
+paused/playing را یکسان می‌گیرد؛ startup پایدار و قصدPause کاربر تفکیک ندارند. مرجع کامل:
+PLAYBACK_STARTUP_DIAGNOSIS_0.24.2_FA.md. این مرحله فقط عیب‌یابی؛runtime/APK/نسخه/انتشار ثابت.
+
 ## منتشرشده0.24.2/code62 — 2026-10-28
 Commita3d990034456bc22535e81317d6266431a04c4a8/Tagv0.24.2؛ Release عمومی و Latest،
 APK/SHA دانلود تازه و تطابق بایت‌به‌بایت/امضای ثابت تأیید شدند. RELEASE_REPORT_0.24.2.md

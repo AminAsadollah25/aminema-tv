@@ -33,6 +33,10 @@ class FarsiLandActivity:ComponentActivity() {
     private lateinit var error:TvErrorView
     private val handler=Handler(Looper.getMainLooper())
     private val asyncGuard=FarsiLandAsyncGuard()
+    private val startup=FarsiLandStartupGate()
+    private val progress=FarsiLandProgressGuard()
+    private var stallRetryUsed=false
+    private var seekRetryUsed=false
     private val children=mutableSetOf<WebView>()
     private var startedAt=0L
     private var flowStartedAt=0L
@@ -56,7 +60,7 @@ class FarsiLandActivity:ComponentActivity() {
     private var resolving=false
     private val tick=object:Runnable { override fun run(){
         if(stopped || isFinishing || isDestroyed)return
-        if(preparing && !playing && (SystemClock.elapsedRealtime()-startedAt>45_000 || SystemClock.elapsedRealtime()-flowStartedAt>120_000)){
+        if(preparing && !startup.confirmed && (SystemClock.elapsedRealtime()-startedAt>45_000 || SystemClock.elapsedRealtime()-flowStartedAt>120_000)){
             recoverOrFail("پخش در مهلت مقرر آماده نشد؛ برای تلاش دوباره یا برگشت از کنترل استفاده کن.");return
         }
         if(inFlight && SystemClock.elapsedRealtime()-inFlightAt>3000L){inFlight=false;asyncGuard.expireInspection()}
@@ -111,13 +115,19 @@ class FarsiLandActivity:ComponentActivity() {
                     view.stopLoading();return
                 }
                 asyncGuard.invalidate();recovering=false
-                document++;chosenDocument=-1;inFlight=false;playing=false
+                document++;chosenDocument=-1;inFlight=false;playing=false;startup.reset();progress.reset()
                 if(FarsiLandPolicy.isEpisode(url) || (FarsiLandPolicy.isTitle(url) && url.contains("/movies/")))flowStartedAt=SystemClock.elapsedRealtime()
                 if(isPlayablePage(url))startedAt=SystemClock.elapsedRealtime()
                 if(isPlayablePage(url)){preparing=true;loading.showPreparing(false,titleText=intent.getStringExtra("content_title").orEmpty())}
                 else loading.hide()
             }
-            override fun onPageFinished(view:WebView,url:String){CookieManager.getInstance().flush()}
+            override fun onPageCommitVisible(view:WebView,url:String){
+                if(!stopped && !live && FarsiLandPolicy.allowedPage(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
+            }
+            override fun onPageFinished(view:WebView,url:String){
+                CookieManager.getInstance().flush()
+                if(!stopped && !live && FarsiLandPolicy.allowedPage(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
+            }
             override fun onReceivedError(view:WebView,request:WebResourceRequest,e:WebResourceError){
                 if(request.isForMainFrame)fail("اتصال به سایت برقرار نشد؛ اینترنت و DNS دستگاه را بررسی کن.")
             }
@@ -160,6 +170,8 @@ class FarsiLandActivity:ComponentActivity() {
     private fun begin(url:String){
         resolutionJob?.cancel();val epoch=++resolutionEpoch;resolving=false
         asyncGuard.invalidate()
+        startup.reset()
+        progress.reset();stallRetryUsed=false;seekRetryUsed=false
         stopped=false;playing=false;preparing=isPlayablePage(url);inFlight=false;chosenDocument=-1;startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt;ticks=0
         triedQualities.clear();recovering=false;triedPlayers.clear()
         error.visibility=View.GONE;handler.removeCallbacks(tick)
@@ -185,7 +197,10 @@ class FarsiLandActivity:ComponentActivity() {
             val phase=data?.optString("state").orEmpty()
             if(com.amin.tvos.BuildConfig.DEBUG && ticks++%8==0)android.util.Log.d("AminFarsiLand","phase=$phase ready=${data?.optInt("ready",-1)} paused=${data?.optBoolean("paused")} time=${data?.optInt("time",-1)} playError=${data?.optString("playError")}")
             when(phase){
-                "playing", "paused" -> {playing=true;loading.hide();error.visibility=View.GONE}
+                "playing", "paused" -> {
+                    playing=true;error.visibility=View.GONE
+                    if(startup.observe(phase,data?.optDouble("time",0.0)?:0.0,SystemClock.elapsedRealtime(),data?.optBoolean("userPaused")==true))loading.hide()
+                }
                 "gate" -> {loading.hide();playing=false;stopped=true;handler.removeCallbacks(tick)
                     android.widget.Toast.makeText(this,"سایت برای دسترسی اقدام تبلیغاتی می‌خواهد؛ پخش بدون تبلیغ تأیید نشد.",android.widget.Toast.LENGTH_LONG).show()}
                 "quality", "player-quality" -> if(phase=="player-quality" || chosenDocument!=document){
@@ -199,13 +214,64 @@ class FarsiLandActivity:ComponentActivity() {
                 }
                 "player-error" -> recoverOrFail("پلیر سایت خطا داد؛ دوباره تلاش کن یا سرور دیگری را در سایت انتخاب کن.")
             }
-            if(!playing && !stopped && isPlayablePage(web.url.orEmpty()) &&
+            if(startup.confirmed && !stopped && !recovering && progress.stalled(
+                    phase,data?.optDouble("time",-1.0)?:-1.0,data?.optBoolean("paused",true)?:true,SystemClock.elapsedRealtime())){
+                recoverStalledQuality();return@evaluateJavascript
+            }
+            if(!startup.confirmed && !stopped && isPlayablePage(web.url.orEmpty()) &&
                 SystemClock.elapsedRealtime()-startedAt>45_000)recoverOrFail("پخش در مهلت مقرر آماده نشد.")
         }
     }
+    /** One short backwards seek, then at most one official quality switch per attempt. */
+    private fun recoverStalledQuality(){
+        val message="تصویر جلو نمی‌رود؛ کیفیت یا اتصالِ پلیر سایت آماده نشد. دوباره تلاش کن."
+        if(live || (stallRetryUsed && seekRetryUsed)){fail(message);return}
+        recovering=true;inFlight=false
+        val ticket=asyncGuard.beginRecovery()
+        web.evaluateJavascript(FarsiLandScripts.stalledQualitySnapshot){encoded->
+            if(!asyncGuard.currentRecovery(ticket) || stopped || isFinishing || isDestroyed)return@evaluateJavascript
+            asyncGuard.finishRecovery(ticket);recovering=false
+            val data=runCatching{JSONObject(org.json.JSONTokener(encoded).nextValue() as String)}.getOrNull()
+            if(data?.optBoolean("accessGate")==true){
+                stopped=true;handler.removeCallbacks(tick);loading.hide()
+                android.widget.Toast.makeText(this,"سایت شرط دسترسی تبلیغاتی دارد؛ پخش بدون تبلیغ تأیید نشد.",android.widget.Toast.LENGTH_LONG).show()
+                return@evaluateJavascript
+            }
+            if(data?.optBoolean("gate")!=false){fail(message);return@evaluateJavascript}
+            if(data.optBoolean("userPaused")){progress.reset();return@evaluateJavascript}
+            if(!seekRetryUsed && data.optBoolean("seeking") && data.optInt("ready",-1) in 0..1 && data.optDouble("time",-1.0)>=3.0){
+                seekRetryUsed=true;progress.reset()
+                if(com.amin.tvos.BuildConfig.DEBUG)android.util.Log.d("AminFarsiLand","stall-retry-backwards-seek")
+                web.evaluateJavascript(FarsiLandScripts.retryStalledSeek,null)
+                return@evaluateJavascript
+            }
+            if(stallRetryUsed){fail(message);return@evaluateJavascript}
+            stallRetryUsed=true
+            val array=data.optJSONArray("choices")
+            val choices=(0 until (array?.length()?:0)).mapNotNull{array!!.optJSONObject(it)}
+            val selected=choices.filter{it.optBoolean("selected")}
+            if(selected.size!=1){fail(message);return@evaluateJavascript}
+            val current=selected.single().optString("label")
+            val available=choices.filterNot{it.optBoolean("selected")}
+            val best=FarsiLandPolicy.qualityIndex(available.map{it.optString("label")})
+            if(best==null){fail(message);return@evaluateJavascript}
+            val label=available[best].optString("label")
+            if(label !in setOf("480","720","1080")){fail(message);return@evaluateJavascript}
+            triedQualities.add(current);triedQualities.add(label)
+            startup.reset();progress.reset();playing=false;preparing=true
+            startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt
+            loading.showPreparing(false,titleText=intent.getStringExtra("content_title").orEmpty())
+            if(com.amin.tvos.BuildConfig.DEBUG)android.util.Log.d("AminFarsiLand","stall-fallback-quality=$label")
+            web.evaluateJavascript(FarsiLandScripts.selectStalledQuality(label),null)
+            handler.removeCallbacks(tick);handler.post(tick)
+        }
+        handler.postDelayed({if(asyncGuard.currentRecovery(ticket)&&recovering&&!stopped){
+            asyncGuard.finishRecovery(ticket);recovering=false;fail(message)
+        }},3500L)
+    }
     private fun recoverOrFail(message:String){
         if(recovering)return
-        if(live || playing || triedQualities.size>=3 || SystemClock.elapsedRealtime()-flowStartedAt>=120_000){fail(message);return}
+        if(live || startup.confirmed || triedQualities.size>=3 || SystemClock.elapsedRealtime()-flowStartedAt>=120_000){fail(message);return}
         recovering=true
         inFlight=false
         val request=asyncGuard.beginRecovery()
@@ -251,7 +317,7 @@ class FarsiLandActivity:ComponentActivity() {
     private fun fail(message:String){
         asyncGuard.invalidate();recovering=false;inFlight=false
         stopped=true;playing=false;handler.removeCallbacks(tick);loading.hide()
-        web.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});",null)
+        web.evaluateJavascript(FarsiLandScripts.suspendPlayback,null)
         error.show("پخش آماده نشد",message);error.bringToFront()
     }
     private fun hideBars(){WindowInsetsControllerCompat(window,window.decorView).apply {
@@ -268,20 +334,21 @@ class FarsiLandActivity:ComponentActivity() {
     private fun handlePlaybackKey(event:KeyEvent):Boolean {
         if(event.keyCode in setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_DPAD_CENTER,
             KeyEvent.KEYCODE_ENTER,KeyEvent.KEYCODE_NUMPAD_ENTER) && playing){
-            if(event.action==KeyEvent.ACTION_UP)web.evaluateJavascript("(function(){var v=document.querySelector('#player video,video#player')||document.querySelector('.jwplayer video,.plyr video');if(v){if(v.paused)v.play();else v.pause();}})()",null)
+            if(event.action==KeyEvent.ACTION_UP)web.evaluateJavascript(FarsiLandScripts.togglePlayback,null)
             return true
         }
         return false
     }
     override fun onPause(){
         resolutionJob?.cancel();resolutionEpoch++
+        progress.reset()
         asyncGuard.invalidate()
         stopped=true;recovering=false;inFlight=false;handler.removeCallbacksAndMessages(null)
         children.toList().forEach {it.destroy()};children.clear()
-        if(::web.isInitialized){web.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});",null);web.onPause()}
+        if(::web.isInitialized){web.evaluateJavascript(FarsiLandScripts.suspendPlayback,null);web.onPause()}
         super.onPause()
     }
-    override fun onResume(){super.onResume();if(::web.isInitialized){web.onResume();stopped=false;startedAt=SystemClock.elapsedRealtime();if(!playing)flowStartedAt=startedAt;handler.removeCallbacks(tick);if(resolving){if(resolutionJob?.isActive!=true)begin(seed)}else handler.post(tick)}}
+    override fun onResume(){super.onResume();progress.reset();if(::web.isInitialized){web.onResume();web.evaluateJavascript(FarsiLandScripts.resumeObservation,null);stopped=false;startedAt=SystemClock.elapsedRealtime();if(!playing)flowStartedAt=startedAt;handler.removeCallbacks(tick);if(resolving){if(resolutionJob?.isActive!=true)begin(seed)}else handler.post(tick)}}
     override fun onDestroy(){resolutionJob?.cancel();resolutionEpoch++;asyncGuard.invalidate();stopped=true;handler.removeCallbacksAndMessages(null);closeCustom()
         children.toList().forEach {it.destroy()};children.clear()
         if(::web.isInitialized){web.stopLoading();root.removeView(web);web.destroy()};super.onDestroy()}
