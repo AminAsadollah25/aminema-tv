@@ -417,6 +417,7 @@ class CatalogBackgroundSync(
                         CatalogItem(
                             title = entry.optString("title").trim().take(140)
                                 .ifBlank { service.name },
+                            sourceTitle = entry.optString("sourceTitle").trim().take(140),
                             kind = kind,
                             contentUrl = contentUrl,
                             posterUrl = poster,
@@ -570,7 +571,7 @@ class CatalogBackgroundSync(
         const val MYMOVIZ_PAGE_BATCH = 4
         // Keep a generous safety ceiling; the library requests the next window on demand.
         const val MAX_PAGE_LIMIT = 200
-        val SUPPORTED_IDS = setOf("farsiland", FILMROOZ_ID, MYMOVIZ_ID)
+        val SUPPORTED_IDS = setOf("farsiland", PARSI_ID, FILMROOZ_ID, MYMOVIZ_ID)
 
         fun scriptFor(
             serviceId: String,

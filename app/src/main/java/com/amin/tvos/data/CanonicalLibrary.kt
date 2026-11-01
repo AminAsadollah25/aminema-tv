@@ -147,6 +147,7 @@ object CanonicalLibrary {
             }
             val preferred = distinct.maxWithOrNull(
                 compareBy<SourceVariant>(
+                    { if (it.providerId == "parsiflix") 1 else 0 },
                     // A dubbed series is just as important as a dubbed movie.  Keeping this
                     // rule at canonical selection time lets the same title card expose the
                     // dubbed series provider without changing the user's provider sessions.
@@ -211,6 +212,9 @@ object CanonicalLibrary {
             } else {
                 CanonicalMatchConfidence.INDEPENDENT
             }
+        }
+        if (IranianVerifiedPairs.matches(first.item, second.item)) {
+            return CanonicalMatchConfidence.VERIFIED_IRANIAN_PAIR
         }
         // Different pages from the same provider can represent remakes, cuts or duplicates;
         // title/year alone is not enough to collapse a provider's own distinct records.
@@ -351,6 +355,7 @@ object CanonicalLibrary {
     private val CanonicalMatchConfidence.rank: Int
         get() = when (this) {
             CanonicalMatchConfidence.IMDb -> 4
+            CanonicalMatchConfidence.VERIFIED_IRANIAN_PAIR -> 4
             CanonicalMatchConfidence.TITLE_YEAR_KIND -> 3
             CanonicalMatchConfidence.TITLE_KIND_PUBLIC_ID -> 3
             CanonicalMatchConfidence.TITLE_ALIAS_YEAR -> 3

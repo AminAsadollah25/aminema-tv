@@ -111,13 +111,13 @@ fun HomeScreen(
     }
     val refreshingCatalogServices by viewModel.refreshingCatalogServices.collectAsStateWithLifecycle()
     val titleMetadata by viewModel.titleMetadata.collectAsStateWithLifecycle()
-    val homeServices = remember(services) { services.filter { it.showOnHome } }
+    val homeServices = remember(services) { services.filter { it.showOnHome }.sortedBy { if (it.id == "parsiflix") 0 else 1 } }
     val providerDoorways = remember(services) {
         services.filter {
-            it.id == HomeViewModel.IRANIAN_SERVICE_ID ||
+            it.id == "parsiflix" || it.id == HomeViewModel.IRANIAN_SERVICE_ID ||
                 it.id == HomeViewModel.INTERNATIONAL_SERVICE_ID ||
                 it.id == HomeViewModel.MYMOVIZ_SERVICE_ID
-        }
+        }.sortedBy { if (it.id == "parsiflix") 0 else 1 }
     }
     val catalogIndex by androidx.compose.runtime.produceState(
         initialValue = emptyList<CatalogItem>() to emptyMap<String, CatalogItem>(),
@@ -138,8 +138,11 @@ fun HomeScreen(
     }
     val catalogItems = catalogIndex.first
     val catalogByUrl = catalogIndex.second
-    val iranianSection = catalogSections.firstOrNull {
-        it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
+    val iranianSection = remember(catalogSections) {
+        com.amin.tvos.data.IranianCatalogMerge.section(
+            catalogSections.firstOrNull { it.serviceId == "parsiflix" },
+            catalogSections.firstOrNull { it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID }
+        )
     }
     val filmRoozSection = catalogSections.firstOrNull {
         it.serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID
@@ -237,9 +240,10 @@ fun HomeScreen(
         international: Boolean
     ): List<CatalogItem> {
         if (!international) {
-            val current = sections.firstOrNull {
-                it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID
-            }
+            val current = com.amin.tvos.data.IranianCatalogMerge.section(
+                sections.firstOrNull { it.serviceId == "parsiflix" },
+                sections.firstOrNull { it.serviceId == HomeViewModel.IRANIAN_SERVICE_ID }
+            )
             return when (kind) {
                 CatalogKind.MOVIE -> current?.movies.orEmpty()
                 CatalogKind.SERIES -> current?.series.orEmpty()
@@ -749,6 +753,7 @@ fun HomeScreen(
                     shape = RoundedCornerShape(50),
                     onClick = {
                         onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID)
+                        onRefreshCatalog("parsiflix")
                         onRefreshCatalog(HomeViewModel.INTERNATIONAL_SERVICE_ID)
                         onRefreshCatalog(HomeViewModel.MYMOVIZ_SERVICE_ID)
                     }
@@ -1026,6 +1031,10 @@ fun HomeScreen(
                     onRefresh = {
                         section?.serviceId?.let { serviceId ->
                             onRefreshCatalog(serviceId)
+                            if (!isInternational) {
+                                onRefreshCatalog("parsiflix")
+                                onRefreshCatalog(HomeViewModel.IRANIAN_SERVICE_ID)
+                            }
                             if (serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID) {
                                 onRefreshCatalog(HomeViewModel.MYMOVIZ_SERVICE_ID)
                             }
@@ -1049,7 +1058,7 @@ fun HomeScreen(
                                     HomeViewModel.MYMOVIZ_SERVICE_ID
                                 )
                             } else {
-                                setOfNotNull(section?.serviceId)
+                                setOf("parsiflix", HomeViewModel.IRANIAN_SERVICE_ID)
                             }
                         )
                     },
@@ -1058,6 +1067,8 @@ fun HomeScreen(
                     showFilters = false,
                     isRefreshing = section?.serviceId?.let { serviceId ->
                         serviceId in refreshingCatalogServices ||
+                            (!isInternational && ("parsiflix" in refreshingCatalogServices ||
+                                HomeViewModel.IRANIAN_SERVICE_ID in refreshingCatalogServices)) ||
                             (
                                 serviceId == HomeViewModel.INTERNATIONAL_SERVICE_ID &&
                                     HomeViewModel.MYMOVIZ_SERVICE_ID in

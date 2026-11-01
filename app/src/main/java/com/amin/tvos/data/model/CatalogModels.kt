@@ -100,7 +100,9 @@ data class CatalogItem(
     val qualityLabel: String = "",
     /** Ordinary public title credits, when the provider exposes them in its catalog card/API. */
     val directors: List<PersonRef> = emptyList(),
-    val cast: List<PersonRef> = emptyList()
+    val cast: List<PersonRef> = emptyList(),
+    /** Original provider label when title was localized from that same public detail page. */
+    val sourceTitle: String = ""
 )
 
 /**

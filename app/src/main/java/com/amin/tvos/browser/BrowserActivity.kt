@@ -81,6 +81,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_CONTENT_TITLE = "content_title"
         private const val EXTRA_CONTENT_POSTER = "content_poster"
         private const val EXTRA_CONTENT_BACKDROP = "content_backdrop"
+        private const val EXTRA_EPISODE_LABEL = "episode_label"
         private const val EXTRA_AUTO_RESUME = "auto_resume"
         private const val EXTRA_RESUME_STRATEGY = "resume_strategy"
         private const val EXTRA_ACTION_BUTTON_PATTERNS = "action_button_patterns"
@@ -91,7 +92,7 @@ class BrowserActivity : ComponentActivity() {
         private const val EXTRA_SM_SEASON = "sm_season"
         private const val EXTRA_SM_QUALITY = "sm_quality"
         private const val EXTRA_SM_EPISODE = "sm_episode"
-        private const val PLAYBACK_PREPARATION_TIMEOUT_MS = 14_000L
+        private const val PLAYBACK_PREPARATION_TIMEOUT_MS = 20_000L
         private const val ACTION_RETRY_COOLDOWN_MS = 850L
 
         fun intent(
@@ -113,7 +114,8 @@ class BrowserActivity : ComponentActivity() {
             smSeason: String? = null,
             smQuality: String? = null,
             smEpisode: String? = null,
-            liveChannelKey: String? = null
+            liveChannelKey: String? = null,
+            episodeLabel: String? = null
         ): Intent =
             Intent(context, if(serviceId == FarsiLandPolicy.ID) FarsiLandActivity::class.java else BrowserActivity::class.java)
                 .putExtra(EXTRA_SERVICE_ID, serviceId)
@@ -123,6 +125,7 @@ class BrowserActivity : ComponentActivity() {
                 .putExtra(EXTRA_CONTENT_TITLE, contentTitle)
                 .putExtra(EXTRA_CONTENT_POSTER, contentPoster)
                 .putExtra(EXTRA_CONTENT_BACKDROP, contentBackdrop)
+                .putExtra(EXTRA_EPISODE_LABEL, episodeLabel)
                 .putExtra(EXTRA_AUTO_RESUME, autoResume)
                 .putExtra(EXTRA_DIRECT_PLAY, directPlay)
                 .putExtra(EXTRA_LIVE_THEATER_MODE, liveTheaterMode)
@@ -206,6 +209,8 @@ class BrowserActivity : ComponentActivity() {
 
     private val metadataHandler = Handler(Looper.getMainLooper())
     private val playbackAutomationHandler = Handler(Looper.getMainLooper())
+    private val playbackStartupGate = FarsiLandStartupGate()
+    private var observingPlaybackStart = false
     private val playbackAutomationTimeout = Runnable {
         if (
             !directPlayTriggered &&
@@ -652,7 +657,6 @@ class BrowserActivity : ComponentActivity() {
 
                 customView = view
                 customViewCallback = callback
-                confirmPlaybackReady()
                 webView.visibility = View.GONE
                 errorView.visibility = View.GONE
                 mouseKeyboard.dismiss()
@@ -665,6 +669,10 @@ class BrowserActivity : ComponentActivity() {
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
                 )
+                if (playbackLoadingView.isShowing) {
+                    playbackLoadingView.bringToFront()
+                    observePlaybackStart()
+                }
                 view.requestFocus()
                 hideSystemUi()
             }
@@ -1079,7 +1087,7 @@ class BrowserActivity : ComponentActivity() {
                     smSeason = com.amin.tvos.data.EpisodeResumePolicy.season(smEpisode.orEmpty())
                     pendingEpisodeAction = ""
                 }
-                confirmPlaybackReady()
+                if (data.optLong("position") >= 1_000L) confirmPlaybackReady()
                 val contentUrl = lastContentUrl.ifBlank {
                     referrer.takeIf { adapter.isContentUrl(it) }.orEmpty()
                 }.ifBlank {
@@ -2484,11 +2492,40 @@ class BrowserActivity : ComponentActivity() {
     private fun observePlaybackNavigation(url: String) {
         val adapter = serviceAdapter ?: return
         if (!adapter.isPlaybackUrl(url)) return
+        observePlaybackStart()
         if (adapter.directPlay?.autoPlayOnPlaybackPage == true) {
             schedulePlaybackAutoStart(webView, url)
-        } else {
-            confirmPlaybackReady()
         }
+    }
+
+    /** Observe progress only: opening a route, showing a frame, or calling play is not success. */
+    private fun observePlaybackStart() {
+        if (observingPlaybackStart || !playbackLoadingView.isShowing) return
+        observingPlaybackStart = true
+        playbackStartupGate.reset()
+        val poll = object : Runnable {
+            override fun run() {
+                if (isDestroyed || isFinishing || !playbackLoadingView.isShowing) {
+                    observingPlaybackStart = false
+                    return
+                }
+                webView.evaluateJavascript("""(function(){var v=document.querySelector('video');
+                    return JSON.stringify({phase:v&&!v.paused&&v.readyState>=2?'playing':'waiting',
+                        time:v&&isFinite(v.currentTime)?v.currentTime:0});})()""") { encoded ->
+                    val data = runCatching {
+                        JSONObject(org.json.JSONTokener(encoded).nextValue() as String)
+                    }.getOrNull()
+                    if (data != null && playbackStartupGate.observe(
+                            data.optString("phase"), data.optDouble("time", 0.0),
+                            android.os.SystemClock.elapsedRealtime()
+                        )) confirmPlaybackReady()
+                    if (playbackLoadingView.isShowing && !isFinishing && !isDestroyed)
+                        playbackAutomationHandler.postDelayed(this, 650L)
+                    else observingPlaybackStart = false
+                }
+            }
+        }
+        playbackAutomationHandler.post(poll)
     }
 
     private fun confirmPlaybackReady() {
@@ -2586,9 +2623,7 @@ class BrowserActivity : ComponentActivity() {
             })();
         """.trimIndent()
         view.evaluateJavascript(script) { result ->
-            if (result?.contains("already-playing") == true) {
-                confirmPlaybackReady()
-            }
+            if (result?.contains("already-playing") == true) observePlaybackStart()
         }
     }
 
@@ -2605,6 +2640,7 @@ class BrowserActivity : ComponentActivity() {
         ).containsMatchIn(url)
 
     private fun requestedEpisodeLabel(): String? {
+        intent.getStringExtra(EXTRA_EPISODE_LABEL)?.takeIf { it.isNotBlank() }?.let { return it }
         val season = smSeason?.takeIf { it.isNotBlank() } ?: return null
         val episode = smEpisode?.let { action ->
             Regex("epnum-(\\d+)").find(action)?.groupValues?.getOrNull(1)

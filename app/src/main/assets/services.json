@@ -1,5 +1,27 @@
 [
   {
+    "id": "parsiflix",
+    "name": "پارسی‌فلیکس",
+    "url": "https://app.parsiflix.com",
+    "icon": "parsiflix",
+    "subtitle": "سینمای ایران",
+    "sourceLabel": "ParsiFlix",
+    "artwork": "service_iranian_cinema",
+    "color": "#E50914",
+    "type": "STREAMING",
+    "loginZoomPercent": 85,
+    "userAgent": "DESKTOP",
+    "contentUrlPatterns": ["/medias/(movies|series)/[0-9]+($|[?#/])"],
+    "playbackUrlPatterns": ["/play($|[?#/])"],
+    "excludedUrlPatterns": ["(/|#)(login|signin|sign-in|auth|account|profile|settings|device|pair|qr)(/|$|[?#])", "/medias/(movies|series|search|live)/?(?:[?#].*)?$"],
+    "playerSelectors": ["video", "iframe[allowfullscreen]", ".video-js", ".plyr"],
+    "fullscreenSelectors": ["button[aria-label*='fullscreen' i]", ".vjs-fullscreen-control", ".plyr__control[data-plyr='fullscreen']"],
+    "searchSelectors": ["input[type='search']", "input[placeholder*='جست' i]"],
+    "directPlay": {"buttonTextPatterns": ["ادامه تماشا", "تماشا"], "excludeButtonTextPatterns": ["زنده", "شبکه", "تلویزیون", "رادیو", "live"]},
+    "resumeStrategy": "CLICK_SITE_CONTINUE",
+    "resumeButtonTextPatterns": ["ادامه تماشا", "Continue Watching", "Resume"]
+  },
+  {
     "id": "farsiland",
     "name": "فیلم ایرانی",
     "url": "https://farsiland.com",

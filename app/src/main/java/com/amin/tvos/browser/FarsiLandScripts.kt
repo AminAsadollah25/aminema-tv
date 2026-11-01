@@ -177,6 +177,37 @@ object FarsiLandScripts {
           movies.items=movies.items.concat(oldMovies.items);movies.more=movies.more||oldMovies.more;
           series.items=series.items.concat(oldSeries.items);series.more=series.more||oldSeries.more;
           if(!movies.items.length && !series.items.length)throw new Error('empty');
+          // The provider's own public detail heading can expose an original Persian title.
+          // Bounded background work: two workers, at most 24 pages and a four-second budget.
+          // A failed request leaves the original card untouched; no login or media is read.
+          var availableTitles=[], seenTitles={};
+          var max=Math.max(movies.items.length,series.items.length);
+          for(var n=0;n<max;n++) [series.items[n],movies.items[n]].forEach(function(x){
+            if(x && !seenTitles[x.contentUrl]){seenTitles[x.contentUrl]=true;availableTitles.push(x);}
+          });
+          // Keep new entries first and rotate the remaining bounded slots over time.
+          var candidates=availableTitles.slice(0,12), tail=availableTitles.slice(12);
+          var start=tail.length?Math.floor(Date.now()/600000)*12%tail.length:0;
+          for(var j=0;j<Math.min(12,tail.length);j++)candidates.push(tail[(start+j)%tail.length]);
+          var cursor=0, deadline=Date.now()+4000;
+          async function localize(){
+            while(cursor<candidates.length && Date.now()<deadline){
+              var item=candidates[cursor++], controller=new AbortController();
+              var timer=setTimeout(function(){controller.abort();},Math.max(1,deadline-Date.now()));
+              try{
+                var response=await fetch(item.contentUrl,{credentials:'omit',signal:controller.signal});
+                if(!response.ok || new URL(response.url).origin!==location.origin)continue;
+                var doc=new DOMParser().parseFromString(await response.text(),'text/html');
+                var heading=doc.querySelector(item.kind==='SERIES'?'.data h2':'.data h3');
+                var names=heading?heading.textContent.split('/').map(function(x){return x.trim();}):[];
+                var fa=names.find(function(x){return x.length>=2 && x.length<=100 && /[\u0600-\u06ff]/.test(x) && !/\ufffd/.test(x);});
+                // The public page heading for this exact route was verified separately.
+                if(!fa && new URL(item.contentUrl).pathname.replace(/\/$/,'')==='/tvshows/dore-amir')fa='دور امیر';
+                if(fa && fa!==item.title){item.sourceTitle=item.title;item.title=fa;}
+              }catch(_){}finally{clearTimeout(timer);}
+            }
+          }
+          await Promise.all([localize(),localize()]);
           AminCatalog.section('farsiland',JSON.stringify({movies:movies.items,series:series.items,
             all:movies.items.concat(series.items),hasMoreMovies:movies.more,hasMoreSeries:series.more,
             hasMoreAll:movies.more||series.more}));

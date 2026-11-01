@@ -24,6 +24,9 @@ enum class CanonicalMatchConfidence {
     /** One provider repeated the exact same normal detail page in multiple lists. */
     SAME_SOURCE_PAGE,
 
+    /** Two public Iranian provider detail pages were explicitly cross-checked. */
+    VERIFIED_IRANIAN_PAIR,
+
     /** Both normal title pages expose the same public IMDb title id. */
     IMDb,
 

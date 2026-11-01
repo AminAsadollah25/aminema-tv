@@ -50,6 +50,7 @@ import com.amin.tvos.AminTvApp
 import com.amin.tvos.MainActivity
 import com.amin.tvos.browser.SiteSearchEngine
 import com.amin.tvos.data.CanonicalLibrary
+import com.amin.tvos.data.CanonicalText
 import com.amin.tvos.data.ContentMetadataPolicy
 import com.amin.tvos.data.model.CanonicalMedia
 import com.amin.tvos.data.model.CatalogKind
@@ -146,14 +147,38 @@ class SearchActivity : ComponentActivity() {
     }
 
     private fun applyResults(serviceId: String, results: List<SearchResult>) {
+        val combined = if (serviceId == "farsiland") {
+            (cachedFarsiLandMatches() + results).distinctBy {
+                ContentMetadataPolicy.canonicalContentUrl(it.contentUrl)
+            }
+        } else results
         groups = groups + (
-            serviceId to SearchGroup(serviceId, results, loading = false, searched = true)
+            serviceId to SearchGroup(serviceId, combined, loading = false, searched = true)
             )
     }
 
+    private fun cachedFarsiLandMatches(): List<SearchResult> {
+        val needle = CanonicalText.normalizeTitle(query.trim())
+        if (needle.length < 2) return emptyList()
+        val section = app.catalogRepository.section("farsiland") ?: return emptyList()
+        return (section.movies + section.series).asSequence()
+            .filter { item ->
+                CanonicalText.normalizeTitle(item.title).contains(needle) ||
+                    (item.sourceTitle.isNotBlank() &&
+                        CanonicalText.normalizeTitle(item.sourceTitle).contains(needle))
+            }
+            .distinctBy { ContentMetadataPolicy.canonicalContentUrl(it.contentUrl) }
+            .take(24)
+            .map { item ->
+                SearchResult(item.title, item.kind, item.contentUrl, item.posterUrl, item.serviceId,
+                    year = item.year, imdbId = item.imdbId)
+            }.toList()
+    }
+
     private fun applyFailure(serviceId: String, reason: String) {
+        val cached = if (serviceId == "farsiland") cachedFarsiLandMatches() else emptyList()
         groups = groups + (
-            serviceId to SearchGroup(serviceId, emptyList(), false, reason, searched = true)
+            serviceId to SearchGroup(serviceId, cached, false, reason, searched = true)
             )
     }
 
@@ -432,6 +457,6 @@ class SearchActivity : ComponentActivity() {
         const val IRANIAN_ID = "farsiland"
         const val INTERNATIONAL_ID = "filmrooz"
         const val MYMOVIZ_ID = "mymoviz"
-        val SEARCH_SERVICE_IDS = listOf(IRANIAN_ID, INTERNATIONAL_ID, MYMOVIZ_ID)
+        val SEARCH_SERVICE_IDS = listOf("parsiflix", IRANIAN_ID, INTERNATIONAL_ID, MYMOVIZ_ID)
     }
 }

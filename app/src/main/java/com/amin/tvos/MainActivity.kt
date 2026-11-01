@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
     /** True only while the cold-start intro is on screen. */
     private var introVisible by mutableStateOf(false)
     private var autoCatalogSyncLaunched = false
+    private var parsiBootstrapLaunched = false
     private var catalogSync: CatalogBackgroundSync? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +112,19 @@ class MainActivity : ComponentActivity() {
                                 val lifecycleOwner = LocalLifecycleOwner.current
                                 val homeLifecycleState by lifecycleOwner.lifecycle.currentStateFlow
                                     .collectAsStateWithLifecycle(minActiveState = Lifecycle.State.CREATED)
+                                LaunchedEffect(introVisible, homeLifecycleState, fullCatalogReady, configuredServices) {
+                                    if (introVisible || homeLifecycleState != Lifecycle.State.RESUMED ||
+                                        !fullCatalogReady || parsiBootstrapLaunched ||
+                                        configuredServices.none { it.id == "parsiflix" }) return@LaunchedEffect
+                                    val existing = homeViewModel.fullCatalogSections.value.firstOrNull { it.serviceId == "parsiflix" }
+                                    if (existing != null && (existing.all.isNotEmpty() || existing.movies.isNotEmpty() || existing.series.isNotEmpty())) return@LaunchedEffect
+                                    withFrameNanos { }
+                                    delay(CatalogBootstrapPolicy.QUIET_DELAY_MS)
+                                    val sync = catalogSync ?: return@LaunchedEffect
+                                    if (lifecycleOwner.lifecycle.currentState != Lifecycle.State.RESUMED) return@LaunchedEffect
+                                    parsiBootstrapLaunched = true
+                                    sync.refresh("parsiflix", pageLimit = 1)
+                                }
                                 LaunchedEffect(introVisible, homeLifecycleState, fullCatalogReady,
                                     configuredServices, catalogSnapshot) {
                                     fun missingIranianCache() = CatalogBootstrapPolicy.needsBootstrap(
@@ -268,6 +282,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        parsiBootstrapLaunched = false
         catalogSync?.destroy()
         catalogSync = null
         super.onPause()

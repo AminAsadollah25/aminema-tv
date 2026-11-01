@@ -58,13 +58,21 @@ class FarsiLandActivity:ComponentActivity() {
     private var resolutionJob:Job?=null
     private var resolutionEpoch=0L
     private var resolving=false
+    private var wrapperExpectedUntil=0L
+    private var activeWrapperPath:String?=null
+    private fun allowedNavigation(url:String):Boolean {
+        if(FarsiLandPolicy.allowedPage(url))return true
+        val path=runCatching { java.net.URI(url).path }.getOrNull()
+        val expected=SystemClock.elapsedRealtime()<wrapperExpectedUntil || (path!=null && path==activeWrapperPath)
+        return FarsiLandPolicy.allowedPlayerWrapper(url,expected)
+    }
     private val tick=object:Runnable { override fun run(){
         if(stopped || isFinishing || isDestroyed)return
         if(preparing && !startup.confirmed && (SystemClock.elapsedRealtime()-startedAt>45_000 || SystemClock.elapsedRealtime()-flowStartedAt>120_000)){
             recoverOrFail("پخش در مهلت مقرر آماده نشد؛ برای تلاش دوباره یا برگشت از کنترل استفاده کن.");return
         }
         if(inFlight && SystemClock.elapsedRealtime()-inFlightAt>3000L){inFlight=false;asyncGuard.expireInspection()}
-        if(!inFlight && !recovering && FarsiLandPolicy.allowedPage(web.url.orEmpty()))inspect()
+        if(!inFlight && !recovering && allowedNavigation(web.url.orEmpty()))inspect()
         handler.postDelayed(this,if(playing)1500L else 550L)
     } }
 
@@ -99,14 +107,14 @@ class FarsiLandActivity:ComponentActivity() {
         web.setDownloadListener { _,_,_,_,_ -> fail("دانلود باز نشد؛ فقط پخش داخل سایت پشتیبانی می‌شود.") }
         web.webViewClient=object:WebViewClient(){
             override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean =
-                request.isForMainFrame && !FarsiLandPolicy.allowedPage(request.url.toString())
+                request.isForMainFrame && !allowedNavigation(request.url.toString())
             @Deprecated("Legacy WebView callback")
-            override fun shouldOverrideUrlLoading(view:WebView,url:String)=!FarsiLandPolicy.allowedPage(url)
+            override fun shouldOverrideUrlLoading(view:WebView,url:String)=!allowedNavigation(url)
             override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse? =
                 if(FarsiLandPolicy.blockedResourceHost(request.url.host))
                     WebResourceResponse("text/plain","UTF-8",java.io.ByteArrayInputStream(ByteArray(0))) else null
             override fun onPageStarted(view:WebView,url:String,favicon:Bitmap?){
-                if(!FarsiLandPolicy.allowedPage(url)){
+                if(!allowedNavigation(url)){
                     if(com.amin.tvos.BuildConfig.DEBUG){
                         val u=android.net.Uri.parse(url)
                         val route=u.pathSegments.firstOrNull()?.takeIf {it.matches(Regex("[A-Za-z-]{1,30}(\\.php)?"))}?:"other"
@@ -114,19 +122,25 @@ class FarsiLandActivity:ComponentActivity() {
                     }
                     view.stopLoading();return
                 }
+                if(FarsiLandPolicy.allowedPlayerWrapper(url, true)){
+                    activeWrapperPath=runCatching { java.net.URI(url).path }.getOrNull()
+                    wrapperExpectedUntil=0L
+                } else { activeWrapperPath=null }
                 asyncGuard.invalidate();recovering=false
                 document++;chosenDocument=-1;inFlight=false;playing=false;startup.reset();progress.reset()
                 if(FarsiLandPolicy.isEpisode(url) || (FarsiLandPolicy.isTitle(url) && url.contains("/movies/")))flowStartedAt=SystemClock.elapsedRealtime()
                 if(isPlayablePage(url))startedAt=SystemClock.elapsedRealtime()
-                if(isPlayablePage(url)){preparing=true;loading.showPreparing(false,titleText=intent.getStringExtra("content_title").orEmpty())}
-                else loading.hide()
+                if(isPlayablePage(url)){preparing=true;showPlaybackLoading()}
+                // The provider's intermediate quality page is part of the same playback
+                // attempt. Do not expose it while the user waits for the player.
+                else if(!preparing) loading.hide()
             }
             override fun onPageCommitVisible(view:WebView,url:String){
-                if(!stopped && !live && FarsiLandPolicy.allowedPage(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
+                if(!stopped && !live && allowedNavigation(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
             }
             override fun onPageFinished(view:WebView,url:String){
                 CookieManager.getInstance().flush()
-                if(!stopped && !live && FarsiLandPolicy.allowedPage(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
+                if(!stopped && !live && allowedNavigation(url))view.evaluateJavascript(FarsiLandScripts.adRequestFilter,null)
             }
             override fun onReceivedError(view:WebView,request:WebResourceRequest,e:WebResourceError){
                 if(request.isForMainFrame)fail("اتصال به سایت برقرار نشد؛ اینترنت و DNS دستگاه را بررسی کن.")
@@ -144,12 +158,12 @@ class FarsiLandActivity:ComponentActivity() {
                 child.webViewClient=object:WebViewClient(){
                     override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest):Boolean {
                         val target=r.url.toString()
-                        if(FarsiLandPolicy.allowedPage(target))web.loadUrl(target)
+                        if(allowedNavigation(target))web.loadUrl(target)
                         handler.post {release()};return true
                     }
                     override fun onPageStarted(v:WebView,url:String,icon:Bitmap?){
                         if(url!="about:blank"){
-                            if(FarsiLandPolicy.allowedPage(url))web.loadUrl(url)
+                            if(allowedNavigation(url))web.loadUrl(url)
                             v.stopLoading();handler.post {release()}
                         }
                     }
@@ -159,15 +173,19 @@ class FarsiLandActivity:ComponentActivity() {
             }
             override fun onShowCustomView(view:View,callback:CustomViewCallback){
                 if(custom!=null){callback.onCustomViewHidden();return}
-                custom=view;customCallback=callback;root.addView(view,FrameLayout.LayoutParams(-1,-1));hideBars()
+                custom=view;customCallback=callback;root.addView(view,FrameLayout.LayoutParams(-1,-1))
+                if(loading.isShowing)loading.bringToFront()
+                hideBars()
             }
             override fun onHideCustomView(){closeCustom()}
         }
         onBackPressedDispatcher.addCallback(this,object:OnBackPressedCallback(true){override fun handleOnBackPressed(){finish()}})
         begin(seed)
     }
-    private fun isPlayablePage(url:String)=FarsiLandPolicy.isPlayablePage(url)
+    private fun isPlayablePage(url:String)=FarsiLandPolicy.isPlayablePage(url) ||
+        (allowedNavigation(url) && FarsiLandPolicy.allowedPlayerWrapper(url,true))
     private fun begin(url:String){
+        wrapperExpectedUntil=0L;activeWrapperPath=null
         resolutionJob?.cancel();val epoch=++resolutionEpoch;resolving=false
         asyncGuard.invalidate()
         startup.reset()
@@ -175,8 +193,9 @@ class FarsiLandActivity:ComponentActivity() {
         stopped=false;playing=false;preparing=isPlayablePage(url);inFlight=false;chosenDocument=-1;startedAt=SystemClock.elapsedRealtime();flowStartedAt=startedAt;ticks=0
         triedQualities.clear();recovering=false;triedPlayers.clear()
         error.visibility=View.GONE;handler.removeCallbacks(tick)
+        if(preparing && !live) showPlaybackLoading()
         if(!live && FarsiPlexPublicPages.isSource(url)){
-            resolving=true;loading.showPreparing(false,titleText=intent.getStringExtra("content_title").orEmpty())
+            resolving=true;showPlaybackLoading()
             resolutionJob=lifecycleScope.launch {
                 val canonical=withContext(Dispatchers.IO){FarsiPlexPublicPages.resolve(url)}
                 if(epoch!=resolutionEpoch || stopped || isFinishing || isDestroyed)return@launch
@@ -186,6 +205,15 @@ class FarsiLandActivity:ComponentActivity() {
                 web.loadUrl(canonical?:url);handler.post(tick)
             }
         }else{web.loadUrl(url);handler.post(tick)}
+    }
+    private fun showPlaybackLoading() {
+        loading.showPreparing(
+            false,
+            episodeLabel = intent.getStringExtra("episode_label"),
+            titleText = intent.getStringExtra("content_title").orEmpty(),
+            backdropUrl = intent.getStringExtra("content_backdrop").orEmpty(),
+            posterUrl = intent.getStringExtra("content_poster").orEmpty()
+        )
     }
     private fun inspect(){
         val request=asyncGuard.beginInspection();inFlight=true;inFlightAt=SystemClock.elapsedRealtime()
@@ -208,6 +236,9 @@ class FarsiLandActivity:ComponentActivity() {
                     val labels=(0 until (array?.length()?:0)).map {array!!.optString(it)}
                     val index=FarsiLandPolicy.qualityIndex(labels,live)
                     if(index!=null){chosenDocument=document;triedQualities.add(labels[index].trim())
+                        if(phase=="quality" && FarsiLandPolicy.isWrapperQualityPage(web.url.orEmpty()) &&
+                            labels[index].trim().matches(Regex("^(1080|720|480)p?$",RegexOption.IGNORE_CASE)))
+                            wrapperExpectedUntil=SystemClock.elapsedRealtime()+45_000L
                         val nodes=if(phase=="player-quality")"Array.from(document.querySelectorAll('.plyr button[data-plyr=\"quality\"]')).filter(function(b){return /^(480|720|1080)$/.test(b.value);})" else FarsiLandScripts.entryQualityNodes
                         web.evaluateJavascript("(function(){var a=$nodes;if(a[$index])a[$index].click();})()",null)}
                     else if(labels.isNotEmpty())fail("کیفیت مجاز پیدا نشد؛ گزینهٔ ۲۱۶۰ خودکار انتخاب نمی‌شود.")

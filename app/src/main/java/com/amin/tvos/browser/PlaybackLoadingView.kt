@@ -21,6 +21,7 @@ import coil.request.ImageRequest
  * the site's own normal Continue/Play action. It never reads media requests.
  */
 class PlaybackLoadingView(context: Context) : FrameLayout(context) {
+    private var shownArtUrl = ""
 
     private val artwork = ImageView(context).apply {
         scaleType = ImageView.ScaleType.CENTER_CROP
@@ -110,7 +111,8 @@ class PlaybackLoadingView(context: Context) : FrameLayout(context) {
         posterUrl: String = ""
     ) {
         val artUrl = backdropUrl.ifBlank { posterUrl }
-        if (artUrl.isNotBlank()) {
+        if (artUrl.isNotBlank() && artUrl != shownArtUrl) {
+            shownArtUrl = artUrl
             artwork.visibility = View.VISIBLE
             context.imageLoader.enqueue(
                 ImageRequest.Builder(context)
@@ -120,32 +122,41 @@ class PlaybackLoadingView(context: Context) : FrameLayout(context) {
                     .target(onSuccess = { drawable -> artwork.setImageDrawable(drawable) })
                     .build()
             )
-        } else {
+        } else if (artUrl.isBlank()) {
+            shownArtUrl = ""
             artwork.setImageDrawable(null)
             artwork.visibility = View.GONE
         }
         title.text = if (!episodeLabel.isNullOrBlank()) {
-            "در حال آماده‌سازی $episodeLabel…"
+            if (titleText.isNotBlank()) "«$titleText» · $episodeLabel"
+            else "در حال آماده‌سازی $episodeLabel…"
         } else if (titleText.isNotBlank()) {
             "در حال آماده‌سازی «$titleText»…"
         } else if (isContinue) {
-            "پاپ‌کورن یادت نره… 🍿"
+            "در حال آماده‌سازی ادامهٔ تماشا…"
         } else {
-            "چراغ‌ها خاموش، پاپ‌کورن آماده… 🍿"
+            "چراغ‌ها خاموش، پاپ‌کورن آماده…"
         }
         subtitle.text = if (!episodeLabel.isNullOrBlank()) {
-            "انتخابت ثبت شد؛ داریم دقیقاً همون قسمت رو باز می‌کنیم 🍿"
+            "انتخابت ثبت شد؛ داریم همون قسمت رو آماده می‌کنیم."
         } else if (isContinue) {
             "داریم فیلمت رو از همون‌جایی که جا گذاشتی میاریم؛ خوش بگذره!"
         } else {
             "چند لحظه تا شروع فیلم؛ خوش بگذره!"
         }
+        animate().cancel()
+        alpha = 1f
         visibility = View.VISIBLE
         bringToFront()
     }
 
     fun hide() {
-        visibility = View.GONE
+        if (visibility != View.VISIBLE) return
+        animate().cancel()
+        animate().alpha(0f).setDuration(180L).withEndAction {
+            visibility = View.GONE
+            alpha = 1f
+        }.start()
     }
 
     val isShowing: Boolean

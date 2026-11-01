@@ -16,6 +16,16 @@ object FarsiLandPolicy {
             (u.port==-1 || u.port==443) && !Regex("\\.(?:mp4|m3u8|mpd|webm|mkv|zip|apk|exe|js|css|png|jpg|webp)$",RegexOption.IGNORE_CASE)
                 .containsMatchIn(u.path.orEmpty())
     }.getOrDefault(false)
+    /** Only after choosing a quality on the provider's own intermediary page. */
+    fun allowedPlayerWrapper(url:String, expected:Boolean):Boolean = expected && runCatching {
+        val u=URI(url)
+        u.scheme.equals("https",true) && u.host?.lowercase() in setOf("farsiland.buzz","www.farsiland.buzz") &&
+            u.userInfo==null && (u.port==-1 || u.port==443) &&
+            Regex("^/movies/[a-z0-9-]+/?$").matches(u.path.orEmpty())
+    }.getOrDefault(false)
+    fun isWrapperQualityPage(url:String):Boolean = allowedPage(url) && runCatching {
+        URI(url).host?.lowercase() in setOf("farsiland.buzz","www.farsiland.buzz")
+    }.getOrDefault(false)
     fun blockedResourceHost(host:String?):Boolean = host?.lowercase()?.let { h ->
         ads.any { h==it || h.endsWith(".$it") }
     } ?: false
